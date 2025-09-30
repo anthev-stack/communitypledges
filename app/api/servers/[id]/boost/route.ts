@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { stripe, calculatePlatformFee, calculateStripeFee, calculateNetAmount } from '@/lib/stripe';
+import { stripe, calculatePlatformFee, calculateStripeFee, calculateNetAmount, STRIPE_CONNECT_ACCOUNT_ID } from '@/lib/stripe';
 import { handlePaymentFailure, isUserPaymentSuspended, resetPaymentFailures } from '@/lib/payment-failure';
 import { sendDiscordWebhook, createBoostNotificationEmbed } from '@/lib/discord-webhook';
 
@@ -100,7 +100,7 @@ export async function POST(
         confirm: true,
         application_fee_amount: Math.round(platformFee * 100), // Platform fee in cents
         transfer_data: {
-          destination: process.env.STRIPE_CONNECT_ACCOUNT_ID, // Platform's Stripe Connect account
+          destination: STRIPE_CONNECT_ACCOUNT_ID, // Platform's Stripe Connect account
         },
         metadata: {
           serverId: serverId,
