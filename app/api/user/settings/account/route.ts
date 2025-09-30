@@ -57,6 +57,13 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verify current password
+    if (!user.password) {
+      return NextResponse.json(
+        { message: 'User has no password set' },
+        { status: 400 }
+      )
+    }
+    
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password)
     if (!isPasswordValid) {
       return NextResponse.json(
