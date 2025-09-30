@@ -120,7 +120,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       await prisma.serverBoost.create({
         data: {
           serverId,
-          userId: payerId,
+          ownerId: payerId,
           amount: 3.00, // Fixed boost price
           expiresAt: boostExpiresAt
         }
@@ -132,11 +132,8 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
           userId: payerId,
           serverId,
           type: 'server_boost',
-          description: `Boosted server for A$3.00`,
-          metadata: {
-            amount: '3.00',
-            platformFee: '0.03'
-          }
+          message: `Boosted server for A$3.00`,
+          amount: 3.00
         }
       });
     }
@@ -145,14 +142,8 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     await prisma.activityLog.create({
       data: {
         type: 'platform_fee',
-        description: `Platform fee collected: $${platformFee}`,
-        metadata: {
-          amount: platformFee,
-          paymentIntentId: paymentIntent.id,
-          serverId,
-          serverOwnerId,
-          payerId
-        }
+        message: `Platform fee collected: $${platformFee}`,
+        amount: platformFee
       }
     });
 
