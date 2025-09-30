@@ -13,7 +13,6 @@ import {
   AlertTriangle,
   Clock,
   UserCheck,
-  ServerCheck,
   Ticket,
   Settings,
   Search,
@@ -680,7 +679,7 @@ function UserManagement() {
                           <Ban className="w-4 h-4" />
                         </button>
                       )}
-                      {user.isPaymentSuspended && (isAdmin || isModerator) && (
+                      {user.isPaymentSuspended && isAdmin && (
                         <button
                           onClick={() => handleUnsuspendUser(user.id)}
                           className="p-2 text-green-400 hover:text-green-300 transition-colors"

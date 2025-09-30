@@ -143,7 +143,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       data: {
         type: 'platform_fee',
         message: `Platform fee collected: $${platformFee}`,
-        amount: platformFee
+        amount: parseFloat(platformFee)
       }
     });
 
