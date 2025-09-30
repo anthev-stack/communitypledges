@@ -266,7 +266,7 @@ export async function POST(
         
         const embed = createPledgeNotificationEmbed(
           server.name,
-          pledge.user.name,
+          pledge.user.name || 'Anonymous User',
           amount,
           server.cost,
           totalPledged,

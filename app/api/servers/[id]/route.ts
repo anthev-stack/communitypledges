@@ -158,7 +158,7 @@ export async function GET(
     // Create personalized costs for each pledge
     const personalizedCosts = server.pledges.map((pledge, index) => ({
       userId: pledge.userId,
-      userName: pledge.user.name,
+      userName: pledge.user.name || 'Anonymous User',
       pledgedAmount: pledge.amount,
       actualCost: optimizedCosts[index] || pledge.amount,
       savings: Math.max(0, pledge.amount - (optimizedCosts[index] || pledge.amount))

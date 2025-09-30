@@ -481,7 +481,7 @@ export default function ServerDetailPage() {
             <h3 className="text-lg font-semibold text-white mb-4">Pledges ({server.pledges.length})</h3>
             <div className="space-y-3">
               {server.pledges.map((pledge) => {
-                const personalizedCost = getPersonalizedCost(pledge.user.name)
+                const personalizedCost = getPersonalizedCost(pledge.user.name || 'Anonymous User')
                 return (
                   <div key={pledge.id} className="flex justify-between items-center py-3 border-b border-slate-600 last:border-b-0">
                     <div className="flex items-center space-x-3">
@@ -489,7 +489,7 @@ export default function ServerDetailPage() {
                         <Users className="w-4 h-4 text-emerald-400" />
                       </div>
                       <div>
-                        <p className="font-medium text-white">{pledge.user.name}</p>
+                        <p className="font-medium text-white">{pledge.user.name || 'Anonymous User'}</p>
                         <p className="text-sm text-gray-400">{new Date(pledge.createdAt).toLocaleDateString()}</p>
                       </div>
                     </div>
