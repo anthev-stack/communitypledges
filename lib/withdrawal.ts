@@ -249,7 +249,7 @@ export async function processPendingWithdrawals() {
         data: {
           status: 'completed',
           processedAt: new Date(),
-          actualAmount: totalCollected
+          amount: totalCollected
         }
       })
 

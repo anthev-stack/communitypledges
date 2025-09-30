@@ -93,7 +93,7 @@ export default async function UserPage({ params }: UserPageProps) {
             {user.image ? (
               <img
                 src={user.image}
-                alt={user.username}
+                alt={user.name || 'User'}
                 className="w-24 h-24 rounded-full"
               />
             ) : (
