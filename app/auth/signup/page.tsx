@@ -133,8 +133,7 @@ export default function SignupPage() {
     
     try {
       const result = await signIn(provider, { 
-        callbackUrl: '/dashboard',
-        redirect: false
+        callbackUrl: '/dashboard'
       })
       
       if (result?.error) {
