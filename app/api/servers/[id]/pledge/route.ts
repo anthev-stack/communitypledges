@@ -250,7 +250,7 @@ export async function POST(
       await prisma.activityLog.create({
         data: {
           type: 'server_pledge',
-          message: `${pledge.user.name} pledged $${amount.toFixed(2)} to your server "${pledge.server.name}"`,
+          message: `${pledge.user.name || 'Anonymous User'} pledged $${amount.toFixed(2)} to your server "${pledge.server.name}"`,
           amount: amount,
           userId: pledge.server.ownerId,
           serverId: serverId
@@ -386,7 +386,7 @@ export async function DELETE(
       await prisma.activityLog.create({
         data: {
           type: 'server_unpledge',
-          message: `${pledge.user.name} unpledged $${pledge.amount.toFixed(2)} from your server "${pledge.server.name}"`,
+          message: `${pledge.user.name || 'Anonymous User'} unpledged $${pledge.amount.toFixed(2)} from your server "${pledge.server.name}"`,
           amount: pledge.amount,
           userId: pledge.server.ownerId,
           serverId: serverId
@@ -404,7 +404,7 @@ export async function DELETE(
         
         const embed = createUnpledgeNotificationEmbed(
           pledge.server.name,
-          pledge.user.name,
+          pledge.user.name || 'Anonymous User',
           pledge.amount,
           pledge.server.cost,
           totalPledged,
