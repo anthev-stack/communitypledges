@@ -19,6 +19,7 @@ interface ServerDetail {
   costPerPerson: number
   isAcceptingPledges: boolean
   totalPledged: number
+  remainingCost: number
   progressPercentage: number
   withdrawalDay: number
   gameType: string
