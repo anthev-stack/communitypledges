@@ -144,7 +144,7 @@ export async function processPendingWithdrawals() {
               }
             }
           },
-          user: {
+          owner: {
             select: {
               stripeAccountId: true
             }
@@ -195,8 +195,8 @@ export async function processPendingWithdrawals() {
             payment_method: user.stripePaymentMethodId,
             confirm: true,
             application_fee_amount: Math.round(platformFee * 100), // Platform fee in cents
-            transfer_data: server.user.stripeAccountId ? {
-              destination: server.user.stripeAccountId, // Server owner's Stripe Connect account
+            transfer_data: server.owner.stripeAccountId ? {
+              destination: server.owner.stripeAccountId, // Server owner's Stripe Connect account
             } : undefined,
             metadata: {
               serverId: withdrawal.serverId,

@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
           if (a.hasActiveBoost && !b.hasActiveBoost) return -1;
           if (!a.hasActiveBoost && b.hasActiveBoost) return 1;
           if (a.hasActiveBoost && b.hasActiveBoost) {
-            return new Date(a.boostExpiresAt).getTime() - new Date(b.boostExpiresAt).getTime();
+            return new Date(a.boostExpiresAt || 0).getTime() - new Date(b.boostExpiresAt || 0).getTime();
           }
           
           // Third priority: Regular servers by creation time

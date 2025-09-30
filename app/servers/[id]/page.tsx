@@ -94,6 +94,7 @@ export default function ServerDetailPage() {
     if (!session) {
       addNotification({
         type: 'error',
+        title: 'Login Required',
         message: 'You must be logged in to pledge',
         duration: 4000
       })
@@ -103,6 +104,7 @@ export default function ServerDetailPage() {
     if (!pledgeAmount || pledgeAmount <= 0) {
       addNotification({
         type: 'error',
+        title: 'Error',
         message: 'Please enter a valid pledge amount',
         duration: 4000
       })
@@ -126,6 +128,7 @@ export default function ServerDetailPage() {
     if (!session) {
       addNotification({
         type: 'error',
+        title: 'Error',
         message: 'You must be logged in to unpledge',
         duration: 4000
       })
@@ -144,14 +147,16 @@ export default function ServerDetailPage() {
       } else {
         const errorData = await response.json()
         addNotification({
-          type: 'error',
-          message: errorData.message || 'Failed to remove pledge',
+        type: 'error',
+        title: 'Error',
+        message: errorData.message || 'Failed to remove pledge',
           duration: 4000
         })
       }
     } catch (error) {
       addNotification({
         type: 'error',
+        title: 'Error',
         message: 'Failed to remove pledge',
         duration: 4000
       })
