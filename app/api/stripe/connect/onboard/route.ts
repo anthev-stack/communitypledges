@@ -29,7 +29,7 @@ export async function POST() {
     const account = await stripe.accounts.create({
       type: 'express', // Express accounts are easier to set up
       country: 'US', // You can make this dynamic based on user location
-      email: session.user.email,
+      email: session.user.email || undefined,
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true }
