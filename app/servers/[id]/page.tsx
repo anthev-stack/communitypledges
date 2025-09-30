@@ -181,6 +181,7 @@ export default function ServerDetailPage() {
       await navigator.clipboard.writeText(ipToCopy)
       addNotification({
         type: 'success',
+        title: 'Success',
         message: `Server IP copied to clipboard: ${ipToCopy}`,
         duration: 3000
       })
@@ -195,6 +196,7 @@ export default function ServerDetailPage() {
       document.body.removeChild(textArea)
       addNotification({
         type: 'success',
+        title: 'Success',
         message: `Server IP copied to clipboard: ${ipToCopy}`,
         duration: 3000
       })
