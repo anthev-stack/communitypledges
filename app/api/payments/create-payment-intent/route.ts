@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     // Get server details
     const server = await prisma.server.findUnique({
       where: { id: serverId },
-      include: { user: true }
+      include: { owner: true }
     });
 
     if (!server) {
@@ -44,17 +44,17 @@ export async function POST(request: NextRequest) {
 
     // For Stripe Connect, we need to handle the payment differently
     // Option 1: If server owner has Stripe Connect account
-    if (server.user.stripeAccountId) {
+    if (server.owner.stripeAccountId) {
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount * 100), // Convert to cents
         currency: 'usd',
         application_fee_amount: Math.round(platformFee * 100), // Platform fee in cents
         transfer_data: {
-          destination: server.user.stripeAccountId, // Server owner's Stripe Connect account
+          destination: server.owner.stripeAccountId, // Server owner's Stripe Connect account
         },
         metadata: {
           serverId,
-          serverOwnerId: server.userId,
+          serverOwnerId: server.ownerId,
           payerId: session.user.id,
           type, // 'pledge' or 'boost'
           platformFee: platformFee.toString(),
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
         currency: 'usd',
         metadata: {
           serverId,
-          serverOwnerId: server.userId,
+          serverOwnerId: server.ownerId,
           payerId: session.user.id,
           type, // 'pledge' or 'boost'
           platformFee: platformFee.toString(),
