@@ -54,6 +54,7 @@ interface ServerDetail {
 
 export default function ServerDetailPage() {
   const params = useParams()
+  const serverId = Array.isArray(params.id) ? params.id[0] : params.id
   const router = useRouter()
   const { data: session } = useSession()
   const { addNotification } = useNotifications()
@@ -65,14 +66,14 @@ export default function ServerDetailPage() {
   const [showHowItWorks, setShowHowItWorks] = useState(false)
 
   useEffect(() => {
-    if (params.id) {
+    if (serverId) {
       fetchServer()
     }
-  }, [params.id])
+  }, [serverId])
 
   const fetchServer = async () => {
     try {
-      const response = await fetch(`/api/servers/${params.id}`)
+      const response = await fetch(`/api/servers/${serverId}`)
       if (response.ok) {
         const data = await response.json()
         setServer(data)
@@ -139,7 +140,7 @@ export default function ServerDetailPage() {
     setPledging(true)
 
     try {
-      const response = await fetch(`/api/servers/${params.id}/pledge`, {
+      const response = await fetch(`/api/servers/${serverId}/pledge`, {
         method: 'DELETE',
       })
 
@@ -532,7 +533,7 @@ export default function ServerDetailPage() {
             onClose={() => setShowPledgeConfirmation(false)}
             onSuccess={handlePledgeSuccess}
             serverName={server?.name || ''}
-            serverId={params.id}
+            serverId={serverId}
             amount={pledgeData.amount}
           />
         )}
