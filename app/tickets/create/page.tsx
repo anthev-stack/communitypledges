@@ -91,6 +91,7 @@ export default function CreateTicketPage() {
         const result = await response.json()
         addNotification({
           type: 'success',
+          title: 'Success',
           message: 'Ticket created successfully! We\'ll get back to you soon.'
         })
         router.push(`/tickets/${result.id}`)
@@ -98,6 +99,7 @@ export default function CreateTicketPage() {
         const error = await response.json()
         addNotification({
           type: 'error',
+          title: 'Error',
           message: error.message || 'Failed to create ticket'
         })
       }
@@ -105,6 +107,7 @@ export default function CreateTicketPage() {
       console.error('Error creating ticket:', error)
       addNotification({
         type: 'error',
+        title: 'Error',
         message: 'Failed to create ticket. Please try again.'
       })
     } finally {

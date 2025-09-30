@@ -129,12 +129,14 @@ export default function TicketPage() {
         fetchTicket() // Refresh ticket data
         addNotification({
           type: 'success',
+          title: 'Success',
           message: 'Message sent successfully'
         })
       } else {
         const error = await response.json()
         addNotification({
           type: 'error',
+          title: 'Error',
           message: error.message || 'Failed to send message'
         })
       }
@@ -142,6 +144,7 @@ export default function TicketPage() {
       console.error('Error sending message:', error)
       addNotification({
         type: 'error',
+        title: 'Error',
         message: 'Failed to send message'
       })
     } finally {
@@ -167,11 +170,13 @@ export default function TicketPage() {
         setShowCloseConfirm(false)
         addNotification({
           type: 'success',
+          title: 'Success',
           message: 'Ticket closed successfully'
         })
       } else {
         addNotification({
           type: 'error',
+          title: 'Error',
           message: 'Failed to close ticket'
         })
       }
@@ -179,6 +184,7 @@ export default function TicketPage() {
       console.error('Error closing ticket:', error)
       addNotification({
         type: 'error',
+        title: 'Error',
         message: 'Failed to close ticket'
       })
     } finally {
