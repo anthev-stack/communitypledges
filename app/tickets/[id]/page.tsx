@@ -102,6 +102,7 @@ export default function TicketPage() {
       console.error('Error fetching ticket:', error)
       addNotification({
         type: 'error',
+        title: 'Error',
         message: 'Failed to load ticket'
       })
     } finally {
