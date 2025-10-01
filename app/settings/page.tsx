@@ -74,6 +74,8 @@ export default function SettingsPageFixed() {
   const [stripeConnectStatus, setStripeConnectStatus] = useState<any>(null)
   const [settingUpStripe, setSettingUpStripe] = useState(false)
   const [stripeConnectLoading, setStripeConnectLoading] = useState(false)
+  const [userCountry, setUserCountry] = useState<string>('AU') // Default to Australia
+  const [detectingCountry, setDetectingCountry] = useState(false)
 
   const paymentForm = useForm<PaymentMethodForm>({
     resolver: zodResolver(paymentMethodSchema)
@@ -89,10 +91,61 @@ export default function SettingsPageFixed() {
     } else if (status === 'authenticated') {
       fetchUserSettings()
       fetchStripeConnectStatus()
+      detectUserCountry()
     } else if (status === 'loading') {
       setLoading(true)
     }
   }, [status, router])
+
+  const detectUserCountry = async () => {
+    setDetectingCountry(true)
+    try {
+      // Try geolocation first
+      if (navigator.geolocation) {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            timeout: 5000,
+            enableHighAccuracy: false
+          })
+        })
+
+        const { latitude, longitude } = position.coords
+        
+        // Use reverse geocoding to get country
+        const response = await fetch(
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+        )
+        
+        if (response.ok) {
+          const data = await response.json()
+          const countryCode = data.countryCode
+          if (countryCode) {
+            setUserCountry(countryCode)
+            setDetectingCountry(false)
+            return
+          }
+        }
+      }
+    } catch (error) {
+      console.log('Geolocation failed, trying IP-based detection:', error)
+    }
+
+    try {
+      // Fallback to IP-based detection
+      const response = await fetch('https://ipapi.co/json/')
+      if (response.ok) {
+        const data = await response.json()
+        const countryCode = data.country_code
+        if (countryCode) {
+          setUserCountry(countryCode)
+        }
+      }
+    } catch (error) {
+      console.log('IP-based detection failed, using default:', error)
+    }
+
+    setDetectingCountry(false)
+  }
 
   const fetchUserSettings = async () => {
     try {
@@ -742,12 +795,13 @@ export default function SettingsPageFixed() {
                   <h3 className="text-lg font-medium text-white mb-4">Add New Deposit Method</h3>
                   <div className="space-y-3">
                     <form action="/api/stripe/connect/onboard" method="POST" target="_blank">
+                      <input type="hidden" name="country" value={userCountry} />
                       <button
                         type="submit"
-                        disabled={settingUpStripe}
+                        disabled={settingUpStripe || detectingCountry}
                         className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {settingUpStripe ? 'Setting up...' : 'Add Bank Account (Australia)'}
+                        {detectingCountry ? 'Detecting country...' : settingUpStripe ? 'Setting up...' : `Add Bank Account (${userCountry})`}
                       </button>
                     </form>
                     
@@ -787,17 +841,18 @@ export default function SettingsPageFixed() {
                 <p className="text-gray-300 mb-4">No deposit methods added yet.</p>
                 <div className="space-y-3">
                   <form action="/api/stripe/connect/onboard" method="POST" target="_blank">
+                    <input type="hidden" name="country" value={userCountry} />
                     <button
                       type="submit"
-                      disabled={settingUpStripe}
+                      disabled={settingUpStripe || detectingCountry}
                       className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {settingUpStripe ? 'Setting up...' : 'Add Bank Account (Australia)'}
+                      {detectingCountry ? 'Detecting country...' : settingUpStripe ? 'Setting up...' : `Add Bank Account (${userCountry})`}
                     </button>
                   </form>
                   
                   <p className="text-xs text-gray-400">
-                    Note: The account will be created for Australia. If you started with a different country, 
+                    Note: The account will be created for {userCountry}. If you started with a different country, 
                     you may need to reset and start over.
                   </p>
                 </div>

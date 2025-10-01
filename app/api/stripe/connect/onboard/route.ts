@@ -4,13 +4,17 @@ import { authOptions } from '@/lib/auth';
 import { stripe, STRIPE_CONNECT_ACCOUNT_ID } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
+
+    // Get country from form data or default to AU
+    const formData = await request.formData();
+    const country = (formData.get('country') as string) || 'AU';
 
     // Check if user already has a Stripe Connect account
     const user = await prisma.user.findUnique({
@@ -33,7 +37,7 @@ export async function POST() {
     // Create Stripe Connect account
     const account = await stripe.accounts.create({
       type: 'express', // Express accounts are easier to set up
-      country: 'AU', // Set to Australia
+      country: country, // Use detected country
       email: session.user.email || undefined,
       capabilities: {
         card_payments: { requested: true },
