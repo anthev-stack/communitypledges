@@ -9,6 +9,12 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // Stripe publishable key for client-side
 export const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 
+// Debug logging
+console.log('Stripe config loaded:')
+console.log('STRIPE_PUBLISHABLE_KEY:', STRIPE_PUBLISHABLE_KEY)
+console.log('STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'Present' : 'Missing')
+console.log('STRIPE_CONNECT_ACCOUNT_ID:', process.env.STRIPE_CONNECT_ACCOUNT_ID ? 'Present' : 'Missing')
+
 // Stripe Connect account ID for CommunityPledges
 export const STRIPE_CONNECT_ACCOUNT_ID = process.env.STRIPE_CONNECT_ACCOUNT_ID!
 

@@ -84,15 +84,23 @@ function PaymentForm({ onSuccess, onError, isUpdating }: StripePaymentFormProps)
 }
 
 export default function StripePaymentForm({ onSuccess, onError, isUpdating = false }: StripePaymentFormProps) {
+  // Debug logging
+  console.log('StripePaymentForm rendering...')
+  console.log('STRIPE_PUBLISHABLE_KEY:', STRIPE_PUBLISHABLE_KEY)
+  console.log('stripePromise:', stripePromise)
+
   // Don't render if we don't have a valid Stripe key
   if (!stripePromise) {
+    console.log('No stripePromise, showing error message')
     return (
       <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-4">
         <p className="text-red-300">Stripe is not properly configured. Please check your environment variables.</p>
+        <p className="text-red-300 text-sm mt-2">Key: {STRIPE_PUBLISHABLE_KEY || 'undefined'}</p>
       </div>
     )
   }
 
+  console.log('Rendering Stripe Elements')
   return (
     <Elements stripe={stripePromise}>
       <PaymentForm onSuccess={onSuccess} onError={onError} isUpdating={isUpdating} />
