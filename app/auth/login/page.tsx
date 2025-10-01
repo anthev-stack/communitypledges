@@ -44,7 +44,7 @@ export default function LoginPage() {
     }
   }
 
-  const handleOAuthSignIn = async (provider: 'discord' | 'google') => {
+  const handleOAuthSignIn = async (provider: 'discord') => {
     setLoading(true)
     setError('')
     
