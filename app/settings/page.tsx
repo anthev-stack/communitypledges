@@ -121,6 +121,14 @@ export default function SettingsPage() {
       } else {
         const errorData = await response.json()
         console.error('Failed to fetch user settings:', response.status, errorData)
+        // Set empty settings to prevent blank page
+        setUserSettings({
+          hasPaymentMethod: false,
+          hasDepositMethod: false,
+          name: session?.user?.name || '',
+          email: session?.user?.email || '',
+          image: session?.user?.image || null
+        })
         addNotification({
           type: 'error',
           title: 'Error',
@@ -130,6 +138,14 @@ export default function SettingsPage() {
       }
     } catch (error) {
       console.error('Error fetching user settings:', error)
+      // Set empty settings to prevent blank page
+      setUserSettings({
+        hasPaymentMethod: false,
+        hasDepositMethod: false,
+        name: session?.user?.name || '',
+        email: session?.user?.email || '',
+        image: session?.user?.image || null
+      })
       addNotification({
         type: 'error',
         title: 'Error',
