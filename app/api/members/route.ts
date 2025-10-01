@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('[Members API] Starting request...')
 
     // Get all users with basic stats only
     const members = await prisma.user.findMany({
@@ -30,6 +31,8 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    console.log(`[Members API] Found ${members.length} members`)
+
     // Transform the data to include basic stats only
     const membersWithStats = members.map(member => ({
       id: member.id,
@@ -46,9 +49,9 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error fetching members:', error);
+    console.error('[Members API] Error fetching members:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
