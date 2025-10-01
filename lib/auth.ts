@@ -6,6 +6,7 @@ import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
+  // Force fresh build - Google OAuth removed
   adapter: PrismaAdapter(prisma),
   providers: [
     DiscordProvider({
