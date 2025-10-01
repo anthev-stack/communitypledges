@@ -5,14 +5,8 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { STRIPE_PUBLISHABLE_KEY } from '@/lib/stripe'
 
-// Create stripe promise inside component to ensure proper initialization
-const getStripePromise = () => {
-  if (!STRIPE_PUBLISHABLE_KEY) {
-    console.error('STRIPE_PUBLISHABLE_KEY is not defined')
-    return null
-  }
-  return loadStripe(STRIPE_PUBLISHABLE_KEY)
-}
+// Create stripe promise - loadStripe returns a promise
+const stripePromise = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null
 
 interface StripePaymentFormProps {
   onSuccess: (paymentMethodId: string) => void
@@ -91,20 +85,11 @@ function PaymentForm({ onSuccess, onError, isUpdating }: StripePaymentFormProps)
 
 export default function StripePaymentForm({ onSuccess, onError, isUpdating = false }: StripePaymentFormProps) {
   // Don't render if we don't have a valid Stripe key
-  if (!STRIPE_PUBLISHABLE_KEY) {
+  if (!stripePromise) {
     return (
       <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-4">
         <p className="text-red-300">Stripe is not properly configured. Please check your environment variables.</p>
         <p className="text-red-300 text-sm mt-2">Key: {STRIPE_PUBLISHABLE_KEY || 'undefined'}</p>
-      </div>
-    )
-  }
-
-  const stripePromise = getStripePromise()
-  if (!stripePromise) {
-    return (
-      <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-4">
-        <p className="text-red-300">Failed to initialize Stripe.</p>
       </div>
     )
   }
