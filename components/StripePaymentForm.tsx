@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { STRIPE_PUBLISHABLE_KEY } from '@/lib/stripe'
 
-const stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY)
+// Only create stripe promise if we have a valid key
+const stripePromise = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null
 
 interface StripePaymentFormProps {
   onSuccess: (paymentMethodId: string) => void
@@ -83,6 +84,15 @@ function PaymentForm({ onSuccess, onError, isUpdating }: StripePaymentFormProps)
 }
 
 export default function StripePaymentForm({ onSuccess, onError, isUpdating = false }: StripePaymentFormProps) {
+  // Don't render if we don't have a valid Stripe key
+  if (!stripePromise) {
+    return (
+      <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-4">
+        <p className="text-red-300">Stripe is not properly configured. Please check your environment variables.</p>
+      </div>
+    )
+  }
+
   return (
     <Elements stripe={stripePromise}>
       <PaymentForm onSuccess={onSuccess} onError={onError} isUpdating={isUpdating} />
