@@ -4,11 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma db push --accept-data-loss && next build",
     "start": "next start",
     "lint": "next lint",
     "seed-admin": "node scripts/seed-admin.js",
-    "setup-production": "node scripts/setup-production.js",
     "postinstall": "prisma generate"
   },
   "dependencies": {
