@@ -69,7 +69,9 @@ export default function TestSettingsPage6() {
       {stripeLoaded && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold text-white mb-4">Testing Elements Wrapper</h3>
-          <StripeTestForm />
+          <Elements stripe={loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)}>
+            <StripeTestForm />
+          </Elements>
         </div>
       )}
     </div>
