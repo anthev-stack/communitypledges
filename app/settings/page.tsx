@@ -162,6 +162,162 @@ export default function SettingsPageFixed() {
     }
   }
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      processImageFile(file)
+    }
+  }
+
+  const removeProfileImage = () => {
+    setProfileImage(null)
+    setProfileImagePreview(null)
+  }
+
+  const saveProfileImage = async () => {
+    if (!profileImage) return
+
+    setSavingProfileImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('profileImage', profileImage)
+
+      const response = await fetch('/api/user/settings/profile-image', {
+        method: 'PUT',
+        body: formData
+      })
+
+      if (response.ok) {
+        await fetchUserSettings()
+        setProfileImage(null)
+        addNotification({
+          type: 'success',
+          title: 'Profile Picture Updated',
+          message: 'Your profile picture has been updated successfully!',
+          duration: 4000
+        })
+      } else {
+        const error = await response.json()
+        addNotification({
+          type: 'error',
+          title: 'Update Failed',
+          message: error.message || 'Failed to update profile picture',
+          duration: 4000
+        })
+      }
+    } catch (error) {
+      console.error('Error updating profile picture:', error)
+      addNotification({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update profile picture',
+        duration: 4000
+      })
+    } finally {
+      setSavingProfileImage(false)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    
+    const files = e.dataTransfer.files
+    if (files && files[0]) {
+      const file = files[0]
+      processImageFile(file)
+    }
+  }
+
+  const processImageFile = (file: File) => {
+    // Validate file type
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      addNotification({
+        type: 'error',
+        title: 'Invalid File Type',
+        message: 'Please upload a PNG, JPG, or WebP image',
+        duration: 4000
+      })
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      addNotification({
+        type: 'error',
+        title: 'File Too Large',
+        message: 'Please upload an image smaller than 5MB',
+        duration: 4000
+      })
+      return
+    }
+
+    setProfileImage(file)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setProfileImagePreview(e.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const onAccountSubmit = async (data: AccountSettingsForm) => {
+    setSaving(true)
+    try {
+      const formData = new FormData()
+      formData.append('name', data.name)
+      formData.append('email', data.email)
+      formData.append('currentPassword', data.currentPassword)
+      
+      if (data.newPassword) {
+        formData.append('newPassword', data.newPassword)
+      }
+
+      const response = await fetch('/api/user/settings/account', {
+        method: 'PUT',
+        body: formData
+      })
+
+      if (response.ok) {
+        await fetchUserSettings()
+        addNotification({
+          type: 'success',
+          title: 'Account Updated',
+          message: 'Your account settings have been updated successfully!',
+          duration: 4000
+        })
+      } else {
+        const error = await response.json()
+        addNotification({
+          type: 'error',
+          title: 'Update Failed',
+          message: error.message || 'Failed to update account settings',
+          duration: 4000
+        })
+      }
+    } catch (error) {
+      console.error('Error updating account:', error)
+      addNotification({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to update account settings',
+        duration: 4000
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (status === 'loading' || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -257,6 +413,9 @@ export default function SettingsPageFixed() {
                   ? 'border-emerald-400 bg-emerald-500/10' 
                   : 'border-slate-600 hover:border-slate-500'
               }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             >
               <div className="flex items-center space-x-6">
                 <div className="relative">
@@ -281,12 +440,25 @@ export default function SettingsPageFixed() {
                       <input
                         type="file"
                         accept="image/png,image/jpeg,image/jpg,image/webp"
+                        onChange={handleImageChange}
                         className="hidden"
                       />
                     </label>
                     
+                    {profileImage && (
+                      <button
+                        onClick={saveProfileImage}
+                        disabled={savingProfileImage}
+                        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                      >
+                        <Save className="w-4 h-4" />
+                        <span>{savingProfileImage ? 'Saving...' : 'Save Picture'}</span>
+                      </button>
+                    )}
+                    
                     {profileImagePreview && (
                       <button
+                        onClick={removeProfileImage}
                         className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
                         title="Remove Profile Picture"
                       >
@@ -306,7 +478,7 @@ export default function SettingsPageFixed() {
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
             <h2 className="text-xl font-semibold text-white mb-4">Account Information</h2>
             
-            <form className="space-y-4">
+            <form onSubmit={accountForm.handleSubmit(onAccountSubmit)} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -339,6 +511,79 @@ export default function SettingsPageFixed() {
                       placeholder="your@email.com"
                       className="w-full pl-10 pr-3 py-2 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
                     />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-600 pt-4">
+                <h3 className="text-lg font-medium text-white mb-4">Change Password</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Current Password
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Lock className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        {...accountForm.register('currentPassword')}
+                        type="password"
+                        placeholder="Enter current password"
+                        className="w-full pl-10 pr-3 py-2 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
+                      />
+                    </div>
+                    {accountForm.formState.errors.currentPassword && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {accountForm.formState.errors.currentPassword.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        New Password
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Lock className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          {...accountForm.register('newPassword')}
+                          type="password"
+                          placeholder="Enter new password"
+                          className="w-full pl-10 pr-3 py-2 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
+                        />
+                      </div>
+                      {accountForm.formState.errors.newPassword && (
+                        <p className="mt-1 text-sm text-red-400">
+                          {accountForm.formState.errors.newPassword.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Confirm New Password
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Lock className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          {...accountForm.register('confirmPassword')}
+                          type="password"
+                          placeholder="Confirm new password"
+                          className="w-full pl-10 pr-3 py-2 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
+                        />
+                      </div>
+                      {accountForm.formState.errors.confirmPassword && (
+                        <p className="mt-1 text-sm text-red-400">
+                          {accountForm.formState.errors.confirmPassword.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
