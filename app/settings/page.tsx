@@ -127,7 +127,7 @@ export default function SettingsPage() {
           hasDepositMethod: false,
           name: session?.user?.name || '',
           email: session?.user?.email || '',
-          image: session?.user?.image || null
+          image: session?.user?.image || undefined
         })
         addNotification({
           type: 'error',
