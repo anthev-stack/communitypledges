@@ -19,10 +19,15 @@ export async function POST() {
     });
 
     if (user?.stripeAccountId) {
-      return NextResponse.json({ 
-        message: 'User already has a Stripe Connect account',
-        accountId: user.stripeAccountId
+      // User already has an account, create a new account link for onboarding
+      const accountLink = await stripe.accountLinks.create({
+        account: user.stripeAccountId,
+        refresh_url: `${process.env.NEXTAUTH_URL}/settings?stripe_refresh=true`,
+        return_url: `${process.env.NEXTAUTH_URL}/settings?stripe_success=true`,
+        type: 'account_onboarding'
       });
+      
+      return NextResponse.redirect(accountLink.url);
     }
 
     // Create Stripe Connect account
@@ -58,10 +63,8 @@ export async function POST() {
       type: 'account_onboarding'
     });
 
-    return NextResponse.json({ 
-      accountId: account.id,
-      onboardingUrl: accountLink.url
-    });
+    // Redirect to Stripe Connect onboarding
+    return NextResponse.redirect(accountLink.url);
   } catch (error) {
     console.error('Error creating Stripe Connect account:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
