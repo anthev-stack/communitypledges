@@ -740,29 +740,67 @@ export default function SettingsPageFixed() {
                 
                 <div className="border-t border-slate-600 pt-4">
                   <h3 className="text-lg font-medium text-white mb-4">Add New Deposit Method</h3>
+                  <div className="space-y-3">
+                    <form action="/api/stripe/connect/onboard" method="POST" target="_blank">
+                      <button
+                        type="submit"
+                        disabled={settingUpStripe}
+                        className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {settingUpStripe ? 'Setting up...' : 'Add Bank Account (Australia)'}
+                      </button>
+                    </form>
+                    
+                    <button
+                      onClick={async () => {
+                        if (confirm('Are you sure you want to reset your Stripe Connect account? This will allow you to start fresh with Australia as the country.')) {
+                          try {
+                            const response = await fetch('/api/stripe/connect/reset', { method: 'POST' })
+                            if (response.ok) {
+                              addNotification({
+                                type: 'success',
+                                title: 'Account Reset',
+                                message: 'Stripe Connect account reset. You can now create a new one.',
+                                duration: 4000
+                              })
+                              fetchUserSettings()
+                            }
+                          } catch (error) {
+                            addNotification({
+                              type: 'error',
+                              title: 'Reset Failed',
+                              message: 'Failed to reset Stripe Connect account',
+                              duration: 4000
+                            })
+                          }
+                        }
+                      }}
+                      className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 text-sm"
+                    >
+                      Reset Stripe Account
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-gray-300 mb-4">No deposit methods added yet.</p>
+                <div className="space-y-3">
                   <form action="/api/stripe/connect/onboard" method="POST" target="_blank">
                     <button
                       type="submit"
                       disabled={settingUpStripe}
                       className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {settingUpStripe ? 'Setting up...' : 'Add Bank Account'}
+                      {settingUpStripe ? 'Setting up...' : 'Add Bank Account (Australia)'}
                     </button>
                   </form>
+                  
+                  <p className="text-xs text-gray-400">
+                    Note: The account will be created for Australia. If you started with a different country, 
+                    you may need to reset and start over.
+                  </p>
                 </div>
-              </div>
-            ) : (
-              <div>
-                <p className="text-gray-300 mb-4">No deposit methods added yet.</p>
-                <form action="/api/stripe/connect/onboard" method="POST" target="_blank">
-                  <button
-                    type="submit"
-                    disabled={settingUpStripe}
-                    className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {settingUpStripe ? 'Setting up...' : 'Add Bank Account'}
-                  </button>
-                </form>
               </div>
             )}
           </div>
