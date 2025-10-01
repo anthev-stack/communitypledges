@@ -5,8 +5,14 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { STRIPE_PUBLISHABLE_KEY } from '@/lib/stripe'
 
-// Only create stripe promise if we have a valid key
-const stripePromise = STRIPE_PUBLISHABLE_KEY ? loadStripe(STRIPE_PUBLISHABLE_KEY) : null
+// Create stripe promise inside component to ensure proper initialization
+const getStripePromise = () => {
+  if (!STRIPE_PUBLISHABLE_KEY) {
+    console.error('STRIPE_PUBLISHABLE_KEY is not defined')
+    return null
+  }
+  return loadStripe(STRIPE_PUBLISHABLE_KEY)
+}
 
 interface StripePaymentFormProps {
   onSuccess: (paymentMethodId: string) => void
@@ -84,14 +90,44 @@ function PaymentForm({ onSuccess, onError, isUpdating }: StripePaymentFormProps)
 }
 
 export default function StripePaymentForm({ onSuccess, onError, isUpdating = false }: StripePaymentFormProps) {
-  // Debug logging
-  console.log('StripePaymentForm rendering...')
-  console.log('STRIPE_PUBLISHABLE_KEY:', STRIPE_PUBLISHABLE_KEY)
-  console.log('stripePromise:', stripePromise)
+  const [stripePromise, setStripePromise] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-  // Don't render if we don't have a valid Stripe key
+  useEffect(() => {
+    console.log('StripePaymentForm initializing...')
+    console.log('STRIPE_PUBLISHABLE_KEY:', STRIPE_PUBLISHABLE_KEY)
+    
+    if (!STRIPE_PUBLISHABLE_KEY) {
+      console.error('STRIPE_PUBLISHABLE_KEY is not defined')
+      setLoading(false)
+      return
+    }
+
+    // Initialize Stripe promise
+    const promise = getStripePromise()
+    if (promise) {
+      promise.then((stripe) => {
+        console.log('Stripe initialized successfully:', stripe)
+        setStripePromise(promise)
+        setLoading(false)
+      }).catch((error) => {
+        console.error('Stripe initialization failed:', error)
+        setLoading(false)
+      })
+    } else {
+      setLoading(false)
+    }
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
+        <p className="text-gray-300">Loading Stripe...</p>
+      </div>
+    )
+  }
+
   if (!stripePromise) {
-    console.log('No stripePromise, showing error message')
     return (
       <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-4">
         <p className="text-red-300">Stripe is not properly configured. Please check your environment variables.</p>
@@ -100,7 +136,7 @@ export default function StripePaymentForm({ onSuccess, onError, isUpdating = fal
     )
   }
 
-  console.log('Rendering Stripe Elements')
+  console.log('Rendering Stripe Elements with promise:', stripePromise)
   return (
     <Elements stripe={stripePromise}>
       <PaymentForm onSuccess={onSuccess} onError={onError} isUpdating={isUpdating} />
