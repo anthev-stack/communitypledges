@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma'
 import { calculateServerWithdrawalDate } from '@/lib/withdrawal'
 import { getUserPaymentStatus } from '@/lib/payment-failure'
 
+export const dynamic = 'force-dynamic'
+
 function calculateOptimizedCosts(pledgeAmounts: number[], serverCost: number, minCostPerPerson: number) {
   const totalPledged = pledgeAmounts.reduce((sum, amount) => sum + amount, 0)
   const pledgeCount = pledgeAmounts.length
