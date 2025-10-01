@@ -740,31 +740,29 @@ export default function SettingsPageFixed() {
                 
                 <div className="border-t border-slate-600 pt-4">
                   <h3 className="text-lg font-medium text-white mb-4">Add New Deposit Method</h3>
-                  <button
-                    onClick={() => {
-                      setSettingUpStripe(true)
-                      window.open('/api/stripe/connect/onboard', '_blank')
-                    }}
-                    disabled={settingUpStripe}
-                    className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {settingUpStripe ? 'Setting up...' : 'Add Bank Account'}
-                  </button>
+                  <form action="/api/stripe/connect/onboard" method="POST" target="_blank">
+                    <button
+                      type="submit"
+                      disabled={settingUpStripe}
+                      className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {settingUpStripe ? 'Setting up...' : 'Add Bank Account'}
+                    </button>
+                  </form>
                 </div>
               </div>
             ) : (
               <div>
                 <p className="text-gray-300 mb-4">No deposit methods added yet.</p>
-                <button
-                  onClick={() => {
-                    setSettingUpStripe(true)
-                    window.open('/api/stripe/connect/onboard', '_blank')
-                  }}
-                  disabled={settingUpStripe}
-                  className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {settingUpStripe ? 'Setting up...' : 'Add Bank Account'}
-                </button>
+                <form action="/api/stripe/connect/onboard" method="POST" target="_blank">
+                  <button
+                    type="submit"
+                    disabled={settingUpStripe}
+                    className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {settingUpStripe ? 'Setting up...' : 'Add Bank Account'}
+                  </button>
+                </form>
               </div>
             )}
           </div>
