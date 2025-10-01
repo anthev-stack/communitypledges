@@ -411,6 +411,54 @@ export default function SettingsPageFixed() {
     })
   }
 
+  const handleStripeConnectOnboard = async () => {
+    setSettingUpStripe(true)
+    try {
+      const response = await fetch('/api/stripe/connect/onboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          country: userCountry
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.onboardingUrl) {
+          // Open in new tab
+          window.open(data.onboardingUrl, '_blank')
+        } else {
+          addNotification({
+            type: 'error',
+            title: 'Setup Error',
+            message: 'Failed to get Stripe onboarding URL',
+            duration: 4000
+          })
+        }
+      } else {
+        const errorData = await response.json()
+        addNotification({
+          type: 'error',
+          title: 'Setup Error',
+          message: errorData.message || 'Failed to start Stripe Connect setup',
+          duration: 4000
+        })
+      }
+    } catch (error) {
+      console.error('Error starting Stripe Connect:', error)
+      addNotification({
+        type: 'error',
+        title: 'Setup Error',
+        message: 'Failed to start Stripe Connect setup',
+        duration: 4000
+      })
+    } finally {
+      setSettingUpStripe(false)
+    }
+  }
+
   if (status === 'loading' || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -794,16 +842,13 @@ export default function SettingsPageFixed() {
                 <div className="border-t border-slate-600 pt-4">
                   <h3 className="text-lg font-medium text-white mb-4">Add New Deposit Method</h3>
                   <div className="space-y-3">
-                    <form action="/api/stripe/connect/onboard" method="POST" target="_blank">
-                      <input type="hidden" name="country" value={userCountry} />
-                      <button
-                        type="submit"
-                        disabled={settingUpStripe || detectingCountry}
-                        className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {detectingCountry ? 'Detecting country...' : settingUpStripe ? 'Setting up...' : `Add Bank Account (${userCountry})`}
-                      </button>
-                    </form>
+                    <button
+                      onClick={handleStripeConnectOnboard}
+                      disabled={settingUpStripe || detectingCountry}
+                      className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {detectingCountry ? 'Detecting country...' : settingUpStripe ? 'Setting up...' : `Add Bank Account (${userCountry})`}
+                    </button>
                     
                     <button
                       onClick={async () => {
@@ -840,16 +885,13 @@ export default function SettingsPageFixed() {
               <div>
                 <p className="text-gray-300 mb-4">No deposit methods added yet.</p>
                 <div className="space-y-3">
-                  <form action="/api/stripe/connect/onboard" method="POST" target="_blank">
-                    <input type="hidden" name="country" value={userCountry} />
-                    <button
-                      type="submit"
-                      disabled={settingUpStripe || detectingCountry}
-                      className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {detectingCountry ? 'Detecting country...' : settingUpStripe ? 'Setting up...' : `Add Bank Account (${userCountry})`}
-                    </button>
-                  </form>
+                  <button
+                    onClick={handleStripeConnectOnboard}
+                    disabled={settingUpStripe || detectingCountry}
+                    className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {detectingCountry ? 'Detecting country...' : settingUpStripe ? 'Setting up...' : `Add Bank Account (${userCountry})`}
+                  </button>
                   
                   <p className="text-xs text-gray-400">
                     Note: The account will be created for {userCountry}. If you started with a different country, 

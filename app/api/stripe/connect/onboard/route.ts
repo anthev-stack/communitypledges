@@ -12,9 +12,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get country from form data or default to AU
-    const formData = await request.formData();
-    const country = (formData.get('country') as string) || 'AU';
+    // Get country from JSON body or default to AU
+    const body = await request.json();
+    const country = body.country || 'AU';
 
     // Check if user already has a Stripe Connect account
     const user = await prisma.user.findUnique({
@@ -31,7 +31,10 @@ export async function POST(request: NextRequest) {
         type: 'account_onboarding'
       });
       
-      return NextResponse.redirect(accountLink.url);
+      return NextResponse.json({ 
+        accountId: user.stripeAccountId,
+        onboardingUrl: accountLink.url
+      });
     }
 
     // Create Stripe Connect account
@@ -67,8 +70,11 @@ export async function POST(request: NextRequest) {
       type: 'account_onboarding'
     });
 
-    // Redirect to Stripe Connect onboarding
-    return NextResponse.redirect(accountLink.url);
+    // Return onboarding URL
+    return NextResponse.json({ 
+      accountId: account.id,
+      onboardingUrl: accountLink.url
+    });
   } catch (error) {
     console.error('Error creating Stripe Connect account:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
