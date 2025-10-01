@@ -8,6 +8,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { CreditCard, Building2, CheckCircle, AlertCircle, Save, User, Trash2, Edit3, X, Mail, Lock, Camera, Upload } from 'lucide-react'
 import { useNotifications } from '@/contexts/NotificationContext'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 
 const paymentMethodSchema = z.object({
   cardNumber: z.string().min(16, 'Card number must be 16 digits').max(19, 'Invalid card number'),
@@ -318,6 +320,44 @@ export default function SettingsPageFixed() {
     }
   }
 
+  const handlePaymentSuccess = (paymentMethodId: string) => {
+    addNotification({
+      type: 'success',
+      title: 'Payment Method Added',
+      message: 'Your payment method has been added successfully!',
+      duration: 4000
+    })
+    fetchUserSettings()
+  }
+
+  const handlePaymentError = (error: string) => {
+    addNotification({
+      type: 'error',
+      title: 'Payment Error',
+      message: error,
+      duration: 4000
+    })
+  }
+
+  const handleDepositSuccess = (accountId: string) => {
+    addNotification({
+      type: 'success',
+      title: 'Deposit Method Added',
+      message: 'Your deposit method has been added successfully!',
+      duration: 4000
+    })
+    fetchUserSettings()
+  }
+
+  const handleDepositError = (error: string) => {
+    addNotification({
+      type: 'error',
+      title: 'Deposit Error',
+      message: error,
+      duration: 4000
+    })
+  }
+
   if (status === 'loading' || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -608,12 +648,58 @@ export default function SettingsPageFixed() {
         <div className="space-y-6">
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
             <h2 className="text-xl font-semibold text-white mb-4">Payment Methods</h2>
-            <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-lg p-4">
-              <p className="text-yellow-300">
-                <strong>Stripe Integration Temporarily Disabled:</strong> We're working on fixing the payment form. 
-                Please check back later or contact support for assistance.
-              </p>
-            </div>
+            
+            {userSettings.hasPaymentMethod ? (
+              <div className="space-y-4">
+                <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <CreditCard className="w-6 h-6 text-emerald-400" />
+                      <div>
+                        <p className="text-white font-medium">
+                          {userSettings.cardBrand?.toUpperCase()} •••• {userSettings.cardLast4}
+                        </p>
+                        <p className="text-gray-400 text-sm">
+                          Expires {userSettings.cardExpMonth}/{userSettings.cardExpYear}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setDeleteType('payment')
+                        setShowDeleteModal(true)
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
+                      title="Remove Payment Method"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="border-t border-slate-600 pt-4">
+                  <h3 className="text-lg font-medium text-white mb-4">Add New Payment Method</h3>
+                  <Elements stripe={loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)}>
+                    <PaymentForm 
+                      onSuccess={handlePaymentSuccess}
+                      onError={handlePaymentError}
+                      isUpdating={true}
+                    />
+                  </Elements>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-gray-300 mb-4">No payment methods added yet.</p>
+                <Elements stripe={loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)}>
+                  <PaymentForm 
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                    isUpdating={false}
+                  />
+                </Elements>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -623,15 +709,151 @@ export default function SettingsPageFixed() {
         <div className="space-y-6">
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
             <h2 className="text-xl font-semibold text-white mb-4">Deposit Methods</h2>
-            <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-lg p-4">
-              <p className="text-yellow-300">
-                <strong>Stripe Integration Temporarily Disabled:</strong> We're working on fixing the deposit form. 
-                Please check back later or contact support for assistance.
-              </p>
-            </div>
+            
+            {userSettings.hasDepositMethod ? (
+              <div className="space-y-4">
+                <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Building2 className="w-6 h-6 text-emerald-400" />
+                      <div>
+                        <p className="text-white font-medium">
+                          Bank Account •••• {userSettings.bankAccountLast4}
+                        </p>
+                        <p className="text-gray-400 text-sm">
+                          {userSettings.bankName}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setDeleteType('deposit')
+                        setShowDeleteModal(true)
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
+                      title="Remove Deposit Method"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="border-t border-slate-600 pt-4">
+                  <h3 className="text-lg font-medium text-white mb-4">Add New Deposit Method</h3>
+                  <button
+                    onClick={() => {
+                      setSettingUpStripe(true)
+                      window.open('/api/stripe/connect/onboard', '_blank')
+                    }}
+                    disabled={settingUpStripe}
+                    className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {settingUpStripe ? 'Setting up...' : 'Add Bank Account'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-gray-300 mb-4">No deposit methods added yet.</p>
+                <button
+                  onClick={() => {
+                    setSettingUpStripe(true)
+                    window.open('/api/stripe/connect/onboard', '_blank')
+                  }}
+                  disabled={settingUpStripe}
+                  className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {settingUpStripe ? 'Setting up...' : 'Add Bank Account'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
     </div>
+  )
+}
+
+// Payment Form Component
+function PaymentForm({ onSuccess, onError, isUpdating }: { onSuccess: (paymentMethodId: string) => void, onError: (error: string) => void, isUpdating: boolean }) {
+  const stripe = useStripe()
+  const elements = useElements()
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    
+    if (!stripe || !elements) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const cardElement = elements.getElement(CardElement)
+      if (!cardElement) {
+        throw new Error('Card element not found')
+      }
+
+      const { error, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardElement,
+      })
+
+      if (error) {
+        onError(error.message || 'Payment method creation failed')
+      } else if (paymentMethod) {
+        // Save payment method to backend
+        const response = await fetch('/api/user/settings/payment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            paymentMethodId: paymentMethod.id
+          })
+        })
+
+        if (response.ok) {
+          onSuccess(paymentMethod.id)
+        } else {
+          const errorData = await response.json()
+          onError(errorData.message || 'Failed to save payment method')
+        }
+      }
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Payment method creation failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
+        <CardElement
+          options={{
+            style: {
+              base: {
+                fontSize: '16px',
+                color: '#ffffff',
+                '::placeholder': {
+                  color: '#9ca3af',
+                },
+              },
+              invalid: {
+                color: '#ef4444',
+              },
+            },
+          }}
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={!stripe || loading}
+        className="w-full bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loading ? 'Processing...' : (isUpdating ? 'Add New Payment Method' : 'Add Payment Method')}
+      </button>
+    </form>
   )
 }
