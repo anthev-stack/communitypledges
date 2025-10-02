@@ -62,19 +62,20 @@ export async function POST(
       return NextResponse.json({ error: 'Maximum number of boosted servers reached (10)' }, { status: 400 });
     }
 
-    // Check if user has payment method and get Stripe details
+    // Check if user has payment method (either card or PayPal)
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { 
         hasPaymentMethod: true,
         stripePaymentMethodId: true,
         stripeCustomerId: true,
+        paypalEmail: true,
         isPaymentSuspended: true
       }
     });
 
-    if (!user?.hasPaymentMethod || !user?.stripePaymentMethodId || !user?.stripeCustomerId) {
-      return NextResponse.json({ error: 'Payment method required to boost server' }, { status: 400 });
+    if (!user?.hasPaymentMethod && !user?.paypalEmail) {
+      return NextResponse.json({ error: 'Payment method required to boost server. Please add a card or PayPal in your settings.' }, { status: 400 });
     }
 
     // Check if user is payment suspended
@@ -91,29 +92,62 @@ export async function POST(
     const netAmount = calculateNetAmount(boostAmount);
 
     try {
-      // Create and confirm payment intent immediately
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: Math.round(boostAmount * 100), // Convert to cents
-        currency: 'usd',
-        customer: user.stripeCustomerId,
-        payment_method: user.stripePaymentMethodId,
-        confirm: true,
-        application_fee_amount: Math.round(platformFee * 100), // Platform fee in cents
-        transfer_data: {
-          destination: STRIPE_CONNECT_ACCOUNT_ID, // Platform's Stripe Connect account
-        },
-        metadata: {
-          serverId: serverId,
-          serverOwnerId: session.user.id,
-          payerId: session.user.id,
-          type: 'boost',
-          platformFee: platformFee.toString(),
-          stripeFee: stripeFee.toString(),
-          netAmount: netAmount.toString()
-        }
-      });
+      let paymentIntent: any = null;
 
-      if (paymentIntent.status !== 'succeeded') {
+      if (user.stripePaymentMethodId && user.stripeCustomerId) {
+        // User has card payment method - process through Stripe
+        paymentIntent = await stripe.paymentIntents.create({
+          amount: Math.round(boostAmount * 100), // Convert to cents
+          currency: 'usd',
+          customer: user.stripeCustomerId,
+          payment_method: user.stripePaymentMethodId,
+          confirm: true,
+          application_fee_amount: Math.round(platformFee * 100), // Platform fee in cents
+          transfer_data: {
+            destination: STRIPE_CONNECT_ACCOUNT_ID, // Platform's Stripe Connect account
+          },
+          metadata: {
+            serverId: serverId,
+            serverOwnerId: session.user.id,
+            payerId: session.user.id,
+            type: 'boost',
+            paymentMethod: 'card',
+            platformFee: platformFee.toString(),
+            stripeFee: stripeFee.toString(),
+            netAmount: netAmount.toString()
+          }
+        });
+      } else if (user.paypalEmail) {
+        // User has PayPal - create a payment intent for manual processing
+        paymentIntent = await stripe.paymentIntents.create({
+          amount: Math.round(boostAmount * 100),
+          currency: 'usd',
+          payment_method_types: ['card'], // This will be processed manually via PayPal
+          metadata: {
+            serverId: serverId,
+            serverOwnerId: session.user.id,
+            payerId: session.user.id,
+            type: 'boost',
+            paymentMethod: 'paypal',
+            paypalEmail: user.paypalEmail,
+            platformFee: platformFee.toString(),
+            stripeFee: stripeFee.toString(),
+            netAmount: netAmount.toString()
+          }
+        });
+        
+        // Mark as requiring manual processing
+        paymentIntent.status = 'requires_payment_method';
+      }
+
+      if (paymentIntent.status === 'succeeded') {
+        // Payment successful - proceed with boost creation
+      } else if (paymentIntent.status === 'requires_payment_method') {
+        // PayPal payment - requires manual processing
+        return NextResponse.json({ 
+          error: `PayPal payment required. Please send $${boostAmount.toFixed(2)} to our PayPal account and contact support with your transaction ID.` 
+        }, { status: 400 });
+      } else {
         // Handle payment failure
         const failureResult = await handlePaymentFailure(session.user.id, `Boost payment failed: ${paymentIntent.status}`);
         

@@ -121,19 +121,20 @@ export async function POST(
       )
     }
 
-    // Check if user has payment method
+    // Check if user has payment method (either card or PayPal)
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { 
         hasPaymentMethod: true, 
         stripePaymentMethodId: true,
-        stripeCustomerId: true
+        stripeCustomerId: true,
+        paypalEmail: true
       }
     })
 
-    if (!user?.hasPaymentMethod || !user?.stripePaymentMethodId) {
+    if (!user?.hasPaymentMethod && !user?.paypalEmail) {
       return NextResponse.json(
-        { message: 'Payment method required. Please add a payment method in your settings.' },
+        { message: 'Payment method required. Please add a payment method (card or PayPal) in your settings.' },
         { status: 400 }
       )
     }

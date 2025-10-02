@@ -167,17 +167,18 @@ export async function processPendingWithdrawals() {
         const actualAmount = optimizedCosts.optimizedCosts[i] || pledge.amount
         
         try {
-          // Get user's payment method
+          // Get user's payment methods
           const user = await prisma.user.findUnique({
             where: { id: pledge.userId },
             select: { 
               stripePaymentMethodId: true, 
               stripeCustomerId: true,
+              paypalEmail: true,
               name: true
             }
           })
 
-          if (!user?.stripePaymentMethodId || !user?.stripeCustomerId) {
+          if (!user?.stripePaymentMethodId && !user?.paypalEmail) {
             console.log(`User ${pledge.userId} has no payment method, skipping payment`)
             continue
           }
@@ -187,27 +188,52 @@ export async function processPendingWithdrawals() {
           const stripeFee = calculateStripeFee(actualAmount)
           const netAmount = calculateNetAmount(actualAmount)
 
-          // Create payment intent for this user
-          const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(actualAmount * 100), // Convert to cents
-            currency: 'usd',
-            customer: user.stripeCustomerId,
-            payment_method: user.stripePaymentMethodId,
-            confirm: true,
-            application_fee_amount: Math.round(platformFee * 100), // Platform fee in cents
-            transfer_data: server.owner.stripeAccountId ? {
-              destination: server.owner.stripeAccountId, // Server owner's Stripe Connect account
-            } : undefined,
-            metadata: {
-              serverId: withdrawal.serverId,
-              serverOwnerId: withdrawal.server.ownerId,
-              payerId: pledge.userId,
-              type: 'pledge_payment',
-              platformFee: platformFee.toString(),
-              stripeFee: stripeFee.toString(),
-              netAmount: netAmount.toString()
-            }
-          })
+          let paymentIntent: any = null
+
+          // Process payment based on user's payment method preference
+          if (user.stripePaymentMethodId && user.stripeCustomerId) {
+            // User has card payment method - process through Stripe
+            paymentIntent = await stripe.paymentIntents.create({
+              amount: Math.round(actualAmount * 100), // Convert to cents
+              currency: 'usd',
+              customer: user.stripeCustomerId,
+              payment_method: user.stripePaymentMethodId,
+              confirm: true,
+              metadata: {
+                serverId: withdrawal.serverId,
+                serverOwnerId: withdrawal.server.ownerId,
+                payerId: pledge.userId,
+                type: 'pledge_payment',
+                paymentMethod: 'card',
+                platformFee: platformFee.toString(),
+                stripeFee: stripeFee.toString(),
+                netAmount: netAmount.toString()
+              }
+            })
+          } else if (user.paypalEmail) {
+            // User has PayPal - create a payment intent for manual processing
+            // In a real implementation, you would integrate with PayPal API here
+            // For now, we'll create a pending payment intent that can be processed manually
+            paymentIntent = await stripe.paymentIntents.create({
+              amount: Math.round(actualAmount * 100),
+              currency: 'usd',
+              payment_method_types: ['card'], // This will be processed manually via PayPal
+              metadata: {
+                serverId: withdrawal.serverId,
+                serverOwnerId: withdrawal.server.ownerId,
+                payerId: pledge.userId,
+                type: 'pledge_payment',
+                paymentMethod: 'paypal',
+                paypalEmail: user.paypalEmail,
+                platformFee: platformFee.toString(),
+                stripeFee: stripeFee.toString(),
+                netAmount: netAmount.toString()
+              }
+            })
+            
+            // Mark as requiring manual processing
+            paymentIntent.status = 'requires_payment_method' // This indicates manual processing needed
+          }
 
           if (paymentIntent.status === 'succeeded') {
             totalCollected += actualAmount
@@ -221,6 +247,20 @@ export async function processPendingWithdrawals() {
               data: {
                 type: 'payment_processed',
                 message: `Payment of $${actualAmount.toFixed(2)} processed for "${server.name}" pledge`,
+                amount: actualAmount,
+                userId: pledge.userId,
+                serverId: withdrawal.serverId
+              }
+            })
+          } else if (paymentIntent.status === 'requires_payment_method') {
+            // PayPal payment - requires manual processing
+            console.log(`PayPal payment required for user ${pledge.userId} (${user.paypalEmail}) - amount: $${actualAmount.toFixed(2)}`)
+            
+            // Log pending PayPal payment
+            await prisma.activityLog.create({
+              data: {
+                type: 'paypal_payment_pending',
+                message: `PayPal payment of $${actualAmount.toFixed(2)} pending for "${server.name}" pledge (${user.paypalEmail})`,
                 amount: actualAmount,
                 userId: pledge.userId,
                 serverId: withdrawal.serverId
@@ -241,6 +281,11 @@ export async function processPendingWithdrawals() {
         } catch (error) {
           console.error(`Error processing payment for user ${pledge.userId}:`, error)
         }
+      }
+
+      // Distribute payments to server owner based on their payout method
+      if (totalCollected > 0) {
+        await distributeToServerOwner(server, totalCollected, withdrawal.serverId)
       }
 
       // Update withdrawal status
@@ -335,4 +380,121 @@ function calculateOptimizedCosts(pledgeAmounts: number[], serverCost: number, mi
   }
   
   return { optimizedCosts }
+}
+
+/**
+ * Distribute payments to server owner based on their payout method preference
+ * All payments are processed through the business Stripe account first
+ */
+async function distributeToServerOwner(server: any, totalAmount: number, serverId: string) {
+  try {
+    // Get server owner's payout preferences
+    const owner = await prisma.user.findUnique({
+      where: { id: server.ownerId },
+      select: {
+        stripeAccountId: true,
+        paypalEmail: true,
+        name: true,
+        email: true
+      }
+    })
+
+    if (!owner) {
+      console.error(`Server owner not found for server ${serverId}`)
+      return
+    }
+
+    // Calculate platform fee and net amount
+    const platformFee = calculatePlatformFee(totalAmount)
+    const netAmount = totalAmount - platformFee
+
+    if (owner.stripeAccountId) {
+      // Server owner prefers Stripe Connect - transfer via Stripe
+      try {
+        const transfer = await stripe.transfers.create({
+          amount: Math.round(netAmount * 100), // Convert to cents
+          currency: 'usd',
+          destination: owner.stripeAccountId,
+          metadata: {
+            serverId: serverId,
+            type: 'server_owner_payout',
+            platformFee: platformFee.toString(),
+            netAmount: netAmount.toString()
+          }
+        })
+
+        console.log(`Transferred $${netAmount.toFixed(2)} to server owner ${owner.name} via Stripe Connect`)
+        
+        // Log the transfer
+        await prisma.activityLog.create({
+          data: {
+            type: 'stripe_transfer',
+            message: `$${netAmount.toFixed(2)} transferred to your Stripe Connect account for "${server.name}"`,
+            amount: netAmount,
+            userId: owner.id,
+            serverId: serverId
+          }
+        })
+      } catch (error) {
+        console.error(`Failed to transfer to Stripe Connect account:`, error)
+        // Fallback to PayPal if Stripe transfer fails
+        await distributeToPayPal(owner, netAmount, serverId, server.name)
+      }
+    } else if (owner.paypalEmail) {
+      // Server owner prefers PayPal - process via PayPal
+      await distributeToPayPal(owner, netAmount, serverId, server.name)
+    } else {
+      // No payout method configured - hold funds for manual processing
+      console.log(`No payout method configured for server owner ${owner.name} - holding $${netAmount.toFixed(2)} for manual processing`)
+      
+      await prisma.activityLog.create({
+        data: {
+          type: 'payout_pending',
+          message: `$${netAmount.toFixed(2)} pending payout for "${server.name}" - no payout method configured`,
+          amount: netAmount,
+          userId: owner.id,
+          serverId: serverId
+        }
+      })
+    }
+  } catch (error) {
+    console.error(`Error distributing payment to server owner:`, error)
+  }
+}
+
+/**
+ * Distribute payment to server owner via PayPal
+ * In a real implementation, this would integrate with PayPal API
+ */
+async function distributeToPayPal(owner: any, amount: number, serverId: string, serverName: string) {
+  try {
+    // For now, we'll log the PayPal payment requirement
+    // In a real implementation, you would:
+    // 1. Use PayPal API to send payment to owner.paypalEmail
+    // 2. Handle PayPal webhooks for payment confirmation
+    // 3. Update payment status in database
+    
+    console.log(`PayPal payment required: Send $${amount.toFixed(2)} to ${owner.paypalEmail} for server "${serverName}"`)
+    
+    // Log the PayPal payment requirement
+    await prisma.activityLog.create({
+      data: {
+        type: 'paypal_payout_pending',
+        message: `$${amount.toFixed(2)} will be sent to your PayPal account (${owner.paypalEmail}) for "${serverName}"`,
+        amount: amount,
+        userId: owner.id,
+        serverId: serverId
+      }
+    })
+    
+    // TODO: Implement actual PayPal API integration
+    // This would involve:
+    // - Creating a PayPal payment request
+    // - Sending payment to owner.paypalEmail
+    // - Handling PayPal webhooks for confirmation
+    // - Updating payment status in database
+    
+  } catch (error) {
+    console.error(`Error processing PayPal payout:`, error)
+  }
 }

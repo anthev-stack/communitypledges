@@ -77,6 +77,7 @@ export default function SettingsPageFixed() {
   const [stripeConnectLoading, setStripeConnectLoading] = useState(false)
   const [userCountry, setUserCountry] = useState<string>('AU') // Default to Australia
   const [detectingCountry, setDetectingCountry] = useState(false)
+  const [showCardForm, setShowCardForm] = useState(false)
 
   const paymentForm = useForm<PaymentMethodForm>({
     resolver: zodResolver(paymentMethodSchema)
@@ -822,8 +823,10 @@ export default function SettingsPageFixed() {
         <div className="space-y-6">
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
             <h2 className="text-xl font-semibold text-white mb-4">Payment Methods</h2>
+            <p className="text-gray-300 mb-6">Choose how you want to pay for pledges and server boosts. You can use both methods.</p>
             
-            {userSettings.hasPaymentMethod ? (
+            {/* Card Payment Method */}
+            {userSettings.hasPaymentMethod && (
               <div className="space-y-4">
                 <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
                   <div className="flex items-center justify-between">
@@ -844,34 +847,132 @@ export default function SettingsPageFixed() {
                         setShowDeleteModal(true)
                       }}
                       className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
-                      title="Remove Payment Method"
+                      title="Remove Card"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-                
-                <div className="border-t border-slate-600 pt-4">
-                  <h3 className="text-lg font-medium text-white mb-4">Add New Payment Method</h3>
-                  <Elements stripe={loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)}>
-                    <PaymentForm 
-                      onSuccess={handlePaymentSuccess}
-                      onError={handlePaymentError}
-                      isUpdating={true}
-                    />
-                  </Elements>
+              </div>
+            )}
+
+            {/* PayPal Payment Method */}
+            {userSettings.paypalEmail && (
+              <div className="space-y-4">
+                <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+                        <span className="text-white font-bold text-xs">P</span>
+                      </div>
+                      <div>
+                        <p className="text-white font-medium">
+                          PayPal
+                        </p>
+                        <p className="text-gray-400 text-sm">
+                          {userSettings.paypalEmail}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (confirm('Remove PayPal payment method?')) {
+                          handlePayPalRemove()
+                        }
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
+                      title="Remove PayPal"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
+            )}
+
+            {/* Add New Payment Methods */}
+            <div className="border-t border-slate-600 pt-4">
+              <h3 className="text-lg font-medium text-white mb-4">Add Payment Method</h3>
+              <div className="space-y-4">
+                {/* PayPal - Recommended */}
+                <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-white font-medium">PayPal (Recommended)</h4>
+                      <p className="text-gray-400 text-sm">Simple setup, widely accepted</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const email = prompt('Enter your PayPal email address:')
+                        if (email && email.includes('@')) {
+                          handlePayPalUpdate(email)
+                        }
+                      }}
+                      className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+                    >
+                      Add PayPal
+                    </button>
+                  </div>
+                </div>
+
+                {/* Card Payment - Alternative */}
+                <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-white font-medium">Credit/Debit Card</h4>
+                      <p className="text-gray-400 text-sm">Visa, Mastercard, American Express</p>
+                    </div>
+                    <button
+                      onClick={() => setShowCardForm(true)}
+                      className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700"
+                    >
+                      Add Card
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
             ) : (
               <div>
-                <p className="text-gray-300 mb-4">No payment methods added yet.</p>
-                <Elements stripe={loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)}>
-                  <PaymentForm 
-                    onSuccess={handlePaymentSuccess}
-                    onError={handlePaymentError}
-                    isUpdating={false}
-                  />
-                </Elements>
+                <p className="text-gray-300 mb-4">No payment methods added yet. Choose how you want to pay for pledges and server boosts.</p>
+                <div className="space-y-4">
+                  {/* PayPal - Recommended */}
+                  <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-white font-medium">PayPal (Recommended)</h4>
+                        <p className="text-gray-400 text-sm">Simple setup, widely accepted</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const email = prompt('Enter your PayPal email address:')
+                          if (email && email.includes('@')) {
+                            handlePayPalUpdate(email)
+                          }
+                        }}
+                        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+                      >
+                        Add PayPal
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Card Payment - Alternative */}
+                  <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-white font-medium">Credit/Debit Card</h4>
+                        <p className="text-gray-400 text-sm">Visa, Mastercard, American Express</p>
+                      </div>
+                      <button
+                        onClick={() => setShowCardForm(true)}
+                        className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700"
+                      >
+                        Add Card
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1050,6 +1151,33 @@ export default function SettingsPageFixed() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Card Form Modal */}
+      {showCardForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-white">Add Card Payment Method</h3>
+              <button
+                onClick={() => setShowCardForm(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <Elements stripe={loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)}>
+              <PaymentForm 
+                onSuccess={(paymentMethodId) => {
+                  handlePaymentSuccess(paymentMethodId)
+                  setShowCardForm(false)
+                }}
+                onError={handlePaymentError}
+                isUpdating={false}
+              />
+            </Elements>
           </div>
         </div>
       )}
