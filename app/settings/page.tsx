@@ -115,7 +115,6 @@ export default function SettingsPageFixed() {
         console.error('Failed to fetch user settings:', response.status, errorData)
         setUserSettings({
           hasPaymentMethod: false,
-          hasDepositMethod: false,
           name: session?.user?.name || '',
           email: session?.user?.email || '',
           image: session?.user?.image || undefined
@@ -131,7 +130,6 @@ export default function SettingsPageFixed() {
       console.error('Error fetching user settings:', error)
       setUserSettings({
         hasPaymentMethod: false,
-        hasDepositMethod: false,
         name: session?.user?.name || '',
         email: session?.user?.email || '',
         image: session?.user?.image || undefined
