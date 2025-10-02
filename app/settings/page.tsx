@@ -412,6 +412,48 @@ export default function SettingsPageFixed() {
     }
   }
 
+  const handleCardRemove = async () => {
+    try {
+      const response = await fetch('/api/user/settings/payment', {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        addNotification({
+          type: 'success',
+          title: 'Payment Method Removed',
+          message: 'Your payment method has been removed.',
+          duration: 4000
+        })
+        fetchUserSettings()
+      } else {
+        addNotification({
+          type: 'error',
+          title: 'Remove Failed',
+          message: 'Failed to remove payment method',
+          duration: 4000
+        })
+      }
+    } catch (error) {
+      console.error('Error removing payment method:', error)
+      addNotification({
+        type: 'error',
+        title: 'Remove Failed',
+        message: 'Failed to remove payment method',
+        duration: 4000
+      })
+    }
+  }
+
+  const handleDelete = async () => {
+    if (deleteType === 'payment') {
+      await handleCardRemove()
+    } else if (deleteType === 'deposit') {
+      await handlePayPalRemove()
+    }
+    setShowDeleteModal(false)
+  }
+
   if (status === 'loading' || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -767,50 +809,6 @@ export default function SettingsPageFixed() {
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* Add New Payment Methods */}
-            <div className="border-t border-slate-600 pt-4">
-              <h3 className="text-lg font-medium text-white mb-4">Add Payment Method</h3>
-              <div className="space-y-4">
-                {/* PayPal - Recommended */}
-                <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-white font-medium">PayPal (Recommended)</h4>
-                      <p className="text-gray-400 text-sm">Simple setup, widely accepted</p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        const email = prompt('Enter your PayPal email address:')
-                        if (email && email.includes('@')) {
-                          handlePayPalUpdate(email)
-                        }
-                      }}
-                      className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-                    >
-                      Add PayPal
-                    </button>
-                  </div>
-                </div>
-
-                {/* Card Payment - Alternative */}
-                <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-white font-medium">Credit/Debit Card</h4>
-                      <p className="text-gray-400 text-sm">Visa, Mastercard, American Express</p>
-                    </div>
-                    <button
-                      onClick={() => setShowCardForm(true)}
-                      className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700"
-                    >
-                      Add Card
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
             ) : (
               <div>
                 <p className="text-gray-300 mb-4">No payment methods added yet. Choose how you want to pay for pledges and server boosts.</p>
@@ -964,6 +962,35 @@ export default function SettingsPageFixed() {
                 isUpdating={false}
               />
             </Elements>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Confirm Deletion
+            </h3>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to remove this {deleteType === 'payment' ? 'payment method' : 'PayPal account'}? 
+              This action cannot be undone.
+            </p>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
