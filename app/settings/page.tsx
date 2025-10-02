@@ -853,14 +853,14 @@ export default function SettingsPageFixed() {
                     
                     <button
                       onClick={async () => {
-                        if (confirm('Are you sure you want to reset your Stripe Connect account? This will allow you to start fresh with Australia as the country.')) {
+                        if (confirm(`Are you sure you want to reset your Stripe Connect account? This will allow you to start fresh with ${userCountry} as the country.`)) {
                           try {
                             const response = await fetch('/api/stripe/connect/reset', { method: 'POST' })
                             if (response.ok) {
                               addNotification({
                                 type: 'success',
                                 title: 'Account Reset',
-                                message: 'Stripe Connect account reset. You can now create a new one.',
+                                message: `Stripe Connect account reset. You can now create a new one with ${userCountry}.`,
                                 duration: 4000
                               })
                               fetchUserSettings()
@@ -898,6 +898,35 @@ export default function SettingsPageFixed() {
                     Note: The account will be created for {userCountry}. If you started with a different country, 
                     you may need to reset and start over.
                   </p>
+                  
+                  <button
+                    onClick={async () => {
+                      if (confirm(`Reset your Stripe Connect account to start fresh with ${userCountry}?`)) {
+                        try {
+                          const response = await fetch('/api/stripe/connect/reset', { method: 'POST' })
+                          if (response.ok) {
+                            addNotification({
+                              type: 'success',
+                              title: 'Account Reset',
+                              message: `Stripe Connect account reset. You can now create a new one with ${userCountry}.`,
+                              duration: 4000
+                            })
+                            fetchUserSettings()
+                          }
+                        } catch (error) {
+                          addNotification({
+                            type: 'error',
+                            title: 'Reset Failed',
+                            message: 'Failed to reset Stripe Connect account',
+                            duration: 4000
+                          })
+                        }
+                      }
+                    }}
+                    className="bg-red-600 text-white py-1 px-3 rounded text-sm hover:bg-red-700"
+                  >
+                    Reset Stripe Account
+                  </button>
                 </div>
               </div>
             )}
