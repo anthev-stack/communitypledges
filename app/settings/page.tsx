@@ -488,8 +488,8 @@ export default function SettingsPageFixed() {
                 : 'border-transparent text-gray-400 hover:text-white hover:border-slate-500'
             }`}
           >
-            <Building2 className="w-4 h-4 inline mr-2" />
-            Deposit Methods
+            <CreditCard className="w-4 h-4 inline mr-2" />
+            Payout Methods
           </button>
         </nav>
       </div>
