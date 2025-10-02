@@ -20,21 +20,29 @@ export async function GET() {
     }
 
     console.log('[Settings API] Fetching user:', session.user.id)
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        hasPaymentMethod: true,
-        cardLast4: true,
-        cardBrand: true,
-        cardExpMonth: true,
-        cardExpYear: true,
-        stripePaymentMethodId: true,
-        paypalEmail: true,
-        name: true,
-        email: true,
-        image: true
-      }
-    })
+    
+    let user
+    try {
+      user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          hasPaymentMethod: true,
+          cardLast4: true,
+          cardBrand: true,
+          cardExpMonth: true,
+          cardExpYear: true,
+          stripePaymentMethodId: true,
+          paypalEmail: true,
+          name: true,
+          email: true,
+          image: true
+        }
+      })
+      console.log('[Settings API] User query successful:', user ? 'Found' : 'Not found')
+    } catch (dbError) {
+      console.error('[Settings API] Database error:', dbError)
+      throw dbError
+    }
 
     if (!user) {
       console.log('[Settings API] User not found in database')
