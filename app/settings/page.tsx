@@ -490,7 +490,6 @@ export default function SettingsPageFixed() {
       </div>
     )
   }
-  }
 
   return (
     <div className="max-w-4xl mx-auto">
