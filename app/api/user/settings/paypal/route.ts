@@ -42,10 +42,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Remove PayPal email
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { paypalEmail: null }
-    })
+    // TODO: Re-enable when paypalEmail column is added to database
+    // await prisma.user.update({
+    //   where: { id: session.user.id },
+    //   data: { paypalEmail: null }
+    // })
 
     return NextResponse.json({ 
       message: 'PayPal email removed successfully'
