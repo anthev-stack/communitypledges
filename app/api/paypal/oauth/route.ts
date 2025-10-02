@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       }
 
       const stateParam = session.user.id // Use user ID as state for security
-      const paypalAuthUrl = `https://www.paypal.com/signin/authorize?client_id=${clientId}&response_type=code&scope=openid+profile+email&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateParam}`
+      const paypalAuthUrl = `https://www.sandbox.paypal.com/signin/authorize?client_id=${clientId}&response_type=code&scope=openid+profile+email&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateParam}`
 
       return NextResponse.redirect(paypalAuthUrl)
     }
