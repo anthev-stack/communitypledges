@@ -87,9 +87,9 @@ export async function POST(
 
     // Process immediate payment for boost
     const boostAmount = 3.0;
-    const platformFee = calculatePlatformFee(boostAmount);
+    // Server boosts go directly to platform - no platform fee
     const stripeFee = calculateStripeFee(boostAmount);
-    const netAmount = calculateNetAmount(boostAmount);
+    const netAmount = boostAmount - stripeFee; // Only subtract Stripe fee
 
     try {
       let paymentIntent: any = null;
@@ -102,17 +102,14 @@ export async function POST(
           customer: user.stripeCustomerId,
           payment_method: user.stripePaymentMethodId,
           confirm: true,
-          application_fee_amount: Math.round(platformFee * 100), // Platform fee in cents
-          transfer_data: {
-            destination: STRIPE_CONNECT_ACCOUNT_ID, // Platform's Stripe Connect account
-          },
+          // No application_fee_amount - server boosts go directly to platform
           metadata: {
             serverId: serverId,
             serverOwnerId: session.user.id,
             payerId: session.user.id,
             type: 'boost',
             paymentMethod: 'card',
-            platformFee: platformFee.toString(),
+            platformFee: '0.00', // No platform fee for boosts
             stripeFee: stripeFee.toString(),
             netAmount: netAmount.toString()
           }
@@ -130,7 +127,7 @@ export async function POST(
             type: 'boost',
             paymentMethod: 'paypal',
             paypalEmail: user.paypalEmail,
-            platformFee: platformFee.toString(),
+            platformFee: '0.00', // No platform fee for boosts
             stripeFee: stripeFee.toString(),
             netAmount: netAmount.toString()
           }
