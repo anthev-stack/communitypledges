@@ -33,6 +33,7 @@ export async function GET() {
         stripeAccountId: true,
         bankAccountLast4: true,
         bankName: true,
+        paypalEmail: true,
         name: true,
         email: true,
         image: true

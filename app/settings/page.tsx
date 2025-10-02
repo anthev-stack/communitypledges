@@ -49,6 +49,7 @@ interface UserSettings {
   stripeAccountId?: string
   bankAccountLast4?: string
   bankName?: string
+  paypalEmail?: string
   name?: string
   email?: string
   image?: string
@@ -460,6 +461,77 @@ export default function SettingsPageFixed() {
     }
   }
 
+  const handlePayPalUpdate = async (email: string) => {
+    try {
+      const response = await fetch('/api/user/settings/paypal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email })
+      })
+
+      if (response.ok) {
+        addNotification({
+          type: 'success',
+          title: 'PayPal Updated',
+          message: 'Your PayPal email has been saved successfully!',
+          duration: 4000
+        })
+        fetchUserSettings()
+      } else {
+        const errorData = await response.json()
+        addNotification({
+          type: 'error',
+          title: 'Update Failed',
+          message: errorData.message || 'Failed to save PayPal email',
+          duration: 4000
+        })
+      }
+    } catch (error) {
+      console.error('Error updating PayPal:', error)
+      addNotification({
+        type: 'error',
+        title: 'Update Failed',
+        message: 'Failed to save PayPal email',
+        duration: 4000
+      })
+    }
+  }
+
+  const handlePayPalRemove = async () => {
+    try {
+      const response = await fetch('/api/user/settings/paypal', {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        addNotification({
+          type: 'success',
+          title: 'PayPal Removed',
+          message: 'Your PayPal email has been removed.',
+          duration: 4000
+        })
+        fetchUserSettings()
+      } else {
+        addNotification({
+          type: 'error',
+          title: 'Remove Failed',
+          message: 'Failed to remove PayPal email',
+          duration: 4000
+        })
+      }
+    } catch (error) {
+      console.error('Error removing PayPal:', error)
+      addNotification({
+        type: 'error',
+        title: 'Remove Failed',
+        message: 'Failed to remove PayPal email',
+        duration: 4000
+      })
+    }
+  }
+
   if (status === 'loading' || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -810,17 +882,66 @@ export default function SettingsPageFixed() {
       {activeTab === 'deposit' && (
         <div className="space-y-6">
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
-            <h2 className="text-xl font-semibold text-white mb-4">Deposit Methods</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Payout Methods</h2>
+            <p className="text-gray-300 mb-6">Choose how you want to receive monthly donations from community members. We recommend PayPal for simplicity.</p>
             
-            {userSettings.hasDepositMethod ? (
-              <div className="space-y-4">
+            {/* PayPal Method */}
+            <div className="space-y-4">
+              <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+                      <span className="text-white font-bold text-xs">P</span>
+                    </div>
+                    <div>
+                      <p className="text-white font-medium">
+                        PayPal Email
+                      </p>
+                      <p className="text-gray-400 text-sm">
+                        {userSettings.paypalEmail || 'Not set'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => {
+                        const email = prompt('Enter your PayPal email address:')
+                        if (email && email.includes('@')) {
+                          // Save PayPal email
+                          handlePayPalUpdate(email)
+                        }
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-blue-400 transition-colors"
+                      title="Update PayPal Email"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    {userSettings.paypalEmail && (
+                      <button
+                        onClick={() => {
+                          if (confirm('Remove PayPal email?')) {
+                            handlePayPalRemove()
+                          }
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
+                        title="Remove PayPal Email"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Stripe Connect Method */}
+              {userSettings.hasDepositMethod && (
                 <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <Building2 className="w-6 h-6 text-emerald-400" />
                       <div>
                         <p className="text-white font-medium">
-                          Bank Account •••• {userSettings.bankAccountLast4}
+                          Stripe Connect •••• {userSettings.bankAccountLast4}
                         </p>
                         <p className="text-gray-400 text-sm">
                           {userSettings.bankName}
@@ -833,100 +954,99 @@ export default function SettingsPageFixed() {
                         setShowDeleteModal(true)
                       }}
                       className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
-                      title="Remove Deposit Method"
+                      title="Remove Stripe Connect"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
+              )}
                 
-                <div className="border-t border-slate-600 pt-4">
-                  <h3 className="text-lg font-medium text-white mb-4">Add New Deposit Method</h3>
-                  <div className="space-y-3">
-                    <button
-                      onClick={handleStripeConnectOnboard}
-                      disabled={settingUpStripe || detectingCountry}
-                      className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {detectingCountry ? 'Detecting country...' : settingUpStripe ? 'Setting up...' : `Add Bank Account (${userCountry})`}
-                    </button>
-                    
-                    <button
-                      onClick={async () => {
-                        if (confirm(`Are you sure you want to reset your Stripe Connect account? This will allow you to start fresh with ${userCountry} as the country.`)) {
-                          try {
-                            const response = await fetch('/api/stripe/connect/reset', { method: 'POST' })
-                            if (response.ok) {
-                              addNotification({
-                                type: 'success',
-                                title: 'Account Reset',
-                                message: `Stripe Connect account reset. You can now create a new one with ${userCountry}.`,
-                                duration: 4000
-                              })
-                              fetchUserSettings()
-                            }
-                          } catch (error) {
-                            addNotification({
-                              type: 'error',
-                              title: 'Reset Failed',
-                              message: 'Failed to reset Stripe Connect account',
-                              duration: 4000
-                            })
+              {/* Add New Methods */}
+              <div className="border-t border-slate-600 pt-4">
+                <h3 className="text-lg font-medium text-white mb-4">Add Payout Method</h3>
+                <div className="space-y-3">
+                  {/* PayPal - Recommended */}
+                  <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-white font-medium">PayPal (Recommended)</h4>
+                        <p className="text-gray-400 text-sm">Simple setup, no verification required</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const email = prompt('Enter your PayPal email address:')
+                          if (email && email.includes('@')) {
+                            handlePayPalUpdate(email)
                           }
-                        }
-                      }}
-                      className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 text-sm"
-                    >
-                      Reset Stripe Account
-                    </button>
+                        }}
+                        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+                      >
+                        Add PayPal
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Stripe Connect - Alternative */}
+                  <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-white font-medium">Stripe Connect</h4>
+                        <p className="text-gray-400 text-sm">Bank account integration (requires verification)</p>
+                      </div>
+                      <button
+                        onClick={handleStripeConnectOnboard}
+                        disabled={settingUpStripe || detectingCountry}
+                        className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {detectingCountry ? 'Detecting...' : settingUpStripe ? 'Setting up...' : `Add Stripe (${userCountry})`}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
+              </div>
             ) : (
               <div>
-                <p className="text-gray-300 mb-4">No deposit methods added yet.</p>
+                <p className="text-gray-300 mb-4">No payout methods added yet. Choose how you want to receive monthly donations.</p>
                 <div className="space-y-3">
-                  <button
-                    onClick={handleStripeConnectOnboard}
-                    disabled={settingUpStripe || detectingCountry}
-                    className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {detectingCountry ? 'Detecting country...' : settingUpStripe ? 'Setting up...' : `Add Bank Account (${userCountry})`}
-                  </button>
-                  
-                  <p className="text-xs text-gray-400">
-                    Note: The account will be created for {userCountry}. If you started with a different country, 
-                    you may need to reset and start over.
-                  </p>
-                  
-                  <button
-                    onClick={async () => {
-                      if (confirm(`Reset your Stripe Connect account to start fresh with ${userCountry}?`)) {
-                        try {
-                          const response = await fetch('/api/stripe/connect/reset', { method: 'POST' })
-                          if (response.ok) {
-                            addNotification({
-                              type: 'success',
-                              title: 'Account Reset',
-                              message: `Stripe Connect account reset. You can now create a new one with ${userCountry}.`,
-                              duration: 4000
-                            })
-                            fetchUserSettings()
+                  {/* PayPal - Recommended */}
+                  <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-white font-medium">PayPal (Recommended)</h4>
+                        <p className="text-gray-400 text-sm">Simple setup, no verification required</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const email = prompt('Enter your PayPal email address:')
+                          if (email && email.includes('@')) {
+                            handlePayPalUpdate(email)
                           }
-                        } catch (error) {
-                          addNotification({
-                            type: 'error',
-                            title: 'Reset Failed',
-                            message: 'Failed to reset Stripe Connect account',
-                            duration: 4000
-                          })
-                        }
-                      }
-                    }}
-                    className="bg-red-600 text-white py-1 px-3 rounded text-sm hover:bg-red-700"
-                  >
-                    Reset Stripe Account
-                  </button>
+                        }}
+                        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+                      >
+                        Add PayPal
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Stripe Connect - Alternative */}
+                  <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-white font-medium">Stripe Connect</h4>
+                        <p className="text-gray-400 text-sm">Bank account integration (requires verification)</p>
+                      </div>
+                      <button
+                        onClick={handleStripeConnectOnboard}
+                        disabled={settingUpStripe || detectingCountry}
+                        className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {detectingCountry ? 'Detecting...' : settingUpStripe ? 'Setting up...' : `Add Stripe (${userCountry})`}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
