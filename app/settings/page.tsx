@@ -52,6 +52,7 @@ interface UserSettings {
 }
 
 export default function SettingsPageFixed() {
+  // Settings page component
   const { data: session, status } = useSession()
   const router = useRouter()
   const { addNotification } = useNotifications()
