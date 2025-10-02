@@ -853,7 +853,6 @@ export default function SettingsPageFixed() {
                   </div>
                 </div>
               </div>
-            )}
           </div>
         </div>
       )}
