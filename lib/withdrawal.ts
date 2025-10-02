@@ -392,6 +392,7 @@ async function distributeToServerOwner(server: any, totalAmount: number, serverI
     const owner = await prisma.user.findUnique({
       where: { id: server.ownerId },
       select: {
+        id: true,
         paypalEmail: true,
         name: true,
         email: true
