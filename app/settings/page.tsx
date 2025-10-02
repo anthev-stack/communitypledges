@@ -80,6 +80,7 @@ export default function SettingsPage() {
       } else {
         setUserSettings({
           hasPaymentMethod: false,
+          paypalEmail: undefined, // Will be undefined until database migration
           name: session?.user?.name || '',
           email: session?.user?.email || '',
           image: session?.user?.image || undefined
@@ -95,6 +96,7 @@ export default function SettingsPage() {
       console.error('Error fetching user settings:', error)
       setUserSettings({
         hasPaymentMethod: false,
+        paypalEmail: undefined, // Will be undefined until database migration
         name: session?.user?.name || '',
         email: session?.user?.email || '',
         image: session?.user?.image || undefined
@@ -200,7 +202,12 @@ export default function SettingsPage() {
     }
   }
 
-  // Handle PayPal update
+  // Handle PayPal OAuth
+  const handlePayPalOAuth = () => {
+    window.location.href = '/api/paypal/oauth'
+  }
+
+  // Handle PayPal update (fallback for manual email entry)
   const handlePayPalUpdate = async (email: string) => {
     try {
       const response = await fetch('/api/user/settings/paypal', {
@@ -344,6 +351,33 @@ export default function SettingsPage() {
       fetchUserSettings()
     }
   }, [session])
+
+  // Handle PayPal OAuth callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const paypalStatus = urlParams.get('paypal')
+    const paypalEmail = urlParams.get('email')
+
+    if (paypalStatus === 'success' && paypalEmail) {
+      addNotification({
+        type: 'success',
+        title: 'PayPal Connected',
+        message: `Successfully connected PayPal account: ${paypalEmail}`,
+        duration: 5000
+      })
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname)
+    } else if (paypalStatus === 'error') {
+      addNotification({
+        type: 'error',
+        title: 'PayPal Connection Failed',
+        message: 'Failed to connect PayPal account. Please try again.',
+        duration: 5000
+      })
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+  }, [])
 
   // Loading state
   if (status === 'loading' || loading) {
@@ -594,15 +628,10 @@ export default function SettingsPage() {
                         <p className="text-gray-400 text-sm">Simple setup, widely accepted</p>
                       </div>
                       <button
-                        onClick={() => {
-                          const email = prompt('Enter your PayPal email address:')
-                          if (email && email.includes('@')) {
-                            handlePayPalUpdate(email)
-                          }
-                        }}
+                        onClick={handlePayPalOAuth}
                         className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
                       >
-                        Add PayPal
+                        Connect PayPal
                       </button>
                     </div>
                   </div>
@@ -655,14 +684,9 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => {
-                        const email = prompt('Enter your PayPal email address:')
-                        if (email && email.includes('@')) {
-                          handlePayPalUpdate(email)
-                        }
-                      }}
+                      onClick={handlePayPalOAuth}
                       className="p-1.5 text-gray-400 hover:text-blue-400 transition-colors"
-                      title="Update PayPal Email"
+                      title="Connect PayPal Account"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
@@ -694,15 +718,10 @@ export default function SettingsPage() {
                         <p className="text-gray-400 text-sm">All server owners must have a PayPal account to receive donations</p>
                       </div>
                       <button
-                        onClick={() => {
-                          const email = prompt('Enter your PayPal email address:')
-                          if (email && email.includes('@')) {
-                            handlePayPalUpdate(email)
-                          }
-                        }}
+                        onClick={handlePayPalOAuth}
                         className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
                       >
-                        Add PayPal
+                        Connect PayPal
                       </button>
                     </div>
                   </div>

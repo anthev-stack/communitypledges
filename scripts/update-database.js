@@ -28,7 +28,14 @@ async function updateDatabase() {
         console.log('✅ paypalEmail column added successfully')
       } catch (alterError) {
         console.error('❌ Error adding paypalEmail column:', alterError)
-        // Don't exit, just log the error
+        console.error('This might be because the column already exists or there are permission issues')
+        // Try alternative approach
+        try {
+          await prisma.$executeRaw`ALTER TABLE "User" ADD "paypalEmail" TEXT`
+          console.log('✅ paypalEmail column added with alternative syntax')
+        } catch (altError) {
+          console.error('❌ Alternative approach also failed:', altError)
+        }
       }
     } else {
       console.log('✅ paypalEmail column already exists')
@@ -43,12 +50,18 @@ async function updateDatabase() {
     `
     console.log('Verification result:', verifyResult)
     
+    if (verifyResult.length > 0) {
+      console.log('✅ Column verification successful - paypalEmail exists')
+    } else {
+      console.log('⚠️ Column verification failed - paypalEmail may not exist')
+    }
+    
     console.log('=== DATABASE MIGRATION COMPLETE ===')
   } catch (error) {
     console.error('❌ Error updating database:', error)
     console.error('Error details:', error.message)
     console.error('Error code:', error.code)
-    // Don't exit on error, just log it
+    console.error('This is not fatal - the app will continue to work')
   } finally {
     await prisma.$disconnect()
   }

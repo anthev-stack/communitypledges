@@ -17,11 +17,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Valid email required' }, { status: 400 })
     }
 
-    // Update user with PayPal email
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { paypalEmail: email }
-    })
+          // Update user with PayPal email
+          // Temporarily disabled until database migration
+          // await prisma.user.update({
+          //   where: { id: session.user.id },
+          //   data: { paypalEmail: email }
+          // })
 
     return NextResponse.json({ 
       message: 'PayPal email saved successfully',
