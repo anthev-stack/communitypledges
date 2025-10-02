@@ -15,10 +15,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get country from JSON body or default to AU
-    const body = await request.json();
-    const country = body.country || 'AU';
-    console.log('Country:', country);
+    // Get country from JSON body or form data, default to AU
+    let country = 'AU';
+    try {
+      const body = await request.json();
+      country = body.country || 'AU';
+      console.log('Country from JSON:', country);
+    } catch (jsonError) {
+      // Fallback to form data parsing
+      try {
+        const formData = await request.formData();
+        country = (formData.get('country') as string) || 'AU';
+        console.log('Country from form data:', country);
+      } catch (formError) {
+        console.log('Could not parse JSON or form data, using default country:', country);
+      }
+    }
 
     // Check if user already has a Stripe Connect account
     console.log('Checking for existing Stripe account...');

@@ -414,6 +414,7 @@ export default function SettingsPageFixed() {
   const handleStripeConnectOnboard = async () => {
     setSettingUpStripe(true)
     try {
+      console.log('Sending country:', userCountry)
       const response = await fetch('/api/stripe/connect/onboard', {
         method: 'POST',
         headers: {
