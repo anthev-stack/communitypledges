@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { CreditCard, Building2, CheckCircle, AlertCircle, Save, User, Trash2, Edit3, X, Mail, Lock, Camera, Upload } from 'lucide-react'
+import { CreditCard, CheckCircle, AlertCircle, Save, User, Trash2, Edit3, X, Mail, Lock, Camera, Upload } from 'lucide-react'
 import { useNotifications } from '@/contexts/NotificationContext'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
@@ -40,15 +40,11 @@ type AccountSettingsForm = z.infer<typeof accountSettingsSchema>
 
 interface UserSettings {
   hasPaymentMethod: boolean
-  hasDepositMethod: boolean
   cardLast4?: string
   cardBrand?: string
   cardExpMonth?: number
   cardExpYear?: number
   stripePaymentMethodId?: string
-  stripeAccountId?: string
-  bankAccountLast4?: string
-  bankName?: string
   paypalEmail?: string
   name?: string
   email?: string
@@ -72,11 +68,6 @@ export default function SettingsPageFixed() {
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
   const [savingProfileImage, setSavingProfileImage] = useState(false)
-  const [stripeConnectStatus, setStripeConnectStatus] = useState<any>(null)
-  const [settingUpStripe, setSettingUpStripe] = useState(false)
-  const [stripeConnectLoading, setStripeConnectLoading] = useState(false)
-  const [userCountry, setUserCountry] = useState<string>('AU') // Default to Australia
-  const [detectingCountry, setDetectingCountry] = useState(false)
   const [showCardForm, setShowCardForm] = useState(false)
 
   const paymentForm = useForm<PaymentMethodForm>({
@@ -90,64 +81,13 @@ export default function SettingsPageFixed() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/login')
-    } else if (status === 'authenticated') {
-      fetchUserSettings()
-      fetchStripeConnectStatus()
-      detectUserCountry()
-    } else if (status === 'loading') {
+        } else if (status === 'authenticated') {
+          fetchUserSettings()
+        } else if (status === 'loading') {
       setLoading(true)
     }
   }, [status, router])
 
-  const detectUserCountry = async () => {
-    setDetectingCountry(true)
-    try {
-      // Try geolocation first
-      if (navigator.geolocation) {
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            timeout: 5000,
-            enableHighAccuracy: false
-          })
-        })
-
-        const { latitude, longitude } = position.coords
-        
-        // Use reverse geocoding to get country
-        const response = await fetch(
-          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-        )
-        
-        if (response.ok) {
-          const data = await response.json()
-          const countryCode = data.countryCode
-          if (countryCode) {
-            setUserCountry(countryCode)
-            setDetectingCountry(false)
-            return
-          }
-        }
-      }
-    } catch (error) {
-      console.log('Geolocation failed, trying IP-based detection:', error)
-    }
-
-    try {
-      // Fallback to IP-based detection
-      const response = await fetch('https://ipapi.co/json/')
-      if (response.ok) {
-        const data = await response.json()
-        const countryCode = data.country_code
-        if (countryCode) {
-          setUserCountry(countryCode)
-        }
-      }
-    } catch (error) {
-      console.log('IP-based detection failed, using default:', error)
-    }
-
-    setDetectingCountry(false)
-  }
 
   const fetchUserSettings = async () => {
     try {
@@ -207,17 +147,6 @@ export default function SettingsPageFixed() {
     }
   }
 
-  const fetchStripeConnectStatus = async () => {
-    try {
-      const response = await fetch('/api/stripe/connect/status')
-      if (response.ok) {
-        const status = await response.json()
-        setStripeConnectStatus(status)
-      }
-    } catch (error) {
-      console.error('Error fetching Stripe Connect status:', error)
-    }
-  }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -413,54 +342,6 @@ export default function SettingsPageFixed() {
     })
   }
 
-  const handleStripeConnectOnboard = async () => {
-    setSettingUpStripe(true)
-    try {
-      console.log('Sending country:', userCountry)
-      const response = await fetch('/api/stripe/connect/onboard', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          country: userCountry
-        })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.onboardingUrl) {
-          // Open in new tab
-          window.open(data.onboardingUrl, '_blank')
-        } else {
-          addNotification({
-            type: 'error',
-            title: 'Setup Error',
-            message: 'Failed to get Stripe onboarding URL',
-            duration: 4000
-          })
-        }
-      } else {
-        const errorData = await response.json()
-        addNotification({
-          type: 'error',
-          title: 'Setup Error',
-          message: errorData.message || 'Failed to start Stripe Connect setup',
-          duration: 4000
-        })
-      }
-    } catch (error) {
-      console.error('Error starting Stripe Connect:', error)
-      addNotification({
-        type: 'error',
-        title: 'Setup Error',
-        message: 'Failed to start Stripe Connect setup',
-        duration: 4000
-      })
-    } finally {
-      setSettingUpStripe(false)
-    }
-  }
 
   const handlePayPalUpdate = async (email: string) => {
     try {
@@ -984,7 +865,7 @@ export default function SettingsPageFixed() {
         <div className="space-y-6">
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
             <h2 className="text-xl font-semibold text-white mb-4">Payout Methods</h2>
-            <p className="text-gray-300 mb-6">Choose how you want to receive monthly donations from community members. We recommend PayPal for simplicity.</p>
+            <p className="text-gray-300 mb-6">Set up your PayPal account to receive monthly donations from community members. PayPal is required for all server owners.</p>
             
             {/* PayPal Method */}
             <div className="space-y-4">
@@ -1008,7 +889,6 @@ export default function SettingsPageFixed() {
                       onClick={() => {
                         const email = prompt('Enter your PayPal email address:')
                         if (email && email.includes('@')) {
-                          // Save PayPal email
                           handlePayPalUpdate(email)
                         }
                       }}
@@ -1034,123 +914,32 @@ export default function SettingsPageFixed() {
                 </div>
               </div>
 
-              {/* Stripe Connect Method */}
-              {userSettings.hasDepositMethod && (
-                <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Building2 className="w-6 h-6 text-emerald-400" />
+              {/* Add PayPal Method */}
+              {!userSettings.paypalEmail && (
+                <div className="border-t border-slate-600 pt-4">
+                  <h3 className="text-lg font-medium text-white mb-4">Add PayPal Account</h3>
+                  <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-white font-medium">
-                          Stripe Connect •••• {userSettings.bankAccountLast4}
-                        </p>
-                        <p className="text-gray-400 text-sm">
-                          {userSettings.bankName}
-                        </p>
+                        <h4 className="text-white font-medium">PayPal Account Required</h4>
+                        <p className="text-gray-400 text-sm">All server owners must have a PayPal account to receive donations</p>
                       </div>
+                      <button
+                        onClick={() => {
+                          const email = prompt('Enter your PayPal email address:')
+                          if (email && email.includes('@')) {
+                            handlePayPalUpdate(email)
+                          }
+                        }}
+                        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
+                      >
+                        Add PayPal
+                      </button>
                     </div>
-                    <button
-                      onClick={() => {
-                        setDeleteType('deposit')
-                        setShowDeleteModal(true)
-                      }}
-                      className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
-                      title="Remove Stripe Connect"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
                 </div>
               )}
-                
-              {/* Add New Methods */}
-              <div className="border-t border-slate-600 pt-4">
-                <h3 className="text-lg font-medium text-white mb-4">Add Payout Method</h3>
-                <div className="space-y-3">
-                  {/* PayPal - Recommended */}
-                  <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-white font-medium">PayPal (Recommended)</h4>
-                        <p className="text-gray-400 text-sm">Simple setup, no verification required</p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const email = prompt('Enter your PayPal email address:')
-                          if (email && email.includes('@')) {
-                            handlePayPalUpdate(email)
-                          }
-                        }}
-                        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-                      >
-                        Add PayPal
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Stripe Connect - Alternative */}
-                  <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-white font-medium">Stripe Connect</h4>
-                        <p className="text-gray-400 text-sm">Bank account integration (requires verification)</p>
-                      </div>
-                      <button
-                        onClick={handleStripeConnectOnboard}
-                        disabled={settingUpStripe || detectingCountry}
-                        className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {detectingCountry ? 'Detecting...' : settingUpStripe ? 'Setting up...' : `Add Stripe (${userCountry})`}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              </div>
-            ) : (
-              <div>
-                <p className="text-gray-300 mb-4">No payout methods added yet. Choose how you want to receive monthly donations.</p>
-                <div className="space-y-3">
-                  {/* PayPal - Recommended */}
-                  <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-white font-medium">PayPal (Recommended)</h4>
-                        <p className="text-gray-400 text-sm">Simple setup, no verification required</p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const email = prompt('Enter your PayPal email address:')
-                          if (email && email.includes('@')) {
-                            handlePayPalUpdate(email)
-                          }
-                        }}
-                        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-                      >
-                        Add PayPal
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Stripe Connect - Alternative */}
-                  <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-white font-medium">Stripe Connect</h4>
-                        <p className="text-gray-400 text-sm">Bank account integration (requires verification)</p>
-                      </div>
-                      <button
-                        onClick={handleStripeConnectOnboard}
-                        disabled={settingUpStripe || detectingCountry}
-                        className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {detectingCountry ? 'Detecting...' : settingUpStripe ? 'Setting up...' : `Add Stripe (${userCountry})`}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       )}

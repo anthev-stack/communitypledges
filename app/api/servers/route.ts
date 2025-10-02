@@ -166,15 +166,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if user has deposit method
+    // Check if user has PayPal account for receiving donations
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { hasDepositMethod: true }
+      select: { paypalEmail: true }
     })
 
-    if (!user?.hasDepositMethod) {
+    if (!user?.paypalEmail) {
       return NextResponse.json(
-        { message: 'Deposit method required. Please add a deposit method in your settings to create servers.' },
+        { message: 'PayPal account required. Please add your PayPal email in settings to create servers and receive donations.' },
         { status: 400 }
       )
     }

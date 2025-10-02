@@ -383,16 +383,15 @@ function calculateOptimizedCosts(pledgeAmounts: number[], serverCost: number, mi
 }
 
 /**
- * Distribute payments to server owner based on their payout method preference
- * All payments are processed through the business Stripe account first
+ * Distribute payments to server owner via PayPal
+ * All payments are processed through the business Stripe account first, then distributed via PayPal
  */
 async function distributeToServerOwner(server: any, totalAmount: number, serverId: string) {
   try {
-    // Get server owner's payout preferences
+    // Get server owner's PayPal email
     const owner = await prisma.user.findUnique({
       where: { id: server.ownerId },
       select: {
-        stripeAccountId: true,
         paypalEmail: true,
         name: true,
         email: true
@@ -408,49 +407,17 @@ async function distributeToServerOwner(server: any, totalAmount: number, serverI
     const platformFee = calculatePlatformFee(totalAmount)
     const netAmount = totalAmount - platformFee
 
-    if (owner.stripeAccountId) {
-      // Server owner prefers Stripe Connect - transfer via Stripe
-      try {
-        const transfer = await stripe.transfers.create({
-          amount: Math.round(netAmount * 100), // Convert to cents
-          currency: 'usd',
-          destination: owner.stripeAccountId,
-          metadata: {
-            serverId: serverId,
-            type: 'server_owner_payout',
-            platformFee: platformFee.toString(),
-            netAmount: netAmount.toString()
-          }
-        })
-
-        console.log(`Transferred $${netAmount.toFixed(2)} to server owner ${owner.name} via Stripe Connect`)
-        
-        // Log the transfer
-        await prisma.activityLog.create({
-          data: {
-            type: 'stripe_transfer',
-            message: `$${netAmount.toFixed(2)} transferred to your Stripe Connect account for "${server.name}"`,
-            amount: netAmount,
-            userId: owner.id,
-            serverId: serverId
-          }
-        })
-      } catch (error) {
-        console.error(`Failed to transfer to Stripe Connect account:`, error)
-        // Fallback to PayPal if Stripe transfer fails
-        await distributeToPayPal(owner, netAmount, serverId, server.name)
-      }
-    } else if (owner.paypalEmail) {
-      // Server owner prefers PayPal - process via PayPal
+    if (owner.paypalEmail) {
+      // Server owner has PayPal - process via PayPal
       await distributeToPayPal(owner, netAmount, serverId, server.name)
     } else {
-      // No payout method configured - hold funds for manual processing
-      console.log(`No payout method configured for server owner ${owner.name} - holding $${netAmount.toFixed(2)} for manual processing`)
+      // No PayPal configured - hold funds for manual processing
+      console.log(`No PayPal account configured for server owner ${owner.name} - holding $${netAmount.toFixed(2)} for manual processing`)
       
       await prisma.activityLog.create({
         data: {
           type: 'payout_pending',
-          message: `$${netAmount.toFixed(2)} pending payout for "${server.name}" - no payout method configured`,
+          message: `$${netAmount.toFixed(2)} pending payout for "${server.name}" - PayPal account required`,
           amount: netAmount,
           userId: owner.id,
           serverId: serverId
