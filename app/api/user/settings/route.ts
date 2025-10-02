@@ -32,7 +32,7 @@ export async function GET() {
           cardExpMonth: true,
           cardExpYear: true,
           stripePaymentMethodId: true,
-          paypalEmail: true,
+          // paypalEmail: true, // Temporarily commented out to test
           name: true,
           email: true,
           image: true
