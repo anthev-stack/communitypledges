@@ -3,40 +3,22 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { CreditCard, CheckCircle, AlertCircle, Save, User, Trash2, Edit3, X, Mail, Lock, Camera, Upload } from 'lucide-react'
 import { useNotifications } from '@/contexts/NotificationContext'
+import { useForm } from 'react-hook-form'
+import { 
+  User, 
+  CreditCard, 
+  Trash2, 
+  Edit3, 
+  Camera, 
+  X,
+  Check
+} from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 
-const paymentMethodSchema = z.object({
-  cardNumber: z.string().min(16, 'Card number must be 16 digits').max(19, 'Invalid card number'),
-  expiryMonth: z.number().min(1, 'Invalid month').max(12, 'Invalid month'),
-  expiryYear: z.number().min(new Date().getFullYear(), 'Card expired'),
-  cvv: z.string().min(3, 'CVV must be 3 digits').max(4, 'CVV must be 3-4 digits'),
-  cardholderName: z.string().min(2, 'Cardholder name required'),
-})
-
-const accountSettingsSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(50, 'Name must be less than 50 characters'),
-  email: z.string().email('Please enter a valid email address'),
-  currentPassword: z.string().min(6, 'Current password is required'),
-  newPassword: z.string().min(8, 'New password must be at least 8 characters').optional(),
-  confirmPassword: z.string().optional(),
-}).refine((data) => {
-  if (data.newPassword && data.newPassword !== data.confirmPassword) {
-    return false
-  }
-  return true
-}, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-})
-
-type PaymentMethodForm = z.infer<typeof paymentMethodSchema>
-type AccountSettingsForm = z.infer<typeof accountSettingsSchema>
+// Initialize Stripe
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 interface UserSettings {
   hasPaymentMethod: boolean
@@ -51,8 +33,7 @@ interface UserSettings {
   image?: string
 }
 
-export default function SettingsPageFixed() {
-  // Settings page component
+export default function SettingsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { addNotification } = useNotifications()
@@ -61,45 +42,30 @@ export default function SettingsPageFixed() {
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState<'account' | 'payment' | 'deposit'>('account')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false)
-  const [isUpdatingDeposit, setIsUpdatingDeposit] = useState(false)
-  const [deleting, setDeleting] = useState(false)
   const [deleteType, setDeleteType] = useState<'payment' | 'deposit'>('payment')
+  const [showCardForm, setShowCardForm] = useState(false)
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null)
-  const [isDragOver, setIsDragOver] = useState(false)
   const [savingProfileImage, setSavingProfileImage] = useState(false)
-  const [showCardForm, setShowCardForm] = useState(false)
 
-  const paymentForm = useForm<PaymentMethodForm>({
-    resolver: zodResolver(paymentMethodSchema)
-  })
-
-  const accountForm = useForm<AccountSettingsForm>({
-    resolver: zodResolver(accountSettingsSchema)
-  })
-
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/login')
-        } else if (status === 'authenticated') {
-          fetchUserSettings()
-        } else if (status === 'loading') {
-      setLoading(true)
+  const accountForm = useForm({
+    defaultValues: {
+      name: '',
+      email: '',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
     }
-  }, [status, router])
+  })
 
-
+  // Fetch user settings
   const fetchUserSettings = async () => {
     try {
       setLoading(true)
-      console.log('Fetching user settings...')
       const response = await fetch('/api/user/settings')
-      console.log('Response status:', response.status)
       
       if (response.ok) {
         const settings = await response.json()
-        console.log('Settings loaded:', settings)
         setUserSettings(settings)
         accountForm.reset({
           name: settings.name || '',
@@ -112,8 +78,6 @@ export default function SettingsPageFixed() {
           setProfileImagePreview(settings.image)
         }
       } else {
-        const errorData = await response.json()
-        console.error('Failed to fetch user settings:', response.status, errorData)
         setUserSettings({
           hasPaymentMethod: false,
           name: session?.user?.name || '',
@@ -146,7 +110,7 @@ export default function SettingsPageFixed() {
     }
   }
 
-
+  // Handle image change
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -154,11 +118,44 @@ export default function SettingsPageFixed() {
     }
   }
 
+  // Process image file
+  const processImageFile = (file: File) => {
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      addNotification({
+        type: 'error',
+        title: 'Invalid File Type',
+        message: 'Please upload a PNG, JPG, or WebP image',
+        duration: 4000
+      })
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      addNotification({
+        type: 'error',
+        title: 'File Too Large',
+        message: 'Please upload an image smaller than 5MB',
+        duration: 4000
+      })
+      return
+    }
+
+    setProfileImage(file)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setProfileImagePreview(e.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // Remove profile image
   const removeProfileImage = () => {
     setProfileImage(null)
     setProfileImagePreview(null)
   }
 
+  // Save profile image
   const saveProfileImage = async () => {
     if (!profileImage) return
 
@@ -203,145 +200,7 @@ export default function SettingsPageFixed() {
     }
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(true)
-  }
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-    
-    const files = e.dataTransfer.files
-    if (files && files[0]) {
-      const file = files[0]
-      processImageFile(file)
-    }
-  }
-
-  const processImageFile = (file: File) => {
-    // Validate file type
-    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
-    if (!validTypes.includes(file.type)) {
-      addNotification({
-        type: 'error',
-        title: 'Invalid File Type',
-        message: 'Please upload a PNG, JPG, or WebP image',
-        duration: 4000
-      })
-      return
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      addNotification({
-        type: 'error',
-        title: 'File Too Large',
-        message: 'Please upload an image smaller than 5MB',
-        duration: 4000
-      })
-      return
-    }
-
-    setProfileImage(file)
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      setProfileImagePreview(e.target?.result as string)
-    }
-    reader.readAsDataURL(file)
-  }
-
-  const onAccountSubmit = async (data: AccountSettingsForm) => {
-    setSaving(true)
-    try {
-      const formData = new FormData()
-      formData.append('name', data.name)
-      formData.append('email', data.email)
-      formData.append('currentPassword', data.currentPassword)
-      
-      if (data.newPassword) {
-        formData.append('newPassword', data.newPassword)
-      }
-
-      const response = await fetch('/api/user/settings/account', {
-        method: 'PUT',
-        body: formData
-      })
-
-      if (response.ok) {
-        await fetchUserSettings()
-        addNotification({
-          type: 'success',
-          title: 'Account Updated',
-          message: 'Your account settings have been updated successfully!',
-          duration: 4000
-        })
-      } else {
-        const error = await response.json()
-        addNotification({
-          type: 'error',
-          title: 'Update Failed',
-          message: error.message || 'Failed to update account settings',
-          duration: 4000
-        })
-      }
-    } catch (error) {
-      console.error('Error updating account:', error)
-      addNotification({
-        type: 'error',
-        title: 'Update Failed',
-        message: 'Failed to update account settings',
-        duration: 4000
-      })
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handlePaymentSuccess = (paymentMethodId: string) => {
-    addNotification({
-      type: 'success',
-      title: 'Payment Method Added',
-      message: 'Your payment method has been added successfully!',
-      duration: 4000
-    })
-    fetchUserSettings()
-  }
-
-  const handlePaymentError = (error: string) => {
-    addNotification({
-      type: 'error',
-      title: 'Payment Error',
-      message: error,
-      duration: 4000
-    })
-  }
-
-  const handleDepositSuccess = (accountId: string) => {
-    addNotification({
-      type: 'success',
-      title: 'Deposit Method Added',
-      message: 'Your deposit method has been added successfully!',
-      duration: 4000
-    })
-    fetchUserSettings()
-  }
-
-  const handleDepositError = (error: string) => {
-    addNotification({
-      type: 'error',
-      title: 'Deposit Error',
-      message: error,
-      duration: 4000
-    })
-  }
-
-
+  // Handle PayPal update
   const handlePayPalUpdate = async (email: string) => {
     try {
       const response = await fetch('/api/user/settings/paypal', {
@@ -380,6 +239,7 @@ export default function SettingsPageFixed() {
     }
   }
 
+  // Handle PayPal remove
   const handlePayPalRemove = async () => {
     try {
       const response = await fetch('/api/user/settings/paypal', {
@@ -413,6 +273,7 @@ export default function SettingsPageFixed() {
     }
   }
 
+  // Handle card remove
   const handleCardRemove = async () => {
     try {
       const response = await fetch('/api/user/settings/payment', {
@@ -446,6 +307,7 @@ export default function SettingsPageFixed() {
     }
   }
 
+  // Handle delete
   const handleDelete = async () => {
     if (deleteType === 'payment') {
       await handleCardRemove()
@@ -455,6 +317,35 @@ export default function SettingsPageFixed() {
     setShowDeleteModal(false)
   }
 
+  // Handle payment success
+  const handlePaymentSuccess = (paymentMethodId: string) => {
+    addNotification({
+      type: 'success',
+      title: 'Payment Method Added',
+      message: 'Your payment method has been added successfully!',
+      duration: 4000
+    })
+    fetchUserSettings()
+  }
+
+  // Handle payment error
+  const handlePaymentError = (error: string) => {
+    addNotification({
+      type: 'error',
+      title: 'Payment Failed',
+      message: error,
+      duration: 4000
+    })
+  }
+
+  // Load settings on mount
+  useEffect(() => {
+    if (session) {
+      fetchUserSettings()
+    }
+  }, [session])
+
+  // Loading state
   if (status === 'loading' || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -463,6 +354,7 @@ export default function SettingsPageFixed() {
     )
   }
 
+  // Not authenticated
   if (!session) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -474,6 +366,7 @@ export default function SettingsPageFixed() {
     )
   }
 
+  // No user settings
   if (!userSettings) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -498,244 +391,121 @@ export default function SettingsPageFixed() {
         <p className="text-gray-300 mt-2">Manage your payment and deposit methods</p>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="border-b border-slate-600 mb-8">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('account')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'account'
-                ? 'border-emerald-500 text-emerald-400'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-slate-500'
-            }`}
-          >
-            <User className="w-4 h-4 inline mr-2" />
-            Account Settings
-          </button>
-          <button
-            onClick={() => setActiveTab('payment')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'payment'
-                ? 'border-emerald-500 text-emerald-400'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-slate-500'
-            }`}
-          >
-            <CreditCard className="w-4 h-4 inline mr-2" />
-            Payment Methods
-          </button>
-          <button
-            onClick={() => setActiveTab('deposit')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'deposit'
-                ? 'border-emerald-500 text-emerald-400'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-slate-500'
-            }`}
-          >
-            <CreditCard className="w-4 h-4 inline mr-2" />
-            Payout Methods
-          </button>
-        </nav>
+      {/* Tabs */}
+      <div className="flex space-x-1 mb-8">
+        <button
+          onClick={() => setActiveTab('account')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === 'account'
+              ? 'bg-emerald-600 text-white'
+              : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+          }`}
+        >
+          Account
+        </button>
+        <button
+          onClick={() => setActiveTab('payment')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === 'payment'
+              ? 'bg-emerald-600 text-white'
+              : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+          }`}
+        >
+          Payment Methods
+        </button>
+        <button
+          onClick={() => setActiveTab('deposit')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            activeTab === 'deposit'
+              ? 'bg-emerald-600 text-white'
+              : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+          }`}
+        >
+          Payout Methods
+        </button>
       </div>
 
-      {/* Account Settings Tab */}
+      {/* Account Tab */}
       {activeTab === 'account' && (
         <div className="space-y-6">
-          {/* Profile Picture Section */}
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
-            <h2 className="text-xl font-semibold text-white mb-4">Profile Picture</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Profile Information</h2>
             
-            <div 
-              className={`relative border-2 border-dashed rounded-lg p-6 transition-colors ${
-                isDragOver 
-                  ? 'border-emerald-400 bg-emerald-500/10' 
-                  : 'border-slate-600 hover:border-slate-500'
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <div className="flex items-center space-x-6">
+            {/* Profile Picture */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Profile Picture
+              </label>
+              <div className="flex items-center space-x-4">
                 <div className="relative">
-                  {profileImagePreview ? (
-                    <img
-                      src={profileImagePreview}
-                      alt="Profile preview"
-                      className="w-24 h-24 rounded-full object-cover border-2 border-slate-600"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 rounded-full bg-slate-700 flex items-center justify-center border-2 border-slate-600">
-                      <User className="w-12 h-12 text-gray-400" />
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex-1">
-                  <div className="flex space-x-3 mb-2">
-                    <label className="cursor-pointer bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-2">
-                      <Camera className="w-4 h-4" />
-                      <span>Upload Photo</span>
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/jpg,image/webp"
-                        onChange={handleImageChange}
-                        className="hidden"
+                  <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
+                    {profileImagePreview ? (
+                      <img
+                        src={profileImagePreview}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
                       />
-                    </label>
-                    
-                    {profileImage && (
-                      <button
-                        onClick={saveProfileImage}
-                        disabled={savingProfileImage}
-                        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                      >
-                        <Save className="w-4 h-4" />
-                        <span>{savingProfileImage ? 'Saving...' : 'Save Picture'}</span>
-                      </button>
-                    )}
-                    
-                    {profileImagePreview && (
-                      <button
-                        onClick={removeProfileImage}
-                        className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
-                        title="Remove Profile Picture"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    ) : (
+                      <User className="w-8 h-8 text-gray-400" />
                     )}
                   </div>
-                  <p className="text-sm text-gray-400">
-                    Upload a PNG, JPG, or WebP image. Max size: 5MB
-                  </p>
+                  <button
+                    onClick={removeProfileImage}
+                    className="absolute -top-1 -right-1 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                    title="Remove Profile Picture"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="flex space-x-2">
+                  <label className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 cursor-pointer transition-colors">
+                    <Camera className="w-4 h-4 inline mr-2" />
+                    Choose Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                  </label>
+                  {profileImage && (
+                    <button
+                      onClick={saveProfileImage}
+                      disabled={savingProfileImage}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    >
+                      {savingProfileImage ? 'Saving...' : 'Save'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Account Information Form */}
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
-            <h2 className="text-xl font-semibold text-white mb-4">Account Information</h2>
-            
-            <form onSubmit={accountForm.handleSubmit(onAccountSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Username
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      {...accountForm.register('name')}
-                      type="text"
-                      placeholder="Your username"
-                      className="w-full pl-10 pr-3 py-2 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      {...accountForm.register('email')}
-                      type="email"
-                      placeholder="your@email.com"
-                      className="w-full pl-10 pr-3 py-2 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
-                    />
-                  </div>
-                </div>
+            {/* Username and Email */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={userSettings.name || ''}
+                  readOnly
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
               </div>
-
-              <div className="border-t border-slate-600 pt-4">
-                <h3 className="text-lg font-medium text-white mb-4">Change Password</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Current Password
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Lock className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        {...accountForm.register('currentPassword')}
-                        type="password"
-                        placeholder="Enter current password"
-                        className="w-full pl-10 pr-3 py-2 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
-                      />
-                    </div>
-                    {accountForm.formState.errors.currentPassword && (
-                      <p className="mt-1 text-sm text-red-400">
-                        {accountForm.formState.errors.currentPassword.message}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        New Password
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Lock className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                          {...accountForm.register('newPassword')}
-                          type="password"
-                          placeholder="Enter new password"
-                          className="w-full pl-10 pr-3 py-2 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
-                        />
-                      </div>
-                      {accountForm.formState.errors.newPassword && (
-                        <p className="mt-1 text-sm text-red-400">
-                          {accountForm.formState.errors.newPassword.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Confirm New Password
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Lock className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                          {...accountForm.register('confirmPassword')}
-                          type="password"
-                          placeholder="Confirm new password"
-                          className="w-full pl-10 pr-3 py-2 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
-                        />
-                      </div>
-                      {accountForm.formState.errors.confirmPassword && (
-                        <p className="mt-1 text-sm text-red-400">
-                          {accountForm.formState.errors.confirmPassword.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={userSettings.email || ''}
+                  readOnly
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
               </div>
-
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="bg-emerald-600 text-white py-2 px-6 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>{saving ? 'Saving...' : 'Save Changes'}</span>
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -745,11 +515,12 @@ export default function SettingsPageFixed() {
         <div className="space-y-6">
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
             <h2 className="text-xl font-semibold text-white mb-4">Payment Methods</h2>
-            <p className="text-gray-300 mb-6">Choose how you want to pay for pledges and server boosts. You can use both methods.</p>
+            <p className="text-gray-300 mb-6">Manage how you pay for pledges and server boosts.</p>
             
-            {/* Card Payment Method */}
+            {/* Existing Payment Methods */}
             {userSettings.hasPaymentMethod && (
-              <div className="space-y-4">
+              <div className="space-y-4 mb-6">
+                {/* Card Payment Method */}
                 <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -780,7 +551,7 @@ export default function SettingsPageFixed() {
 
             {/* PayPal Payment Method */}
             {userSettings.paypalEmail && (
-              <div className="space-y-4">
+              <div className="space-y-4 mb-6">
                 <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -788,9 +559,7 @@ export default function SettingsPageFixed() {
                         <span className="text-white font-bold text-xs">P</span>
                       </div>
                       <div>
-                        <p className="text-white font-medium">
-                          PayPal
-                        </p>
+                        <p className="text-white font-medium">PayPal</p>
                         <p className="text-gray-400 text-sm">
                           {userSettings.paypalEmail}
                         </p>
@@ -810,7 +579,10 @@ export default function SettingsPageFixed() {
                   </div>
                 </div>
               </div>
-            ) : (
+            )}
+
+            {/* Add Payment Methods */}
+            {!userSettings.hasPaymentMethod && !userSettings.paypalEmail && (
               <div>
                 <p className="text-gray-300 mb-4">No payment methods added yet. Choose how you want to pay for pledges and server boosts.</p>
                 <div className="space-y-4">
@@ -852,11 +624,12 @@ export default function SettingsPageFixed() {
                   </div>
                 </div>
               </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Deposit Methods Tab */}
+      {/* Payout Methods Tab */}
       {activeTab === 'deposit' && (
         <div className="space-y-6">
           <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
@@ -943,9 +716,9 @@ export default function SettingsPageFixed() {
       {/* Card Form Modal */}
       {showCardForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-white">Add Card Payment Method</h3>
+          <div className="bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Add Payment Method</h3>
               <button
                 onClick={() => setShowCardForm(false)}
                 className="text-gray-400 hover:text-white"
@@ -953,12 +726,9 @@ export default function SettingsPageFixed() {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <Elements stripe={loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)}>
+            <Elements stripe={stripePromise}>
               <PaymentForm 
-                onSuccess={(paymentMethodId) => {
-                  handlePaymentSuccess(paymentMethodId)
-                  setShowCardForm(false)
-                }}
+                onSuccess={handlePaymentSuccess}
                 onError={handlePaymentError}
                 isUpdating={false}
               />
@@ -1027,7 +797,6 @@ function PaymentForm({ onSuccess, onError, isUpdating }: { onSuccess: (paymentMe
       if (error) {
         onError(error.message || 'Payment method creation failed')
       } else if (paymentMethod) {
-        // Save payment method to backend
         const response = await fetch('/api/user/settings/payment', {
           method: 'POST',
           headers: {
@@ -1046,7 +815,7 @@ function PaymentForm({ onSuccess, onError, isUpdating }: { onSuccess: (paymentMe
         }
       }
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Payment method creation failed')
+      onError('An unexpected error occurred')
     } finally {
       setLoading(false)
     }
