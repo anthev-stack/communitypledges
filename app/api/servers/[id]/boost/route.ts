@@ -209,9 +209,9 @@ export async function POST(
       // Log platform fee
       await prisma.activityLog.create({
         data: {
-          type: 'platform_fee',
-          message: `Platform fee collected: $${platformFee.toFixed(2)}`,
-          amount: platformFee,
+          type: 'server_boost',
+          message: `Server boost payment: $${boostAmount.toFixed(2)}`,
+          amount: boostAmount,
           userId: session.user.id,
           serverId: serverId
         }
