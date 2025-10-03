@@ -85,7 +85,27 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
-    // Remove payment method from user
+    // Get current user data to find the payment method ID
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { 
+        stripePaymentMethodId: true,
+        stripeCustomerId: true
+      }
+    })
+
+    // Detach payment method from Stripe if it exists
+    if (user?.stripePaymentMethodId && user?.stripeCustomerId) {
+      try {
+        await stripe.paymentMethods.detach(user.stripePaymentMethodId)
+        console.log('Payment method detached from Stripe:', user.stripePaymentMethodId)
+      } catch (stripeError) {
+        console.error('Error detaching payment method from Stripe:', stripeError)
+        // Continue with database cleanup even if Stripe fails
+      }
+    }
+
+    // Remove payment method from user database
     await prisma.user.update({
       where: { id: session.user.id },
       data: { 
@@ -98,11 +118,16 @@ export async function DELETE(request: NextRequest) {
       }
     })
 
+    console.log('Payment method removed from database for user:', session.user.id)
+
     return NextResponse.json({ 
       message: 'Payment method removed successfully'
     })
   } catch (error) {
     console.error('Error removing payment method:', error)
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ 
+      message: 'Internal server error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
