@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Exchange code for access token
-    const tokenResponse = await fetch('https://api.paypal.com/v1/oauth2/token', {
+    const tokenResponse = await fetch('https://api-m.sandbox.paypal.com/v1/oauth2/token', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -53,14 +53,20 @@ export async function GET(request: NextRequest) {
     })
 
     if (!tokenResponse.ok) {
-      throw new Error('Failed to exchange code for token')
+      const errorText = await tokenResponse.text()
+      console.error('PayPal token exchange failed:', {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        error: errorText
+      })
+      throw new Error(`Failed to exchange code for token: ${tokenResponse.status} ${errorText}`)
     }
 
     const tokenData = await tokenResponse.json()
     const accessToken = tokenData.access_token
 
     // Get user info from PayPal
-    const userInfoResponse = await fetch('https://api.paypal.com/v1/identity/oauth2/userinfo', {
+    const userInfoResponse = await fetch('https://api-m.sandbox.paypal.com/v1/identity/oauth2/userinfo', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
@@ -68,14 +74,34 @@ export async function GET(request: NextRequest) {
     })
 
     if (!userInfoResponse.ok) {
-      throw new Error('Failed to get user info from PayPal')
+      const errorText = await userInfoResponse.text()
+      console.error('PayPal user info failed:', {
+        status: userInfoResponse.status,
+        statusText: userInfoResponse.statusText,
+        error: errorText
+      })
+      throw new Error(`Failed to get user info from PayPal: ${userInfoResponse.status} ${errorText}`)
     }
 
     const userInfo = await userInfoResponse.json()
     const paypalEmail = userInfo.email
 
-    // TODO: Save paypalEmail to database when column is available
-    // For now, we'll just return success
+    // Save paypalEmail to database
+    const { PrismaClient } = await import('@prisma/client')
+    const prisma = new PrismaClient()
+    
+    try {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { paypalEmail: paypalEmail }
+      })
+      console.log('PayPal email saved successfully:', paypalEmail)
+    } catch (dbError) {
+      console.error('Failed to save PayPal email to database:', dbError)
+      // Continue anyway - the OAuth was successful
+    } finally {
+      await prisma.$disconnect()
+    }
 
     return NextResponse.redirect(`https://communitypledges.vercel.app/settings?paypal=success&email=${encodeURIComponent(paypalEmail)}`)
   } catch (error) {
