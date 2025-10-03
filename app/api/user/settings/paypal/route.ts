@@ -17,12 +17,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Valid email required' }, { status: 400 })
     }
 
-          // Update user with PayPal email
-          // Temporarily disabled until database migration
-          // await prisma.user.update({
-          //   where: { id: session.user.id },
-          //   data: { paypalEmail: email }
-          // })
+    // Update user with PayPal email
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { paypalEmail: email }
+    })
+    
+    console.log('PayPal email saved for user:', session.user.id, 'email:', email)
 
     return NextResponse.json({ 
       message: 'PayPal email saved successfully',
@@ -43,11 +44,12 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Remove PayPal email
-    // TODO: Re-enable when paypalEmail column is added to database
-    // await prisma.user.update({
-    //   where: { id: session.user.id },
-    //   data: { paypalEmail: null }
-    // })
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { paypalEmail: null }
+    })
+    
+    console.log('PayPal email removed for user:', session.user.id)
 
     return NextResponse.json({ 
       message: 'PayPal email removed successfully'
