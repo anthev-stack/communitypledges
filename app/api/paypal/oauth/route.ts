@@ -63,10 +63,15 @@ export async function GET(request: NextRequest) {
     }
 
     const tokenData = await tokenResponse.json()
+    console.log('PayPal token response:', tokenData)
     const accessToken = tokenData.access_token
+    
+    if (!accessToken) {
+      throw new Error('No access token received from PayPal')
+    }
 
-    // Get user info from PayPal
-    const userInfoResponse = await fetch('https://api-m.sandbox.paypal.com/v1/identity/oauth2/userinfo', {
+    // Get user info from PayPal using OpenID Connect endpoint
+    const userInfoResponse = await fetch('https://api-m.sandbox.paypal.com/v1/identity/openidconnect/userinfo', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
@@ -84,7 +89,13 @@ export async function GET(request: NextRequest) {
     }
 
     const userInfo = await userInfoResponse.json()
-    const paypalEmail = userInfo.email
+    console.log('PayPal user info response:', userInfo)
+    const paypalEmail = userInfo.email || userInfo.email_verified || userInfo.sub
+    
+    if (!paypalEmail) {
+      console.error('No email found in PayPal user info:', userInfo)
+      throw new Error('No email found in PayPal user info')
+    }
 
     // Save paypalEmail to database
     const { PrismaClient } = await import('@prisma/client')
