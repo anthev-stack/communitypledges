@@ -65,15 +65,17 @@ export async function GET(request: NextRequest) {
     const tokenData = await tokenResponse.json()
     console.log('PayPal token response:', tokenData)
     const accessToken = tokenData.access_token
+    const idToken = tokenData.id_token
     
     if (!accessToken) {
       throw new Error('No access token received from PayPal')
     }
 
-    // Try to get user info from PayPal using OpenID Connect userinfo endpoint
+    // Try multiple approaches to get PayPal email
     let paypalEmail = null
     let userInfo = null
     
+    // Approach 1: Try OpenID Connect userinfo endpoint
     try {
       const userInfoResponse = await fetch('https://api-m.sandbox.paypal.com/v1/identity/openidconnect/userinfo', {
         method: 'GET',
@@ -100,12 +102,57 @@ export async function GET(request: NextRequest) {
       console.error('Error fetching user info:', userInfoError)
     }
     
-    // If we couldn't get user info, try to get it from the token or use a fallback
+    // Approach 2: Try to decode the ID token if available
+    if (!paypalEmail && idToken) {
+      try {
+        console.log('Attempting to decode ID token...')
+        // ID tokens are JWT tokens, we can decode the payload
+        const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString())
+        console.log('ID token payload:', payload)
+        paypalEmail = payload.email || payload.email_verified
+        if (paypalEmail) {
+          console.log('Got email from ID token:', paypalEmail)
+        }
+      } catch (tokenError) {
+        console.error('Error decoding ID token:', tokenError)
+      }
+    }
+    
+    // Approach 3: Try PayPal Identity API with different endpoint
     if (!paypalEmail) {
-      // For now, let's use the user's email from the session as a fallback
-      // In a real implementation, you might want to ask the user to enter their PayPal email
-      paypalEmail = session.user.email
-      console.log('Using fallback email from session:', paypalEmail)
+      try {
+        console.log('Trying PayPal Identity API...')
+        const identityResponse = await fetch('https://api-m.sandbox.paypal.com/v1/identity/oauth2/userinfo', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (identityResponse.ok) {
+          const identityData = await identityResponse.json()
+          console.log('PayPal Identity API response:', identityData)
+          paypalEmail = identityData.email || identityData.email_verified
+        } else {
+          const errorText = await identityResponse.text()
+          console.error('PayPal Identity API failed:', {
+            status: identityResponse.status,
+            statusText: identityResponse.statusText,
+            error: errorText
+          })
+        }
+      } catch (identityError) {
+        console.error('Error with PayPal Identity API:', identityError)
+      }
+    }
+    
+    // If we still couldn't get the email, ask the user to enter it manually
+    if (!paypalEmail) {
+      console.log('Could not retrieve PayPal email automatically')
+      // For now, redirect to a page where user can enter their PayPal email
+      return NextResponse.redirect(`https://communitypledges.vercel.app/settings?paypal=manual&token=${encodeURIComponent(accessToken)}`)
     }
 
     // Save paypalEmail to database
