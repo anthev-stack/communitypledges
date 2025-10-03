@@ -847,10 +847,10 @@ export default function DashboardPage() {
             
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-6">
               <p className="text-sm text-blue-300">
-                <strong>Total Cost:</strong> <PriceDisplay amount={3} /> (includes Stripe processing fees)
+                <strong>Boost Cost:</strong> <PriceDisplay amount={3} /> (excludes Stripe processing fees)
               </p>
               <p className="text-xs text-blue-200 mt-1">
-                Stripe fees: 1.75% + 30¢ AUD per transaction
+                Stripe fees: 1.75% + 30¢ AUD per transaction (charged separately)
               </p>
             </div>
             
