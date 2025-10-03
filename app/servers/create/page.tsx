@@ -279,7 +279,7 @@ const GAME_SPECIFIC_TAGS: { [key: string]: string[] } = {
 
 interface UserSettings {
   hasPaymentMethod: boolean
-  hasDepositMethod: boolean
+  paypalEmail: string | null
 }
 
 export default function CreateServerPage() {
@@ -454,20 +454,20 @@ export default function CreateServerPage() {
     )
   }
 
-  if (!userSettings?.hasDepositMethod) {
+  if (!userSettings?.paypalEmail) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md">
           <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-4">Deposit Method Required</h1>
+          <h1 className="text-2xl font-bold text-white mb-4">PayPal Account Required</h1>
           <p className="text-gray-300 mb-6">
-            You need to add a deposit method to create servers and receive payments from community pledges.
+            You need to add your PayPal email to create servers and receive payments from community pledges.
           </p>
           <Link
             href="/settings"
             className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors"
           >
-            Add Deposit Method
+            Add PayPal Account
           </Link>
         </div>
       </div>
