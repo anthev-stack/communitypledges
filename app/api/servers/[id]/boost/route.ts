@@ -86,7 +86,7 @@ export async function POST(
     }
 
     // Process immediate payment for boost
-    const boostAmount = 3.0;
+    const boostAmount = 3.0; // AUD amount
     // Server boosts go directly to platform - no platform fee
     const stripeFee = calculateStripeFee(boostAmount);
     const netAmount = boostAmount - stripeFee; // Only subtract Stripe fee
@@ -98,7 +98,7 @@ export async function POST(
         // User has card payment method - process through Stripe
         paymentIntent = await stripe.paymentIntents.create({
           amount: Math.round(boostAmount * 100), // Convert to cents
-          currency: 'usd',
+          currency: 'aud',
           customer: user.stripeCustomerId,
           payment_method: user.stripePaymentMethodId,
           confirm: true,
@@ -119,7 +119,7 @@ export async function POST(
         // User has PayPal - create a payment intent for manual processing
         paymentIntent = await stripe.paymentIntents.create({
           amount: Math.round(boostAmount * 100),
-          currency: 'usd',
+          currency: 'aud',
           payment_method_types: ['card'], // This will be processed manually via PayPal
           return_url: `${process.env.NEXTAUTH_URL}/servers/${serverId}`,
           metadata: {

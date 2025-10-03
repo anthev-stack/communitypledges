@@ -841,9 +841,18 @@ export default function DashboardPage() {
               <h3 className="text-lg font-semibold text-white">Boost Server</h3>
             </div>
             
-            <p className="text-gray-300 mb-6">
+            <p className="text-gray-300 mb-4">
               Are you sure you want to boost this server? This will charge you <strong className="text-white"><PriceDisplay amount={3} /></strong> from your payment method and make your server appear at the top of the server list for 24 hours.
             </p>
+            
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-6">
+              <p className="text-sm text-blue-300">
+                <strong>Total Cost:</strong> <PriceDisplay amount={3} /> (includes Stripe processing fees)
+              </p>
+              <p className="text-xs text-blue-200 mt-1">
+                Stripe fees: 1.75% + 30¢ AUD per transaction
+              </p>
+            </div>
             
             <div className="flex space-x-3">
               <button
