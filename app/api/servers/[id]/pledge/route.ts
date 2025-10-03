@@ -104,7 +104,7 @@ function calculateOptimizedCosts(pledgeAmounts: number[], serverCost: number, mi
 }
 
 const pledgeSchema = z.object({
-  amount: z.number().min(0.01).max(1000),
+  amount: z.number().min(2, 'Minimum pledge amount is $2.00').max(30, 'Maximum pledge amount is $30.00'),
 })
 
 export async function POST(

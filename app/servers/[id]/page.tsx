@@ -103,11 +103,21 @@ export default function ServerDetailPage() {
       return
     }
 
-    if (!pledgeAmount || pledgeAmount <= 0) {
+    if (!pledgeAmount || pledgeAmount < 2) {
       addNotification({
         type: 'error',
         title: 'Error',
-        message: 'Please enter a valid pledge amount',
+        message: 'Minimum pledge amount is $2.00',
+        duration: 4000
+      })
+      return
+    }
+
+    if (pledgeAmount > 30) {
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Maximum pledge amount is $30.00',
         duration: 4000
       })
       return
@@ -408,7 +418,7 @@ export default function ServerDetailPage() {
                   </div>
                   <div>
                     <h4 className="font-semibold mb-2 text-white">Smart Cost Optimization</h4>
-                    <p>The system balances costs intelligently: higher pledgers help reduce costs for everyone, but you never pay more than your pledged amount. The goal is to get everyone as close to <PriceDisplay amount={2} /> as possible.</p>
+                    <p>The system balances costs intelligently: higher pledgers help reduce costs for everyone, but you never pay more than your pledged amount. The goal is to get everyone as close to <PriceDisplay amount={2} /> as possible. Pledge between $2-$30.</p>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-2 text-white"><PriceDisplay amount={2} /> Minimum Rule</h4>
@@ -452,16 +462,16 @@ export default function ServerDetailPage() {
                     <input
                       type="number"
                       step="0.01"
-                      min="0.01"
-                      max="1000"
-                      placeholder="Amount"
+                      min="2"
+                      max="30"
+                      placeholder="Amount (2-30)"
                       value={pledgeAmount || ''}
                       onChange={(e) => setPledgeAmount(parseFloat(e.target.value) || 0)}
                       className="flex-1 px-4 py-3 bg-slate-700/50 border border-slate-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
                     />
                     <button
                       onClick={handlePledge}
-                      disabled={pledging || !pledgeAmount || pledgeAmount <= 0}
+                      disabled={pledging || !pledgeAmount || pledgeAmount < 2 || pledgeAmount > 30}
                       className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                     >
                       <Heart className="w-4 h-4" />
@@ -470,6 +480,7 @@ export default function ServerDetailPage() {
                   </div>
                   <div className="text-xs text-gray-400 text-center mt-2">
                     <p className="text-yellow-400">💡 You'll only pay what you pledge (up to your limit), but higher pledges help reduce everyone's costs!</p>
+                    <p className="text-gray-500 mt-1">Minimum: $2.00 | Maximum: $30.00</p>
                   </div>
                 </div>
               ) : (
