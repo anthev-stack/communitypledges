@@ -27,7 +27,7 @@ interface UserSettings {
   cardExpMonth?: number
   cardExpYear?: number
   stripePaymentMethodId?: string
-  paypalEmail?: string
+  paypalEmail: string | null
   name?: string
   email?: string
   image?: string
