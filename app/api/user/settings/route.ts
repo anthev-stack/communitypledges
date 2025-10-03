@@ -32,7 +32,7 @@ export async function GET() {
           cardExpMonth: true,
           cardExpYear: true,
           stripePaymentMethodId: true,
-                // paypalEmail: true, // Disabled - column doesn't exist in database
+          paypalEmail: true,
           name: true,
           email: true,
           image: true

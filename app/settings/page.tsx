@@ -80,7 +80,7 @@ export default function SettingsPage() {
       } else {
         setUserSettings({
           hasPaymentMethod: false,
-          paypalEmail: undefined, // Will be undefined until database migration
+          paypalEmail: null,
           name: session?.user?.name || '',
           email: session?.user?.email || '',
           image: session?.user?.image || undefined
@@ -96,7 +96,7 @@ export default function SettingsPage() {
       console.error('Error fetching user settings:', error)
       setUserSettings({
         hasPaymentMethod: false,
-        paypalEmail: undefined, // Will be undefined until database migration
+        paypalEmail: null,
         name: session?.user?.name || '',
         email: session?.user?.email || '',
         image: session?.user?.image || undefined
