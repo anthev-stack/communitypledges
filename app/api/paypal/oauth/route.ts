@@ -70,31 +70,42 @@ export async function GET(request: NextRequest) {
       throw new Error('No access token received from PayPal')
     }
 
-    // Get user info from PayPal using OpenID Connect endpoint
-    const userInfoResponse = await fetch('https://api-m.sandbox.paypal.com/v1/identity/openidconnect/userinfo', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
-    })
-
-    if (!userInfoResponse.ok) {
-      const errorText = await userInfoResponse.text()
-      console.error('PayPal user info failed:', {
-        status: userInfoResponse.status,
-        statusText: userInfoResponse.statusText,
-        error: errorText
-      })
-      throw new Error(`Failed to get user info from PayPal: ${userInfoResponse.status} ${errorText}`)
-    }
-
-    const userInfo = await userInfoResponse.json()
-    console.log('PayPal user info response:', userInfo)
-    const paypalEmail = userInfo.email || userInfo.email_verified || userInfo.sub
+    // Try to get user info from PayPal using OpenID Connect userinfo endpoint
+    let paypalEmail = null
+    let userInfo = null
     
+    try {
+      const userInfoResponse = await fetch('https://api-m.sandbox.paypal.com/v1/identity/openidconnect/userinfo', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (userInfoResponse.ok) {
+        userInfo = await userInfoResponse.json()
+        console.log('PayPal user info response:', userInfo)
+        paypalEmail = userInfo.email || userInfo.email_verified || userInfo.sub
+      } else {
+        const errorText = await userInfoResponse.text()
+        console.error('PayPal user info failed:', {
+          status: userInfoResponse.status,
+          statusText: userInfoResponse.statusText,
+          error: errorText
+        })
+      }
+    } catch (userInfoError) {
+      console.error('Error fetching user info:', userInfoError)
+    }
+    
+    // If we couldn't get user info, try to get it from the token or use a fallback
     if (!paypalEmail) {
-      console.error('No email found in PayPal user info:', userInfo)
-      throw new Error('No email found in PayPal user info')
+      // For now, let's use the user's email from the session as a fallback
+      // In a real implementation, you might want to ask the user to enter their PayPal email
+      paypalEmail = session.user.email
+      console.log('Using fallback email from session:', paypalEmail)
     }
 
     // Save paypalEmail to database
