@@ -32,7 +32,7 @@ export async function GET() {
           cardExpMonth: true,
           cardExpYear: true,
           stripePaymentMethodId: true,
-          // paypalEmail: true, // Temporarily disabled until database migration works
+          paypalEmail: true, // Re-enabled - should work after migration
           name: true,
           email: true,
           image: true

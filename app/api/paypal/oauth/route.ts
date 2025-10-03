@@ -108,24 +108,22 @@ export async function GET(request: NextRequest) {
       console.log('Using fallback email from session:', paypalEmail)
     }
 
-    // Save paypalEmail to database (temporarily disabled until migration works)
-    // const { PrismaClient } = await import('@prisma/client')
-    // const prisma = new PrismaClient()
+    // Save paypalEmail to database
+    const { PrismaClient } = await import('@prisma/client')
+    const prisma = new PrismaClient()
     
-    // try {
-    //   await prisma.user.update({
-    //     where: { id: session.user.id },
-    //     data: { paypalEmail: paypalEmail }
-    //   })
-    //   console.log('PayPal email saved successfully:', paypalEmail)
-    // } catch (dbError) {
-    //   console.error('Failed to save PayPal email to database:', dbError)
-    //   // Continue anyway - the OAuth was successful
-    // } finally {
-    //   await prisma.$disconnect()
-    // }
-    
-    console.log('PayPal OAuth successful, email would be:', paypalEmail)
+    try {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { paypalEmail: paypalEmail }
+      })
+      console.log('PayPal email saved successfully:', paypalEmail)
+    } catch (dbError) {
+      console.error('Failed to save PayPal email to database:', dbError)
+      // Continue anyway - the OAuth was successful
+    } finally {
+      await prisma.$disconnect()
+    }
 
     return NextResponse.redirect(`https://communitypledges.vercel.app/settings?paypal=success&email=${encodeURIComponent(paypalEmail)}`)
   } catch (error) {
