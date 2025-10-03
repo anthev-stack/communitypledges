@@ -44,6 +44,8 @@ export default function SettingsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteType, setDeleteType] = useState<'payment' | 'deposit'>('payment')
   const [showCardForm, setShowCardForm] = useState(false)
+  const [showPayPalManualEntry, setShowPayPalManualEntry] = useState(false)
+  const [manualPayPalEmail, setManualPayPalEmail] = useState('')
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null)
   const [savingProfileImage, setSavingProfileImage] = useState(false)
@@ -280,6 +282,56 @@ export default function SettingsPage() {
     }
   }
 
+  // Handle manual PayPal email submission
+  const handleManualPayPalSubmit = async () => {
+    if (!manualPayPalEmail || !manualPayPalEmail.includes('@')) {
+      addNotification({
+        type: 'error',
+        title: 'Invalid Email',
+        message: 'Please enter a valid PayPal email address.',
+        duration: 4000
+      })
+      return
+    }
+
+    try {
+      const response = await fetch('/api/user/settings/paypal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: manualPayPalEmail }),
+      })
+
+      if (response.ok) {
+        addNotification({
+          type: 'success',
+          title: 'PayPal Connected',
+          message: `Successfully connected PayPal account: ${manualPayPalEmail}`,
+          duration: 5000
+        })
+        setShowPayPalManualEntry(false)
+        setManualPayPalEmail('')
+        fetchUserSettings()
+      } else {
+        addNotification({
+          type: 'error',
+          title: 'Connection Failed',
+          message: 'Failed to save PayPal email. Please try again.',
+          duration: 4000
+        })
+      }
+    } catch (error) {
+      console.error('Error saving PayPal email:', error)
+      addNotification({
+        type: 'error',
+        title: 'Connection Failed',
+        message: 'Failed to save PayPal email. Please try again.',
+        duration: 4000
+      })
+    }
+  }
+
   // Handle card remove
   const handleCardRemove = async () => {
     try {
@@ -365,6 +417,18 @@ export default function SettingsPage() {
         message: `Successfully connected PayPal account: ${paypalEmail}`,
         duration: 5000
       })
+      fetchUserSettings()
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname)
+    } else if (paypalStatus === 'manual') {
+      addNotification({
+        type: 'info',
+        title: 'PayPal Connected',
+        message: 'PayPal account connected! Please enter your PayPal email address.',
+        duration: 5000
+      })
+      setShowPayPalManualEntry(true)
+      setActiveTab('deposit')
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname)
     } else if (paypalStatus === 'error') {
@@ -723,6 +787,46 @@ export default function SettingsPage() {
                       >
                         Connect PayPal
                       </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Manual PayPal Email Entry */}
+              {showPayPalManualEntry && (
+                <div className="border-t border-slate-600 pt-4">
+                  <h3 className="text-lg font-medium text-white mb-4">Enter PayPal Email</h3>
+                  <div className="bg-green-900/20 border border-green-500/50 rounded-lg p-4">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-white mb-2">
+                          PayPal Email Address
+                        </label>
+                        <input
+                          type="email"
+                          value={manualPayPalEmail}
+                          onChange={(e) => setManualPayPalEmail(e.target.value)}
+                          placeholder="Enter your PayPal email address"
+                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={handleManualPayPalSubmit}
+                          className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          Save PayPal Email
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowPayPalManualEntry(false)
+                            setManualPayPalEmail('')
+                          }}
+                          className="bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

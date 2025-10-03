@@ -151,8 +151,12 @@ export async function GET(request: NextRequest) {
     // If we still couldn't get the email, ask the user to enter it manually
     if (!paypalEmail) {
       console.log('Could not retrieve PayPal email automatically')
-      // For now, redirect to a page where user can enter their PayPal email
-      return NextResponse.redirect(`https://communitypledges.vercel.app/settings?paypal=manual&token=${encodeURIComponent(accessToken)}`)
+      console.log('Token response keys:', Object.keys(tokenData))
+      console.log('Available scopes:', tokenData.scope)
+      
+      // Store the access token temporarily and redirect to manual entry
+      // We'll create a simple form where the user can enter their PayPal email
+      return NextResponse.redirect(`https://communitypledges.vercel.app/settings?paypal=manual&connected=true`)
     }
 
     // Save paypalEmail to database
