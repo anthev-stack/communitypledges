@@ -102,6 +102,7 @@ export async function POST(
           customer: user.stripeCustomerId,
           payment_method: user.stripePaymentMethodId,
           confirm: true,
+          return_url: `${process.env.NEXTAUTH_URL}/servers/${serverId}`,
           // No application_fee_amount - server boosts go directly to platform
           metadata: {
             serverId: serverId,
@@ -120,6 +121,7 @@ export async function POST(
           amount: Math.round(boostAmount * 100),
           currency: 'usd',
           payment_method_types: ['card'], // This will be processed manually via PayPal
+          return_url: `${process.env.NEXTAUTH_URL}/servers/${serverId}`,
           metadata: {
             serverId: serverId,
             serverOwnerId: session.user.id,
