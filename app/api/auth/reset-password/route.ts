@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { isTokenExpired, hashPassword } from '@/lib/auth-utils'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Token is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
