@@ -77,7 +77,7 @@ export default function HomePage() {
             </div>
             <h3 className="font-semibold mb-2 text-white">Create or Browse</h3>
             <p className="text-sm text-gray-300">
-              Create a server with monthly cost or browse existing servers
+              Upload/create your server with monthly cost or simply browse existing servers
             </p>
           </div>
           
@@ -87,7 +87,7 @@ export default function HomePage() {
             </div>
             <h3 className="font-semibold mb-2 text-white">Pledge Amount</h3>
             <p className="text-sm text-gray-300">
-              Pledge what you can afford to contribute monthly
+              Pledge what you can afford to contribute to your desired server or simply find a server to join
             </p>
           </div>
           
@@ -107,7 +107,7 @@ export default function HomePage() {
             </div>
             <h3 className="font-semibold mb-2 text-white">Pay & Save</h3>
             <p className="text-sm text-gray-300">
-              Pay your optimized amount and enjoy affordable server hosting
+              Pay your optimized amount and enjoy keeping the community alive!
             </p>
           </div>
         </div>
