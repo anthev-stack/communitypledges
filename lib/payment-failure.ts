@@ -12,8 +12,8 @@ export async function handlePaymentFailure(userId: string, error: string) {
       where: { id: userId },
       select: { 
         id: true, 
-        paymentFailureCount: true, 
-        isPaymentSuspended: true,
+        failedPaymentCount: true, 
+        isSuspended: true,
         name: true
       }
     })
@@ -24,21 +24,21 @@ export async function handlePaymentFailure(userId: string, error: string) {
     }
 
     // If already suspended, don't increment further
-    if (user.isPaymentSuspended) {
+    if (user.isSuspended) {
       return
     }
 
-    const newFailureCount = user.paymentFailureCount + 1
+    const newFailureCount = user.failedPaymentCount + 1
     const shouldSuspend = newFailureCount >= MAX_PAYMENT_FAILURES
 
     // Update user with new failure count
     await prisma.user.update({
       where: { id: userId },
       data: {
-        paymentFailureCount: newFailureCount,
-        lastPaymentFailure: new Date(),
-        isPaymentSuspended: shouldSuspend,
-        paymentSuspendedAt: shouldSuspend ? new Date() : null
+        failedPaymentCount: newFailureCount,
+        lastFailedPaymentAt: new Date(),
+        isSuspended: shouldSuspend,
+        suspendedAt: shouldSuspend ? new Date() : null
       }
     })
 
@@ -69,6 +69,7 @@ export async function handlePaymentFailure(userId: string, error: string) {
 
     return {
       failureCount: newFailureCount,
+      attemptNumber: newFailureCount,
       isSuspended: shouldSuspend,
       remainingAttempts: MAX_PAYMENT_FAILURES - newFailureCount
     }
@@ -140,10 +141,10 @@ export async function resetPaymentFailures(userId: string) {
     await prisma.user.update({
       where: { id: userId },
       data: {
-        paymentFailureCount: 0,
-        lastPaymentFailure: null,
-        isPaymentSuspended: false,
-        paymentSuspendedAt: null
+        failedPaymentCount: 0,
+        lastFailedPaymentAt: null,
+        isSuspended: false,
+        suspendedAt: null
       }
     })
 
@@ -161,10 +162,10 @@ export async function isUserPaymentSuspended(userId: string): Promise<boolean> {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { isPaymentSuspended: true }
+      select: { isSuspended: true }
     })
 
-    return user?.isPaymentSuspended || false
+    return user?.isSuspended || false
   } catch (error) {
     console.error('Error checking payment suspension status:', error)
     return false
@@ -179,10 +180,10 @@ export async function getUserPaymentStatus(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
-        paymentFailureCount: true,
-        lastPaymentFailure: true,
-        isPaymentSuspended: true,
-        paymentSuspendedAt: true
+        failedPaymentCount: true,
+        lastFailedPaymentAt: true,
+        isSuspended: true,
+        suspendedAt: true
       }
     })
 
@@ -191,11 +192,11 @@ export async function getUserPaymentStatus(userId: string) {
     }
 
     return {
-      failureCount: user.paymentFailureCount,
-      lastFailure: user.lastPaymentFailure,
-      isSuspended: user.isPaymentSuspended,
-      suspendedAt: user.paymentSuspendedAt,
-      remainingAttempts: MAX_PAYMENT_FAILURES - user.paymentFailureCount
+      failureCount: user.failedPaymentCount,
+      lastFailure: user.lastFailedPaymentAt,
+      isSuspended: user.isSuspended,
+      suspendedAt: user.suspendedAt,
+      remainingAttempts: MAX_PAYMENT_FAILURES - user.failedPaymentCount
     }
   } catch (error) {
     console.error('Error getting user payment status:', error)

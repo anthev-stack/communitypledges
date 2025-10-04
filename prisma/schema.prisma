@@ -67,6 +67,12 @@ model User {
   cardExpYear          Int?
   stripePaymentMethodId String?
   
+  // Failed payment tracking
+  failedPaymentCount    Int      @default(0)
+  lastFailedPaymentAt   DateTime?
+  isSuspended          Boolean  @default(false)
+  suspendedAt          DateTime?
+  
   // Deposit details for server owners
   hasDepositMethod Boolean @default(false)
   bankAccountLast4 String?

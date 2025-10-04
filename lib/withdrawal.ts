@@ -1,6 +1,7 @@
 import { prisma } from './prisma'
 import { stripe, calculatePlatformFee, calculateStripeFee, calculateNetAmount } from './stripe'
 import { handlePaymentFailure, resetPaymentFailures } from './payment-failure'
+import { sendPledgePaymentEmail, sendFailedPaymentEmail, sendSuspensionEmail } from './email'
 
 /**
  * Calculate the next withdrawal date for a server based on its withdrawal day
@@ -233,6 +234,21 @@ export async function processPendingWithdrawals() {
                   }
                 })
                 
+                // Send email notification for successful payment
+                try {
+                  await sendPledgePaymentEmail({
+                    userName: user.name || 'User',
+                    userEmail: user.email,
+                    serverName: server.name,
+                    pledgeAmount: pledge.amount,
+                    actualAmount: actualAmount,
+                    totalPledgers: serverPledges.length,
+                    currency: 'A$'
+                  })
+                } catch (emailError) {
+                  console.error('Failed to send payment success email:', emailError)
+                }
+                
                 // Create a mock successful payment intent for consistency
                 paymentIntent = { status: 'succeeded' }
               } else {
@@ -241,10 +257,31 @@ export async function processPendingWithdrawals() {
                 // Handle payment failure
                 const failureResult = await handlePaymentFailure(pledge.userId, `PayPal payment failed: ${paypalResult.error}`)
                 
-                if (failureResult?.isSuspended) {
-                  console.log(`User ${pledge.userId} suspended due to payment failures`)
-                } else {
-                  console.log(`User ${pledge.userId} has ${failureResult?.remainingAttempts} payment attempts remaining`)
+                // Send failed payment email notification
+                try {
+                  if (failureResult?.isSuspended) {
+                    // Send suspension email
+                    await sendSuspensionEmail({
+                      userName: user.name || 'User',
+                      userEmail: user.email,
+                      supportUrl: `${process.env.NEXTAUTH_URL}/tickets`
+                    })
+                    console.log(`User ${pledge.userId} suspended due to payment failures`)
+                  } else {
+                    // Send failed payment email
+                    await sendFailedPaymentEmail({
+                      userName: user.name || 'User',
+                      userEmail: user.email,
+                      serverName: server.name,
+                      pledgeAmount: pledge.amount,
+                      attemptNumber: failureResult?.attemptNumber || 1,
+                      currency: 'A$',
+                      supportUrl: `${process.env.NEXTAUTH_URL}/tickets`
+                    })
+                    console.log(`User ${pledge.userId} has ${failureResult?.remainingAttempts} payment attempts remaining`)
+                  }
+                } catch (emailError) {
+                  console.error('Failed to send payment failure email:', emailError)
                 }
                 
                 // Create a mock failed payment intent for consistency
@@ -256,6 +293,31 @@ export async function processPendingWithdrawals() {
               // Handle payment failure
               const errorMessage = error instanceof Error ? error.message : String(error)
               const failureResult = await handlePaymentFailure(pledge.userId, `PayPal payment error: ${errorMessage}`)
+              
+              // Send failed payment email notification
+              try {
+                if (failureResult?.isSuspended) {
+                  // Send suspension email
+                  await sendSuspensionEmail({
+                    userName: user.name || 'User',
+                    userEmail: user.email,
+                    supportUrl: `${process.env.NEXTAUTH_URL}/tickets`
+                  })
+                } else {
+                  // Send failed payment email
+                  await sendFailedPaymentEmail({
+                    userName: user.name || 'User',
+                    userEmail: user.email,
+                    serverName: server.name,
+                    pledgeAmount: pledge.amount,
+                    attemptNumber: failureResult?.attemptNumber || 1,
+                    currency: 'A$',
+                    supportUrl: `${process.env.NEXTAUTH_URL}/tickets`
+                  })
+                }
+              } catch (emailError) {
+                console.error('Failed to send payment failure email:', emailError)
+              }
               
               // Create a mock failed payment intent for consistency
               paymentIntent = { status: 'failed' }
@@ -281,16 +343,52 @@ export async function processPendingWithdrawals() {
                 serverId: withdrawal.serverId
               }
             })
+            
+            // Send email notification for successful payment
+            try {
+              await sendPledgePaymentEmail({
+                userName: user.name || 'User',
+                userEmail: user.email,
+                serverName: server.name,
+                pledgeAmount: pledge.amount,
+                actualAmount: actualAmount,
+                totalPledgers: serverPledges.length,
+                currency: 'A$'
+              })
+            } catch (emailError) {
+              console.error('Failed to send payment success email:', emailError)
+            }
           } else if (user.stripePaymentMethodId && user.stripeCustomerId && paymentIntent.status !== 'succeeded') {
             console.log(`Stripe payment failed for user ${pledge.userId}: ${paymentIntent.status}`)
             
             // Handle payment failure
             const failureResult = await handlePaymentFailure(pledge.userId, `Pledge payment failed: ${paymentIntent.status}`)
             
-            if (failureResult?.isSuspended) {
-              console.log(`User ${pledge.userId} suspended due to payment failures`)
-            } else {
-              console.log(`User ${pledge.userId} has ${failureResult?.remainingAttempts} payment attempts remaining`)
+            // Send failed payment email notification
+            try {
+              if (failureResult?.isSuspended) {
+                // Send suspension email
+                await sendSuspensionEmail({
+                  userName: user.name || 'User',
+                  userEmail: user.email,
+                  supportUrl: `${process.env.NEXTAUTH_URL}/tickets`
+                })
+                console.log(`User ${pledge.userId} suspended due to payment failures`)
+              } else {
+                // Send failed payment email
+                await sendFailedPaymentEmail({
+                  userName: user.name || 'User',
+                  userEmail: user.email,
+                  serverName: server.name,
+                  pledgeAmount: pledge.amount,
+                  attemptNumber: failureResult?.attemptNumber || 1,
+                  currency: 'A$',
+                  supportUrl: `${process.env.NEXTAUTH_URL}/tickets`
+                })
+                console.log(`User ${pledge.userId} has ${failureResult?.remainingAttempts} payment attempts remaining`)
+              }
+            } catch (emailError) {
+              console.error('Failed to send payment failure email:', emailError)
             }
           }
         } catch (error) {
