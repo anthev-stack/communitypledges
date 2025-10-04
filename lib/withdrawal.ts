@@ -254,7 +254,8 @@ export async function processPendingWithdrawals() {
               console.error(`Error processing PayPal payment for user ${pledge.userId}:`, error)
               
               // Handle payment failure
-              const failureResult = await handlePaymentFailure(pledge.userId, `PayPal payment error: ${error.message}`)
+              const errorMessage = error instanceof Error ? error.message : String(error)
+              const failureResult = await handlePaymentFailure(pledge.userId, `PayPal payment error: ${errorMessage}`)
               
               // Create a mock failed payment intent for consistency
               paymentIntent = { status: 'failed' }
@@ -553,7 +554,7 @@ async function distributeToPayPal(owner: any, amount: number, serverId: string, 
     await prisma.activityLog.create({
       data: {
         type: 'paypal_payout_failed',
-        message: `PayPal payout failed for "${serverName}": ${error.message}`,
+        message: `PayPal payout failed for "${serverName}": ${error instanceof Error ? error.message : String(error)}`,
         amount: amount,
         userId: owner.id,
         serverId: serverId
@@ -674,6 +675,6 @@ async function processPayPalPayment(user: any, amount: number, serverId: string,
 
   } catch (error) {
     console.error(`Error processing PayPal payment:`, error)
-    return { success: false, error: error.message }
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 }
