@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    console.log(`[Members API] Found ${members.length} members`)
+    console.log(`[Members API] Found ${members.length} total users in database`)
 
     // Transform the data to include basic stats only
     const membersWithStats = members.map(member => ({

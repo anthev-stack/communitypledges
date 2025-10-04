@@ -59,43 +59,75 @@ export async function DELETE(request: Request) {
 
     // Start a transaction to ensure all deletions succeed or none do
     await prisma.$transaction(async (tx) => {
+      console.log(`[Account Deletion] Starting deletion for user ${userId}`)
+      
       // 1. Delete all pledges made by this user
-      await tx.pledge.deleteMany({
+      const deletedPledges = await tx.pledge.deleteMany({
         where: { userId: userId }
       })
+      console.log(`[Account Deletion] Deleted ${deletedPledges.count} pledges made by user`)
 
       // 2. Delete all pledges to servers owned by this user
       const serverIds = user.servers.map(server => server.id)
       if (serverIds.length > 0) {
-        await tx.pledge.deleteMany({
+        const deletedServerPledges = await tx.pledge.deleteMany({
           where: { serverId: { in: serverIds } }
         })
+        console.log(`[Account Deletion] Deleted ${deletedServerPledges.count} pledges to user's servers`)
       }
 
       // 3. Delete all servers owned by this user
-      await tx.server.deleteMany({
+      const deletedServers = await tx.server.deleteMany({
         where: { ownerId: userId }
       })
+      console.log(`[Account Deletion] Deleted ${deletedServers.count} servers owned by user`)
 
       // 4. Delete all activity logs for this user
-      await tx.activityLog.deleteMany({
+      const deletedActivityLogs = await tx.activityLog.deleteMany({
         where: { userId: userId }
       })
+      console.log(`[Account Deletion] Deleted ${deletedActivityLogs.count} activity logs`)
 
       // 5. Delete all tickets created by this user
-      await tx.ticket.deleteMany({
+      const deletedTickets = await tx.ticket.deleteMany({
         where: { createdById: userId }
       })
+      console.log(`[Account Deletion] Deleted ${deletedTickets.count} tickets created by user`)
 
       // 6. Delete all favorites for this user
-      await tx.favorite.deleteMany({
+      const deletedFavorites = await tx.favorite.deleteMany({
         where: { userId: userId }
       })
+      console.log(`[Account Deletion] Deleted ${deletedFavorites.count} favorites`)
 
-      // 7. Finally, delete the user account
-      await tx.user.delete({
+      // 7. Delete any ban actions where user is staff or target
+      const deletedBanActions = await tx.banAction.deleteMany({
+        where: {
+          OR: [
+            { staffId: userId },
+            { targetUserId: userId }
+          ]
+        }
+      })
+      console.log(`[Account Deletion] Deleted ${deletedBanActions.count} ban actions`)
+
+      // 8. Delete any ticket messages authored by this user
+      const deletedTicketMessages = await tx.ticketMessage.deleteMany({
+        where: { authorId: userId }
+      })
+      console.log(`[Account Deletion] Deleted ${deletedTicketMessages.count} ticket messages`)
+
+      // 9. Delete any server boosts owned by this user
+      const deletedServerBoosts = await tx.serverBoost.deleteMany({
+        where: { userId: userId }
+      })
+      console.log(`[Account Deletion] Deleted ${deletedServerBoosts.count} server boosts`)
+
+      // 10. Finally, delete the user account
+      const deletedUser = await tx.user.delete({
         where: { id: userId }
       })
+      console.log(`[Account Deletion] Successfully deleted user: ${deletedUser.email}`)
     })
 
     // Log the account deletion
