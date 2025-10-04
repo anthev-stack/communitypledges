@@ -119,7 +119,7 @@ export async function DELETE(request: Request) {
 
       // 9. Delete any server boosts owned by this user
       const deletedServerBoosts = await tx.serverBoost.deleteMany({
-        where: { userId: userId }
+        where: { ownerId: userId }
       })
       console.log(`[Account Deletion] Deleted ${deletedServerBoosts.count} server boosts`)
 
