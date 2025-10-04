@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "seed-admin": "node scripts/seed-admin.js",
+    "check-admin": "node scripts/check-admin.js",
+    "recreate-admin": "node scripts/recreate-admin.js",
     "postinstall": "prisma generate"
   },
   "dependencies": {
