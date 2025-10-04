@@ -926,8 +926,9 @@ export default function SettingsPage() {
                 <li>All servers you created</li>
                 <li>All pledges you made to other servers</li>
                 <li>All pledges made to your servers</li>
-                <li>All activity logs and notifications</li>
+                <li>All activity logs</li>
                 <li>All support tickets</li>
+                <li>All favorite servers</li>
               </ul>
             </div>
           </div>
@@ -1238,8 +1239,9 @@ export default function SettingsPage() {
                 <li>• All servers you created</li>
                 <li>• All pledges you made to other servers</li>
                 <li>• All pledges made to your servers</li>
-                <li>• All activity logs and notifications</li>
+                <li>• All activity logs</li>
                 <li>• All support tickets</li>
+                <li>• All favorite servers</li>
               </ul>
             </div>
 

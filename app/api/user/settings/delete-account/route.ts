@@ -82,13 +82,13 @@ export async function DELETE(request: Request) {
         where: { userId: userId }
       })
 
-      // 5. Delete all notifications for this user
-      await tx.notification.deleteMany({
+      // 5. Delete all tickets created by this user
+      await tx.ticket.deleteMany({
         where: { userId: userId }
       })
 
-      // 6. Delete all tickets created by this user
-      await tx.ticket.deleteMany({
+      // 6. Delete all favorites for this user
+      await tx.favorite.deleteMany({
         where: { userId: userId }
       })
 
@@ -142,8 +142,9 @@ export async function DELETE(request: Request) {
                   <li>All servers you created (${user.servers.length} server${user.servers.length === 1 ? '' : 's'})</li>
                   <li>All pledges you made to other servers (${user.pledges.length} pledge${user.pledges.length === 1 ? '' : 's'})</li>
                   <li>All pledges made to your servers</li>
-                  <li>All activity logs and notifications</li>
+                  <li>All activity logs</li>
                   <li>All support tickets</li>
+                  <li>All favorite servers</li>
                 </ul>
               </div>
               
@@ -170,8 +171,9 @@ export async function DELETE(request: Request) {
           - All servers you created (${user.servers.length} server${user.servers.length === 1 ? '' : 's'})
           - All pledges you made to other servers (${user.pledges.length} pledge${user.pledges.length === 1 ? '' : 's'})
           - All pledges made to your servers
-          - All activity logs and notifications
+          - All activity logs
           - All support tickets
+          - All favorite servers
           
           Important: This action cannot be undone. If you wish to use Community Pledges again in the future, you will need to create a new account.
           
