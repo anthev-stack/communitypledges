@@ -62,6 +62,20 @@ export interface PasswordResetEmailData {
   resetUrl: string
 }
 
+export interface PasswordChangeEmailData {
+  userName: string
+  userEmail: string
+  changeTime: string
+}
+
+export interface UsernameChangeEmailData {
+  userName: string
+  userEmail: string
+  oldUsername: string
+  newUsername: string
+  changeTime: string
+}
+
 // Email templates
 export function createPledgePaymentTemplate(data: PledgePaymentEmailData): EmailTemplate {
   const { userName, serverName, pledgeAmount, actualAmount, totalPledgers, currency } = data
@@ -488,6 +502,171 @@ export function createPasswordResetTemplate(data: PasswordResetEmailData): Email
   return { subject, html, text }
 }
 
+export function createPasswordChangeTemplate(data: PasswordChangeEmailData): EmailTemplate {
+  const { userName, changeTime } = data
+  
+  const subject = 'Password Changed - Community Pledges'
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Password Changed</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+        .info { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981; }
+        .warning { background: #fef2f2; border: 1px solid #fecaca; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>🔒 Password Changed</h1>
+        <p>Your account security has been updated</p>
+      </div>
+      
+      <div class="content">
+        <h2>Hello ${userName}!</h2>
+        
+        <div class="info">
+          <h3>Password Successfully Changed</h3>
+          <p>Your Community Pledges account password was changed on <strong>${changeTime}</strong>.</p>
+        </div>
+        
+        <div class="warning">
+          <h3>Security Notice</h3>
+          <p>If you did not make this change, please contact our support team immediately. Your account security is important to us.</p>
+        </div>
+        
+        <p><strong>Security Tips:</strong></p>
+        <ul>
+          <li>Use a strong, unique password</li>
+          <li>Don't share your password with anyone</li>
+          <li>Log out from shared devices</li>
+          <li>Enable two-factor authentication if available</li>
+        </ul>
+        
+        <p><strong>Need help?</strong> If you have any questions or concerns, contact us through our <a href="${process.env.NEXTAUTH_URL}/tickets">Support System</a>.</p>
+        
+        <div class="footer">
+          <p>This is an automated security notification from Community Pledges.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+  
+  const text = `
+    Password Changed - Community Pledges
+    
+    Hello ${userName}!
+    
+    Your Community Pledges account password was changed on ${changeTime}.
+    
+    If you did not make this change, please contact our support team immediately.
+    
+    Security Tips:
+    - Use a strong, unique password
+    - Don't share your password with anyone
+    - Log out from shared devices
+    - Enable two-factor authentication if available
+    
+    Need help? Contact us through our Support System: ${process.env.NEXTAUTH_URL}/tickets
+    
+    This is an automated security notification from Community Pledges.
+  `
+  
+  return { subject, html, text }
+}
+
+export function createUsernameChangeTemplate(data: UsernameChangeEmailData): EmailTemplate {
+  const { userName, oldUsername, newUsername, changeTime } = data
+  
+  const subject = 'Username Changed - Community Pledges'
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Username Changed</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+        .info { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981; }
+        .change { background: #f0f9ff; border: 1px solid #bae6fd; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>👤 Username Changed</h1>
+        <p>Your profile has been updated</p>
+      </div>
+      
+      <div class="content">
+        <h2>Hello ${userName}!</h2>
+        
+        <div class="info">
+          <h3>Username Successfully Changed</h3>
+          <p>Your Community Pledges username was changed on <strong>${changeTime}</strong>.</p>
+        </div>
+        
+        <div class="change">
+          <h3>Change Details</h3>
+          <p><strong>Old Username:</strong> ${oldUsername}</p>
+          <p><strong>New Username:</strong> ${newUsername}</p>
+        </div>
+        
+        <p><strong>Important Notes:</strong></p>
+        <ul>
+          <li>Your new username is now visible to other users</li>
+          <li>You cannot change your username again for 14 days</li>
+          <li>All your servers and pledges remain unchanged</li>
+          <li>Your login email remains the same</li>
+        </ul>
+        
+        <p><strong>Need help?</strong> If you have any questions, contact us through our <a href="${process.env.NEXTAUTH_URL}/tickets">Support System</a>.</p>
+        
+        <div class="footer">
+          <p>This is an automated notification from Community Pledges.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+  
+  const text = `
+    Username Changed - Community Pledges
+    
+    Hello ${userName}!
+    
+    Your Community Pledges username was changed on ${changeTime}.
+    
+    Change Details:
+    Old Username: ${oldUsername}
+    New Username: ${newUsername}
+    
+    Important Notes:
+    - Your new username is now visible to other users
+    - You cannot change your username again for 14 days
+    - All your servers and pledges remain unchanged
+    - Your login email remains the same
+    
+    Need help? Contact us through our Support System: ${process.env.NEXTAUTH_URL}/tickets
+    
+    This is an automated notification from Community Pledges.
+  `
+  
+  return { subject, html, text }
+}
+
 // Email sending functions
 export async function sendEmail(to: string, template: EmailTemplate): Promise<boolean> {
   try {
@@ -535,5 +714,15 @@ export async function sendAccountConfirmationEmail(data: AccountConfirmationEmai
 
 export async function sendPasswordResetEmail(data: PasswordResetEmailData): Promise<boolean> {
   const template = createPasswordResetTemplate(data)
+  return await sendEmail(data.userEmail, template)
+}
+
+export async function sendPasswordChangeEmail(data: PasswordChangeEmailData): Promise<boolean> {
+  const template = createPasswordChangeTemplate(data)
+  return await sendEmail(data.userEmail, template)
+}
+
+export async function sendUsernameChangeEmail(data: UsernameChangeEmailData): Promise<boolean> {
+  const template = createUsernameChangeTemplate(data)
   return await sendEmail(data.userEmail, template)
 }

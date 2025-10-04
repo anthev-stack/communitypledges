@@ -31,6 +31,7 @@ interface UserSettings {
   name?: string
   email?: string
   image?: string
+  lastUsernameChange?: string | null
 }
 
 export default function SettingsPage() {
@@ -49,6 +50,10 @@ export default function SettingsPage() {
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null)
   const [savingProfileImage, setSavingProfileImage] = useState(false)
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [showUsernameForm, setShowUsernameForm] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [changingUsername, setChangingUsername] = useState(false)
 
   const accountForm = useForm({
     defaultValues: {
@@ -56,7 +61,8 @@ export default function SettingsPage() {
       email: '',
       currentPassword: '',
       newPassword: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      newUsername: ''
     }
   })
 
@@ -329,6 +335,95 @@ export default function SettingsPage() {
         message: 'Failed to save PayPal email. Please try again.',
         duration: 4000
       })
+    }
+  }
+
+  // Handle password change
+  const handlePasswordChange = async (data: { currentPassword: string; newPassword: string }) => {
+    setChangingPassword(true)
+    try {
+      const response = await fetch('/api/user/settings/password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        addNotification({
+          type: 'success',
+          title: 'Password Changed',
+          message: 'Your password has been changed successfully. You will receive an email confirmation.',
+          duration: 5000
+        })
+        setShowPasswordForm(false)
+        accountForm.reset()
+      } else {
+        addNotification({
+          type: 'error',
+          title: 'Password Change Failed',
+          message: result.message || 'Failed to change password. Please try again.',
+          duration: 4000
+        })
+      }
+    } catch (error) {
+      console.error('Error changing password:', error)
+      addNotification({
+        type: 'error',
+        title: 'Password Change Failed',
+        message: 'Failed to change password. Please try again.',
+        duration: 4000
+      })
+    } finally {
+      setChangingPassword(false)
+    }
+  }
+
+  // Handle username change
+  const handleUsernameChange = async (data: { newUsername: string }) => {
+    setChangingUsername(true)
+    try {
+      const response = await fetch('/api/user/settings/username', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        addNotification({
+          type: 'success',
+          title: 'Username Changed',
+          message: `Your username has been changed to "${result.newUsername}". You will receive an email confirmation.`,
+          duration: 5000
+        })
+        setShowUsernameForm(false)
+        accountForm.reset()
+        fetchUserSettings() // Refresh to get updated username
+      } else {
+        addNotification({
+          type: 'error',
+          title: 'Username Change Failed',
+          message: result.message || 'Failed to change username. Please try again.',
+          duration: 4000
+        })
+      }
+    } catch (error) {
+      console.error('Error changing username:', error)
+      addNotification({
+        type: 'error',
+        title: 'Username Change Failed',
+        message: 'Failed to change username. Please try again.',
+        duration: 4000
+      })
+    } finally {
+      setChangingUsername(false)
     }
   }
 
@@ -606,6 +701,143 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Password Change Section */}
+          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">Password</h2>
+              <button
+                onClick={() => setShowPasswordForm(!showPasswordForm)}
+                className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                {showPasswordForm ? 'Cancel' : 'Change Password'}
+              </button>
+            </div>
+            
+            {showPasswordForm && (
+              <form onSubmit={accountForm.handleSubmit((data) => handlePasswordChange({ currentPassword: data.currentPassword, newPassword: data.newPassword }))} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Current Password
+                  </label>
+                  <input
+                    {...accountForm.register('currentPassword')}
+                    type="password"
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Enter current password"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    New Password
+                  </label>
+                  <input
+                    {...accountForm.register('newPassword')}
+                    type="password"
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Confirm New Password
+                  </label>
+                  <input
+                    {...accountForm.register('confirmPassword')}
+                    type="password"
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Confirm new password"
+                  />
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    type="submit"
+                    disabled={changingPassword}
+                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                  >
+                    {changingPassword ? 'Changing...' : 'Change Password'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordForm(false)}
+                    className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+
+          {/* Username Change Section */}
+          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Username</h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  Current: {userSettings?.name || 'Not set'}
+                  {userSettings?.lastUsernameChange && (
+                    <span className="block text-xs text-yellow-400 mt-1">
+                      Last changed: {new Date(userSettings.lastUsernameChange).toLocaleDateString()}
+                    </span>
+                  )}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowUsernameForm(!showUsernameForm)}
+                disabled={userSettings?.lastUsernameChange && 
+                  (Date.now() - new Date(userSettings.lastUsernameChange).getTime()) < (14 * 24 * 60 * 60 * 1000)}
+                className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {showUsernameForm ? 'Cancel' : 'Change Username'}
+              </button>
+            </div>
+            
+            {userSettings?.lastUsernameChange && 
+              (Date.now() - new Date(userSettings.lastUsernameChange).getTime()) < (14 * 24 * 60 * 60 * 1000) && (
+              <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-lg p-3 mb-4">
+                <p className="text-yellow-400 text-sm">
+                  ⚠️ You can only change your username once every 14 days. 
+                  Next change available: {new Date(new Date(userSettings.lastUsernameChange).getTime() + (14 * 24 * 60 * 60 * 1000)).toLocaleDateString()}
+                </p>
+              </div>
+            )}
+            
+            {showUsernameForm && (
+              <form onSubmit={accountForm.handleSubmit((data) => handleUsernameChange({ newUsername: data.newUsername }))} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    New Username
+                  </label>
+                  <input
+                    {...accountForm.register('newUsername')}
+                    type="text"
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Enter new username"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    3-20 characters, must be unique
+                  </p>
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    type="submit"
+                    disabled={changingUsername}
+                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                  >
+                    {changingUsername ? 'Changing...' : 'Change Username'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowUsernameForm(false)}
+                    className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
