@@ -26,13 +26,14 @@ export async function GET(request: NextRequest) {
       }
 
       const stateParam = session.user.id // Use user ID as state for security
-      const paypalAuthUrl = `https://www.paypal.com/signin/authorize?client_id=${clientId}&response_type=code&scope=openid+profile+email&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateParam}`
+      const paypalAuthUrl = `https://www.paypal.com/signin/authorize?client_id=${clientId}&response_type=code&scope=openid%20profile&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateParam}`
 
       // Debug logging
       console.log('PayPal OAuth Debug Info:')
       console.log('- Client ID:', clientId)
       console.log('- Redirect URI:', redirectUri)
       console.log('- State:', stateParam)
+      console.log('- Scopes: openid profile')
       console.log('- Full URL:', paypalAuthUrl)
 
       return NextResponse.redirect(paypalAuthUrl)
