@@ -39,8 +39,8 @@ export default function HomePage() {
           </div>
           <h3 className="text-xl font-semibold mb-2 text-white">Fair Cost Sharing</h3>
           <p className="text-gray-300">
-            Pay only what you pledged. We optimize costs to reduce everyone's burden 
-            while respecting your budget limits.
+            Pay only what you pledged or less. We optimize costs to reduce everyone's payments 
+            while respecting your pledged limit.
           </p>
         </div>
         
@@ -50,8 +50,8 @@ export default function HomePage() {
           </div>
           <h3 className="text-xl font-semibold mb-2 text-white">Community Driven</h3>
           <p className="text-gray-300">
-            Join forces with other community members to make server hosting 
-            affordable for everyone.
+            Join forces with other community members to make server costs 
+            more affordable for server owners.
           </p>
         </div>
         
@@ -61,8 +61,8 @@ export default function HomePage() {
           </div>
           <h3 className="text-xl font-semibold mb-2 text-white">Transparent Process</h3>
           <p className="text-gray-300">
-            See exactly what you'll pay and how your pledge helps reduce 
-            costs for everyone.
+            See exactly what you'll pay and how your pledge helped reduce 
+            costs for everyone else if you pledged more!
           </p>
         </div>
       </div>
