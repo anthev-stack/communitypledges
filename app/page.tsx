@@ -5,11 +5,11 @@ export default function HomePage() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Hero Section */}
-      <div className="text-center py-16">
-        <h1 className="text-5xl font-bold text-white mb-6">
+      <div className="text-center py-16 px-4">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
           COMMUNITYPLEDGES
         </h1>
-        <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+        <p className="text-lg sm:text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
           Share the cost of community servers with others. Pledge what you can afford, 
           and we'll optimize the costs to make hosting affordable for everyone.
         </p>
