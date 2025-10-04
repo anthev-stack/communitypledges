@@ -74,7 +74,6 @@ model User {
   suspendedAt          DateTime?
   
   // Email confirmation
-  emailVerified        DateTime?
   emailVerificationToken String?
   emailVerificationExpires DateTime?
   

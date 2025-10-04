@@ -1,0 +1,69 @@
+# Email Configuration for Community Pledges
+# Choose one of the options below and configure accordingly
+
+# ===========================================
+# Option 1: SendGrid (Recommended)
+# ===========================================
+# SMTP_HOST=smtp.sendgrid.net
+# SMTP_PORT=587
+# SMTP_SECURE=false
+# SMTP_USER=apikey
+# SMTP_PASS=your-sendgrid-api-key
+
+# ===========================================
+# Option 2: Google Workspace (Your Domain)
+# ===========================================
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_SECURE=false
+# SMTP_USER=noreply@communitypledges.com
+# SMTP_PASS=your-app-password
+
+# ===========================================
+# Option 3: Mailgun
+# ===========================================
+# SMTP_HOST=smtp.mailgun.org
+# SMTP_PORT=587
+# SMTP_SECURE=false
+# SMTP_USER=postmaster@mg.communitypledges.com
+# SMTP_PASS=your-mailgun-password
+
+# ===========================================
+# Option 4: Amazon SES
+# ===========================================
+# SMTP_HOST=email-smtp.us-east-1.amazonaws.com
+# SMTP_PORT=587
+# SMTP_SECURE=false
+# SMTP_USER=your-ses-smtp-username
+# SMTP_PASS=your-ses-smtp-password
+
+# ===========================================
+# Email Addresses (Optional - will use SMTP_USER if not set)
+# ===========================================
+# EMAIL_NOREPLY=noreply@communitypledges.com
+# EMAIL_SUPPORT=support@communitypledges.com
+# EMAIL_ADMIN=admin@communitypledges.com
+
+# ===========================================
+# Instructions:
+# ===========================================
+# 1. Choose one of the email providers above
+# 2. Uncomment the lines for your chosen provider
+# 3. Replace the placeholder values with your actual credentials
+# 4. Copy these variables to your .env.local file
+# 5. Deploy to Vercel with these environment variables
+
+# For SendGrid setup:
+# 1. Go to https://sendgrid.com
+# 2. Sign up for free account
+# 3. Go to Settings → Sender Authentication
+# 4. Add your domain communitypledges.com
+# 5. Follow DNS verification steps
+# 6. Create API key in Settings → API Keys
+# 7. Use the API key as SMTP_PASS
+
+# For Google Workspace setup:
+# 1. Sign up for Google Workspace
+# 2. Verify your domain communitypledges.com
+# 3. Create noreply@communitypledges.com email
+# 4. Generate app password for SMTP_PASS

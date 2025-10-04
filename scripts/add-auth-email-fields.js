@@ -15,10 +15,9 @@ async function addAuthEmailFields() {
     console.log('🔍 Checking if auth email fields exist...')
     
     try {
-      // Try to query the new fields to see if they exist
+      // Try to query the new fields to see if they exist (emailVerified already exists)
       await prisma.user.findFirst({
         select: {
-          emailVerified: true,
           emailVerificationToken: true,
           emailVerificationExpires: true,
           passwordResetToken: true,
@@ -30,10 +29,9 @@ async function addAuthEmailFields() {
       if (error.message.includes('Unknown column') || error.message.includes('does not exist')) {
         console.log('🔧 Adding auth email fields...')
         
-        // Add the new columns
+        // Add the new columns (emailVerified already exists)
         await prisma.$executeRaw`
           ALTER TABLE "User" 
-          ADD COLUMN IF NOT EXISTS "emailVerified" TIMESTAMP(3),
           ADD COLUMN IF NOT EXISTS "emailVerificationToken" TEXT,
           ADD COLUMN IF NOT EXISTS "emailVerificationExpires" TIMESTAMP(3),
           ADD COLUMN IF NOT EXISTS "passwordResetToken" TEXT,
@@ -51,7 +49,7 @@ async function addAuthEmailFields() {
     const testUser = await prisma.user.findFirst({
       select: {
         id: true,
-        emailVerified: true,
+        emailVerified: true, // This already exists
         emailVerificationToken: true,
         emailVerificationExpires: true,
         passwordResetToken: true,

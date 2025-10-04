@@ -11,6 +11,13 @@ const transporter = nodemailer.createTransporter({
   },
 })
 
+// Email addresses for different purposes
+const EMAIL_ADDRESSES = {
+  noreply: process.env.EMAIL_NOREPLY || process.env.SMTP_USER || 'noreply@communitypledges.com',
+  support: process.env.EMAIL_SUPPORT || 'support@communitypledges.com',
+  admin: process.env.EMAIL_ADMIN || 'admin@communitypledges.com',
+}
+
 export interface EmailTemplate {
   subject: string
   html: string
@@ -490,7 +497,7 @@ export async function sendEmail(to: string, template: EmailTemplate): Promise<bo
     }
 
     const mailOptions = {
-      from: `"Community Pledges" <${process.env.SMTP_USER}>`,
+      from: `"Community Pledges" <${EMAIL_ADDRESSES.noreply}>`,
       to,
       subject: template.subject,
       text: template.text,
