@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/contexts/NotificationContext'
 import { useForm } from 'react-hook-form'
@@ -54,6 +54,9 @@ export default function SettingsPage() {
   const [showUsernameForm, setShowUsernameForm] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
   const [changingUsername, setChangingUsername] = useState(false)
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(false)
+  const [deleteConfirmation, setDeleteConfirmation] = useState('')
 
   const accountForm = useForm({
     defaultValues: {
@@ -427,6 +430,62 @@ export default function SettingsPage() {
     }
   }
 
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== 'DELETE') {
+      addNotification({
+        type: 'error',
+        title: 'Confirmation Required',
+        message: 'Please type "DELETE" to confirm account deletion.',
+        duration: 4000
+      })
+      return
+    }
+
+    setDeletingAccount(true)
+    try {
+      const response = await fetch('/api/user/settings/delete-account', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        addNotification({
+          type: 'success',
+          title: 'Account Deleted',
+          message: 'Your account has been permanently deleted. You will be redirected to the homepage.',
+          duration: 5000
+        })
+        
+        // Sign out and redirect after a short delay
+        setTimeout(() => {
+          signOut({ callbackUrl: '/' })
+        }, 2000)
+      } else {
+        addNotification({
+          type: 'error',
+          title: 'Deletion Failed',
+          message: result.message || 'Failed to delete account. Please try again.',
+          duration: 4000
+        })
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error)
+      addNotification({
+        type: 'error',
+        title: 'Deletion Failed',
+        message: 'Failed to delete account. Please try again.',
+        duration: 4000
+      })
+    } finally {
+      setDeletingAccount(false)
+    }
+  }
+
   // Handle card remove
   const handleCardRemove = async () => {
     try {
@@ -786,8 +845,8 @@ export default function SettingsPage() {
               </div>
               <button
                 onClick={() => setShowUsernameForm(!showUsernameForm)}
-                disabled={userSettings?.lastUsernameChange && 
-                  (Date.now() - new Date(userSettings.lastUsernameChange).getTime()) < (14 * 24 * 60 * 60 * 1000)}
+                disabled={!!(userSettings?.lastUsernameChange && 
+                  (Date.now() - new Date(userSettings.lastUsernameChange).getTime()) < (14 * 24 * 60 * 60 * 1000))}
                 className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {showUsernameForm ? 'Cancel' : 'Change Username'}
@@ -838,6 +897,39 @@ export default function SettingsPage() {
                 </div>
               </form>
             )}
+          </div>
+
+          {/* Account Deletion Section */}
+          <div className="bg-red-900/20 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-red-500/50">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold text-red-400">Danger Zone</h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  Permanently delete your account and all associated data
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDeleteAccountModal(true)}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Delete Account
+              </button>
+            </div>
+            
+            <div className="bg-red-900/30 border border-red-500/30 rounded-lg p-4">
+              <h3 className="text-red-400 font-medium mb-2">⚠️ Warning: This action cannot be undone</h3>
+              <p className="text-sm text-gray-300">
+                Deleting your account will permanently remove:
+              </p>
+              <ul className="text-sm text-gray-300 mt-2 ml-4 list-disc">
+                <li>Your user account and profile</li>
+                <li>All servers you created</li>
+                <li>All pledges you made to other servers</li>
+                <li>All pledges made to your servers</li>
+                <li>All activity logs and notifications</li>
+                <li>All support tickets</li>
+              </ul>
+            </div>
           </div>
         </div>
       )}
@@ -1117,6 +1209,69 @@ export default function SettingsPage() {
                 className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Account Deletion Confirmation Modal */}
+      {showDeleteAccountModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4 border border-red-500/50">
+            <div className="text-center mb-6">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-900/20 mb-4">
+                <svg className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-white mb-2">Delete Account</h3>
+              <p className="text-sm text-gray-300 mb-4">
+                This action cannot be undone. This will permanently delete your account and remove all data from our servers.
+              </p>
+            </div>
+            
+            <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-6">
+              <h4 className="text-red-400 font-medium mb-2">What will be deleted:</h4>
+              <ul className="text-sm text-gray-300 space-y-1">
+                <li>• Your user account and profile</li>
+                <li>• All servers you created</li>
+                <li>• All pledges you made to other servers</li>
+                <li>• All pledges made to your servers</li>
+                <li>• All activity logs and notifications</li>
+                <li>• All support tickets</li>
+              </ul>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Type <span className="text-red-400 font-bold">DELETE</span> to confirm:
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                placeholder="Type DELETE to confirm"
+                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+            </div>
+
+            <div className="flex space-x-4">
+              <button
+                onClick={() => {
+                  setShowDeleteAccountModal(false)
+                  setDeleteConfirmation('')
+                }}
+                className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deletingAccount || deleteConfirmation !== 'DELETE'}
+                className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingAccount ? 'Deleting...' : 'Delete Account'}
               </button>
             </div>
           </div>
