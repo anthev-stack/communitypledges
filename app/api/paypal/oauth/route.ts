@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       }
 
       const stateParam = session.user.id // Use user ID as state for security
-      const paypalAuthUrl = `https://www.sandbox.paypal.com/signin/authorize?client_id=${clientId}&response_type=code&scope=openid+profile+email&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateParam}`
+      const paypalAuthUrl = `https://www.paypal.com/signin/authorize?client_id=${clientId}&response_type=code&scope=openid+profile+email&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateParam}`
 
       return NextResponse.redirect(paypalAuthUrl)
     }
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Exchange code for access token
-    const tokenResponse = await fetch('https://api-m.sandbox.paypal.com/v1/oauth2/token', {
+    const tokenResponse = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     
     // Approach 1: Try OpenID Connect userinfo endpoint
     try {
-      const userInfoResponse = await fetch('https://api-m.sandbox.paypal.com/v1/identity/openidconnect/userinfo', {
+      const userInfoResponse = await fetch('https://api-m.paypal.com/v1/identity/openidconnect/userinfo', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     if (!paypalEmail) {
       try {
         console.log('Trying PayPal Identity API...')
-        const identityResponse = await fetch('https://api-m.sandbox.paypal.com/v1/identity/oauth2/userinfo', {
+        const identityResponse = await fetch('https://api-m.paypal.com/v1/identity/oauth2/userinfo', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
