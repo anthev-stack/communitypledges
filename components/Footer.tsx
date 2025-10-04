@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Heart, Mail, MessageCircle, Shield, Instagram, Globe } from 'lucide-react'
+import { Heart, MessageCircle, Shield, Instagram, Globe } from 'lucide-react'
 import { useCurrency } from '@/contexts/CurrencyContext'
 import { Currency } from '@/lib/currency'
 
@@ -56,12 +56,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/members" className="text-gray-400 hover:text-white transition-colors">
-                  Community Members
-                </Link>
-              </li>
-              <li>
-                <Link href="/servers/create" className="text-gray-400 hover:text-white transition-colors">
-                  Create Server
+                  Members
                 </Link>
               </li>
               <li>
@@ -95,15 +90,6 @@ export default function Footer() {
                 <Link href="/tickets/create" className="text-gray-400 hover:text-white transition-colors">
                   Create Ticket
                 </Link>
-              </li>
-              <li>
-                <a
-                  href="mailto:support@communitypledges.com"
-                  className="text-gray-400 hover:text-white transition-colors flex items-center space-x-2"
-                >
-                  <Mail className="w-4 h-4" />
-                  <span>Email Support</span>
-                </a>
               </li>
             </ul>
           </div>
