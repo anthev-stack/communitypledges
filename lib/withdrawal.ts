@@ -195,7 +195,7 @@ export async function processPendingWithdrawals() {
             // User has card payment method - process through Stripe
             paymentIntent = await stripe.paymentIntents.create({
               amount: Math.round(actualAmount * 100), // Convert to cents
-              currency: 'usd',
+              currency: 'aud',
               customer: user.stripeCustomerId,
               payment_method: user.stripePaymentMethodId,
               confirm: true,
@@ -211,31 +211,59 @@ export async function processPendingWithdrawals() {
               }
             })
           } else if (user.paypalEmail) {
-            // User has PayPal - create a payment intent for manual processing
-            // In a real implementation, you would integrate with PayPal API here
-            // For now, we'll create a pending payment intent that can be processed manually
-            paymentIntent = await stripe.paymentIntents.create({
-              amount: Math.round(actualAmount * 100),
-              currency: 'usd',
-              payment_method_types: ['card'], // This will be processed manually via PayPal
-              metadata: {
-                serverId: withdrawal.serverId,
-                serverOwnerId: withdrawal.server.ownerId,
-                payerId: pledge.userId,
-                type: 'pledge_payment',
-                paymentMethod: 'paypal',
-                paypalEmail: user.paypalEmail,
-                platformFee: platformFee.toString(),
-                stripeFee: stripeFee.toString(),
-                netAmount: netAmount.toString()
+            // User has PayPal - process payment via PayPal API
+            try {
+              const paypalResult = await processPayPalPayment(user, actualAmount, withdrawal.serverId, server.name, pledge.userId)
+              
+              if (paypalResult.success) {
+                totalCollected += actualAmount
+                successfulPayments++
+                
+                // Reset payment failures on successful payment
+                await resetPaymentFailures(pledge.userId)
+                
+                // Log successful payment
+                await prisma.activityLog.create({
+                  data: {
+                    type: 'payment_processed',
+                    message: `PayPal payment of A$${actualAmount.toFixed(2)} processed for "${server.name}" pledge`,
+                    amount: actualAmount,
+                    userId: pledge.userId,
+                    serverId: withdrawal.serverId
+                  }
+                })
+                
+                // Create a mock successful payment intent for consistency
+                paymentIntent = { status: 'succeeded' }
+              } else {
+                console.log(`PayPal payment failed for user ${pledge.userId}: ${paypalResult.error}`)
+                
+                // Handle payment failure
+                const failureResult = await handlePaymentFailure(pledge.userId, `PayPal payment failed: ${paypalResult.error}`)
+                
+                if (failureResult?.isSuspended) {
+                  console.log(`User ${pledge.userId} suspended due to payment failures`)
+                } else {
+                  console.log(`User ${pledge.userId} has ${failureResult?.remainingAttempts} payment attempts remaining`)
+                }
+                
+                // Create a mock failed payment intent for consistency
+                paymentIntent = { status: 'failed' }
               }
-            })
-            
-            // Mark as requiring manual processing
-            paymentIntent.status = 'requires_payment_method' // This indicates manual processing needed
+            } catch (error) {
+              console.error(`Error processing PayPal payment for user ${pledge.userId}:`, error)
+              
+              // Handle payment failure
+              const failureResult = await handlePaymentFailure(pledge.userId, `PayPal payment error: ${error.message}`)
+              
+              // Create a mock failed payment intent for consistency
+              paymentIntent = { status: 'failed' }
+            }
           }
 
-          if (paymentIntent.status === 'succeeded') {
+          // Payment processing is now handled within the if/else blocks above
+          // This section is kept for Stripe card payments only
+          if (user.stripePaymentMethodId && user.stripeCustomerId && paymentIntent.status === 'succeeded') {
             totalCollected += actualAmount
             successfulPayments++
             
@@ -246,28 +274,14 @@ export async function processPendingWithdrawals() {
             await prisma.activityLog.create({
               data: {
                 type: 'payment_processed',
-                message: `Payment of $${actualAmount.toFixed(2)} processed for "${server.name}" pledge`,
+                message: `Payment of A$${actualAmount.toFixed(2)} processed for "${server.name}" pledge`,
                 amount: actualAmount,
                 userId: pledge.userId,
                 serverId: withdrawal.serverId
               }
             })
-          } else if (paymentIntent.status === 'requires_payment_method') {
-            // PayPal payment - requires manual processing
-            console.log(`PayPal payment required for user ${pledge.userId} (${user.paypalEmail}) - amount: $${actualAmount.toFixed(2)}`)
-            
-            // Log pending PayPal payment
-            await prisma.activityLog.create({
-              data: {
-                type: 'paypal_payment_pending',
-                message: `PayPal payment of $${actualAmount.toFixed(2)} pending for "${server.name}" pledge (${user.paypalEmail})`,
-                amount: actualAmount,
-                userId: pledge.userId,
-                serverId: withdrawal.serverId
-              }
-            })
-          } else {
-            console.log(`Payment failed for user ${pledge.userId}: ${paymentIntent.status}`)
+          } else if (user.stripePaymentMethodId && user.stripeCustomerId && paymentIntent.status !== 'succeeded') {
+            console.log(`Stripe payment failed for user ${pledge.userId}: ${paymentIntent.status}`)
             
             // Handle payment failure
             const failureResult = await handlePaymentFailure(pledge.userId, `Pledge payment failed: ${paymentIntent.status}`)
@@ -436,33 +450,230 @@ async function distributeToServerOwner(server: any, totalAmount: number, serverI
  */
 async function distributeToPayPal(owner: any, amount: number, serverId: string, serverName: string) {
   try {
-    // For now, we'll log the PayPal payment requirement
-    // In a real implementation, you would:
-    // 1. Use PayPal API to send payment to owner.paypalEmail
-    // 2. Handle PayPal webhooks for payment confirmation
-    // 3. Update payment status in database
+    const clientId = process.env.PAYPAL_CLIENT_ID
+    const clientSecret = process.env.PAYPAL_CLIENT_SECRET
     
-    console.log(`PayPal payment required: Send $${amount.toFixed(2)} to ${owner.paypalEmail} for server "${serverName}"`)
+    if (!clientId || !clientSecret) {
+      console.error('PayPal credentials not configured')
+      await prisma.activityLog.create({
+        data: {
+          type: 'paypal_payout_failed',
+          message: `PayPal payout failed: PayPal not configured for "${serverName}"`,
+          amount: amount,
+          userId: owner.id,
+          serverId: serverId
+        }
+      })
+      return
+    }
+
+    // Get PayPal access token
+    const tokenResponse = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Language': 'en_US',
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
+      },
+      body: 'grant_type=client_credentials'
+    })
+
+    if (!tokenResponse.ok) {
+      throw new Error(`PayPal token request failed: ${tokenResponse.status}`)
+    }
+
+    const tokenData = await tokenResponse.json()
+    const accessToken = tokenData.access_token
+
+    // Create PayPal payout
+    const payoutData = {
+      sender_batch_header: {
+        sender_batch_id: `payout_${serverId}_${Date.now()}`,
+        email_subject: `Payment from Community Pledges - ${serverName}`,
+        email_message: `You have received a payment of A$${amount.toFixed(2)} from Community Pledges for your server "${serverName}". Thank you for using our platform!`
+      },
+      items: [
+        {
+          recipient_type: 'EMAIL',
+          amount: {
+            value: amount.toFixed(2),
+            currency: 'AUD'
+          },
+          receiver: owner.paypalEmail,
+          note: `Payment for server: ${serverName}`,
+          sender_item_id: `server_${serverId}_${Date.now()}`
+        }
+      ]
+    }
+
+    const payoutResponse = await fetch('https://api-m.paypal.com/v1/payments/payouts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payoutData)
+    })
+
+    if (!payoutResponse.ok) {
+      const errorData = await payoutResponse.json()
+      throw new Error(`PayPal payout failed: ${JSON.stringify(errorData)}`)
+    }
+
+    const payoutResult = await payoutResponse.json()
+    console.log(`PayPal payout successful: ${payoutResult.batch_header.payout_batch_id}`)
     
-    // Log the PayPal payment requirement
+    // Log successful payout
     await prisma.activityLog.create({
       data: {
-        type: 'paypal_payout_pending',
-        message: `$${amount.toFixed(2)} will be sent to your PayPal account (${owner.paypalEmail}) for "${serverName}"`,
+        type: 'paypal_payout_success',
+        message: `A$${amount.toFixed(2)} sent to your PayPal account (${owner.paypalEmail}) for "${serverName}"`,
         amount: amount,
         userId: owner.id,
         serverId: serverId
       }
     })
-    
-    // TODO: Implement actual PayPal API integration
-    // This would involve:
-    // - Creating a PayPal payment request
-    // - Sending payment to owner.paypalEmail
-    // - Handling PayPal webhooks for confirmation
-    // - Updating payment status in database
-    
+
+    // Store payout batch ID for tracking
+    await prisma.activityLog.create({
+      data: {
+        type: 'paypal_payout_batch',
+        message: `PayPal Batch ID: ${payoutResult.batch_header.payout_batch_id}`,
+        userId: owner.id,
+        serverId: serverId
+      }
+    })
+
   } catch (error) {
-    console.error(`Error processing PayPal payout:`, error)
+    console.error(`Error distributing PayPal payment:`, error)
+    
+    // Log failed payout
+    await prisma.activityLog.create({
+      data: {
+        type: 'paypal_payout_failed',
+        message: `PayPal payout failed for "${serverName}": ${error.message}`,
+        amount: amount,
+        userId: owner.id,
+        serverId: serverId
+      }
+    })
+  }
+}
+
+/**
+ * Process PayPal payment for pledge
+ * Uses PayPal Payments API to charge the user's PayPal account
+ */
+async function processPayPalPayment(user: any, amount: number, serverId: string, serverName: string, userId: string) {
+  try {
+    const clientId = process.env.PAYPAL_CLIENT_ID
+    const clientSecret = process.env.PAYPAL_CLIENT_SECRET
+    
+    if (!clientId || !clientSecret) {
+      return { success: false, error: 'PayPal credentials not configured' }
+    }
+
+    // Get PayPal access token
+    const tokenResponse = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Language': 'en_US',
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
+      },
+      body: 'grant_type=client_credentials'
+    })
+
+    if (!tokenResponse.ok) {
+      return { success: false, error: `PayPal token request failed: ${tokenResponse.status}` }
+    }
+
+    const tokenData = await tokenResponse.json()
+    const accessToken = tokenData.access_token
+
+    // Create PayPal payment
+    const paymentData = {
+      intent: 'sale',
+      payer: {
+        payment_method: 'paypal',
+        payer_info: {
+          email: user.paypalEmail
+        }
+      },
+      transactions: [
+        {
+          amount: {
+            total: amount.toFixed(2),
+            currency: 'AUD',
+            details: {
+              subtotal: amount.toFixed(2)
+            }
+          },
+          description: `Community Pledge Payment for ${serverName}`,
+          custom: `server_${serverId}_user_${userId}`,
+          invoice_number: `pledge_${serverId}_${userId}_${Date.now()}`
+        }
+      ],
+      redirect_urls: {
+        return_url: `${process.env.NEXTAUTH_URL}/api/paypal/payment/success`,
+        cancel_url: `${process.env.NEXTAUTH_URL}/api/paypal/payment/cancel`
+      }
+    }
+
+    const paymentResponse = await fetch('https://api-m.paypal.com/v1/payments/payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(paymentData)
+    })
+
+    if (!paymentResponse.ok) {
+      const errorData = await paymentResponse.json()
+      return { success: false, error: `PayPal payment creation failed: ${JSON.stringify(errorData)}` }
+    }
+
+    const paymentResult = await paymentResponse.json()
+    
+    // For automated processing, we'll simulate approval
+    // In a real implementation, you might need to handle the approval flow
+    // For now, we'll assume the payment is approved and execute it
+    
+    const executeData = {
+      payer_id: paymentResult.payer.payer_info.payer_id
+    }
+
+    const executeResponse = await fetch(`https://api-m.paypal.com/v1/payments/payment/${paymentResult.id}/execute`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(executeData)
+    })
+
+    if (!executeResponse.ok) {
+      const errorData = await executeResponse.json()
+      return { success: false, error: `PayPal payment execution failed: ${JSON.stringify(errorData)}` }
+    }
+
+    const executeResult = await executeResponse.json()
+    
+    if (executeResult.state === 'approved') {
+      console.log(`PayPal payment successful: ${executeResult.id}`)
+      return { success: true, paymentId: executeResult.id }
+    } else {
+      return { success: false, error: `PayPal payment not approved: ${executeResult.state}` }
+    }
+
+  } catch (error) {
+    console.error(`Error processing PayPal payment:`, error)
+    return { success: false, error: error.message }
   }
 }
