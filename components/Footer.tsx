@@ -140,7 +140,7 @@ export default function Footer() {
         <div className="mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-gray-400 text-sm">
-              © {currentYear} COMMUNITYPLEDGES. ALL RIGHTS RESERVED.
+              © {currentYear} Community Pledges. All rights reserved.
             </div>
             <div className="flex items-center space-x-6 mt-4 md:mt-0">
               {/* Currency Selector */}
