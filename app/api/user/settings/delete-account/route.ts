@@ -84,7 +84,7 @@ export async function DELETE(request: Request) {
 
       // 5. Delete all tickets created by this user
       await tx.ticket.deleteMany({
-        where: { userId: userId }
+        where: { createdById: userId }
       })
 
       // 6. Delete all favorites for this user
