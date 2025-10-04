@@ -243,7 +243,7 @@ export async function processPendingWithdrawals() {
                     serverName: server.name,
                     pledgeAmount: pledge.amount,
                     actualAmount: actualAmount,
-                    totalPledgers: serverPledges.length,
+                    totalPledgers: server.pledges.length,
                     currency: 'A$'
                   })
                 } catch (emailError) {
@@ -353,7 +353,7 @@ export async function processPendingWithdrawals() {
                 serverName: server.name,
                 pledgeAmount: pledge.amount,
                 actualAmount: actualAmount,
-                totalPledgers: serverPledges.length,
+                totalPledgers: server.pledges.length,
                 currency: 'A$'
               })
             } catch (emailError) {
