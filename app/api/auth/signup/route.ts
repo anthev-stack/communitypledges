@@ -5,6 +5,8 @@ import { z } from 'zod'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { existsSync } from 'fs'
+import { generateTokenWithExpiration } from '@/lib/auth-utils'
+import { sendAccountConfirmationEmail } from '@/lib/email'
 
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -83,6 +85,9 @@ export async function POST(request: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
+    // Generate email verification token
+    const { token, expires } = generateTokenWithExpiration(24) // 24 hours
+
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -90,6 +95,8 @@ export async function POST(request: Request) {
         email,
         password: hashedPassword,
         image: imagePath,
+        emailVerificationToken: token,
+        emailVerificationExpires: expires,
       },
       select: {
         id: true,
@@ -99,7 +106,23 @@ export async function POST(request: Request) {
       }
     })
 
-    return NextResponse.json(user, { status: 201 })
+    // Send confirmation email
+    try {
+      const confirmationUrl = `${process.env.NEXTAUTH_URL}/api/auth/confirm-email?token=${token}`
+      await sendAccountConfirmationEmail({
+        userName: name,
+        userEmail: email,
+        confirmationUrl
+      })
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError)
+      // Don't fail the signup if email fails
+    }
+
+    return NextResponse.json({ 
+      message: 'Account created successfully! Please check your email to confirm your account.',
+      user 
+    }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

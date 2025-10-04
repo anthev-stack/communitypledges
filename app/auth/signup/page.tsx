@@ -115,7 +115,8 @@ export default function SignupPage() {
       })
 
       if (response.ok) {
-        router.push('/auth/login?message=Account created successfully! Please log in.')
+        const responseData = await response.json()
+        router.push(`/auth/login?message=${encodeURIComponent(responseData.message || 'Account created successfully! Please check your email to confirm your account.')}`)
       } else {
         const errorData = await response.json()
         setError(errorData.message || 'An error occurred')

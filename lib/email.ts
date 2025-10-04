@@ -43,6 +43,18 @@ export interface SuspensionEmailData {
   supportUrl: string
 }
 
+export interface AccountConfirmationEmailData {
+  userName: string
+  userEmail: string
+  confirmationUrl: string
+}
+
+export interface PasswordResetEmailData {
+  userName: string
+  userEmail: string
+  resetUrl: string
+}
+
 // Email templates
 export function createPledgePaymentTemplate(data: PledgePaymentEmailData): EmailTemplate {
   const { userName, serverName, pledgeAmount, actualAmount, totalPledgers, currency } = data
@@ -292,6 +304,183 @@ export function createSuspensionTemplate(data: SuspensionEmailData): EmailTempla
   return { subject, html, text }
 }
 
+export function createAccountConfirmationTemplate(data: AccountConfirmationEmailData): EmailTemplate {
+  const { userName, confirmationUrl } = data
+  
+  const subject = 'Welcome to Community Pledges - Confirm Your Account'
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Account Confirmation</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+        .welcome { font-size: 24px; font-weight: bold; color: #10b981; margin: 20px 0; }
+        .button { display: inline-block; background: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+        .info { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>🎉 Welcome to Community Pledges!</h1>
+        <p>Let's get your account confirmed</p>
+      </div>
+      
+      <div class="content">
+        <h2>Hello ${userName}!</h2>
+        
+        <div class="welcome">Welcome to Community Pledges!</div>
+        
+        <p>Thank you for creating an account with us. We're excited to have you join our community of server owners and pledgers!</p>
+        
+        <div class="info">
+          <h3>What's Next?</h3>
+          <p>To complete your account setup and start using Community Pledges, please confirm your email address by clicking the button below:</p>
+        </div>
+        
+        <div style="text-align: center;">
+          <a href="${confirmationUrl}" class="button">Confirm My Account</a>
+        </div>
+        
+        <p><strong>What you can do after confirmation:</strong></p>
+        <ul>
+          <li>Browse and pledge to community servers</li>
+          <li>Create your own server and start receiving pledges</li>
+          <li>Manage your payment methods and settings</li>
+          <li>Join our Discord community for support</li>
+        </ul>
+        
+        <p><strong>Need help?</strong> If you have any questions, feel free to contact us through our <a href="${process.env.NEXTAUTH_URL}/tickets">Support System</a>.</p>
+        
+        <div class="footer">
+          <p>This confirmation link will expire in 24 hours for security reasons.</p>
+          <p>If you didn't create this account, you can safely ignore this email.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+  
+  const text = `
+    Welcome to Community Pledges!
+    
+    Hello ${userName}!
+    
+    Thank you for creating an account with us. We're excited to have you join our community of server owners and pledgers!
+    
+    To complete your account setup and start using Community Pledges, please confirm your email address by visiting this link:
+    
+    ${confirmationUrl}
+    
+    What you can do after confirmation:
+    - Browse and pledge to community servers
+    - Create your own server and start receiving pledges
+    - Manage your payment methods and settings
+    - Join our Discord community for support
+    
+    Need help? If you have any questions, feel free to contact us through our Support System: ${process.env.NEXTAUTH_URL}/tickets
+    
+    This confirmation link will expire in 24 hours for security reasons.
+    If you didn't create this account, you can safely ignore this email.
+  `
+  
+  return { subject, html, text }
+}
+
+export function createPasswordResetTemplate(data: PasswordResetEmailData): EmailTemplate {
+  const { userName, resetUrl } = data
+  
+  const subject = 'Reset Your Community Pledges Password'
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Password Reset</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+        .button { display: inline-block; background: #ef4444; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+        .warning { background: #fef2f2; border: 1px solid #fecaca; padding: 20px; border-radius: 8px; margin: 20px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>🔒 Password Reset Request</h1>
+        <p>Secure your account</p>
+      </div>
+      
+      <div class="content">
+        <h2>Hello ${userName}!</h2>
+        
+        <p>We received a request to reset your password for your Community Pledges account.</p>
+        
+        <div class="warning">
+          <h3>Security Notice</h3>
+          <p>If you requested this password reset, click the button below to create a new password. If you didn't request this, please ignore this email and your password will remain unchanged.</p>
+        </div>
+        
+        <div style="text-align: center;">
+          <a href="${resetUrl}" class="button">Reset My Password</a>
+        </div>
+        
+        <p><strong>Security Tips:</strong></p>
+        <ul>
+          <li>Use a strong, unique password</li>
+          <li>Don't share your password with anyone</li>
+          <li>Enable two-factor authentication if available</li>
+          <li>Log out from shared devices</li>
+        </ul>
+        
+        <p><strong>Need help?</strong> If you're having trouble or didn't request this reset, contact us through our <a href="${process.env.NEXTAUTH_URL}/tickets">Support System</a>.</p>
+        
+        <div class="footer">
+          <p>This password reset link will expire in 1 hour for security reasons.</p>
+          <p>For your security, this link can only be used once.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+  
+  const text = `
+    Password Reset Request
+    
+    Hello ${userName}!
+    
+    We received a request to reset your password for your Community Pledges account.
+    
+    If you requested this password reset, visit this link to create a new password:
+    
+    ${resetUrl}
+    
+    If you didn't request this, please ignore this email and your password will remain unchanged.
+    
+    Security Tips:
+    - Use a strong, unique password
+    - Don't share your password with anyone
+    - Enable two-factor authentication if available
+    - Log out from shared devices
+    
+    Need help? If you're having trouble or didn't request this reset, contact us through our Support System: ${process.env.NEXTAUTH_URL}/tickets
+    
+    This password reset link will expire in 1 hour for security reasons.
+    For your security, this link can only be used once.
+  `
+  
+  return { subject, html, text }
+}
+
 // Email sending functions
 export async function sendEmail(to: string, template: EmailTemplate): Promise<boolean> {
   try {
@@ -329,5 +518,15 @@ export async function sendFailedPaymentEmail(data: FailedPaymentEmailData): Prom
 
 export async function sendSuspensionEmail(data: SuspensionEmailData): Promise<boolean> {
   const template = createSuspensionTemplate(data)
+  return await sendEmail(data.userEmail, template)
+}
+
+export async function sendAccountConfirmationEmail(data: AccountConfirmationEmailData): Promise<boolean> {
+  const template = createAccountConfirmationTemplate(data)
+  return await sendEmail(data.userEmail, template)
+}
+
+export async function sendPasswordResetEmail(data: PasswordResetEmailData): Promise<boolean> {
+  const template = createPasswordResetTemplate(data)
   return await sendEmail(data.userEmail, template)
 }

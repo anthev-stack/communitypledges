@@ -73,6 +73,15 @@ model User {
   isSuspended          Boolean  @default(false)
   suspendedAt          DateTime?
   
+  // Email confirmation
+  emailVerified        DateTime?
+  emailVerificationToken String?
+  emailVerificationExpires DateTime?
+  
+  // Password reset
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+  
   // Deposit details for server owners
   hasDepositMethod Boolean @default(false)
   bankAccountLast4 String?
