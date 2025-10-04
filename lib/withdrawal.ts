@@ -175,7 +175,8 @@ export async function processPendingWithdrawals() {
               stripePaymentMethodId: true, 
               stripeCustomerId: true,
               paypalEmail: true,
-              name: true
+              name: true,
+              email: true
             }
           })
 
