@@ -57,6 +57,7 @@ export default function SettingsPage() {
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false)
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [deleteConfirmation, setDeleteConfirmation] = useState('')
+  const [isDragOver, setIsDragOver] = useState(false)
 
   const accountForm = useForm({
     defaultValues: {
@@ -166,6 +167,36 @@ export default function SettingsPage() {
   const removeProfileImage = () => {
     setProfileImage(null)
     setProfileImagePreview(null)
+  }
+
+  // Handle drag and drop
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    
+    const files = Array.from(e.dataTransfer.files)
+    const imageFile = files.find(file => file.type.startsWith('image/'))
+    
+    if (imageFile) {
+      processImageFile(imageFile)
+    } else {
+      addNotification({
+        type: 'error',
+        title: 'Invalid File',
+        message: 'Please drop an image file.',
+        duration: 4000
+      })
+    }
   }
 
   // Save profile image
@@ -690,47 +721,72 @@ export default function SettingsPage() {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Profile Picture
               </label>
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
-                    {profileImagePreview ? (
-                      <img
-                        src={profileImagePreview}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="w-8 h-8 text-gray-400" />
-                    )}
+              
+              {/* Drag and Drop Area */}
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-lg p-6 mb-4 transition-colors ${
+                  isDragOver 
+                    ? 'border-emerald-400 bg-emerald-900/20' 
+                    : 'border-slate-600 bg-slate-800/30'
+                }`}
+              >
+                <div className="text-center">
+                  <div className="flex items-center justify-center space-x-4">
+                    <div className="relative">
+                      <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
+                        {profileImagePreview ? (
+                          <img
+                            src={profileImagePreview}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-8 h-8 text-gray-400" />
+                        )}
+                      </div>
+                      {profileImagePreview && (
+                        <button
+                          onClick={removeProfileImage}
+                          className="absolute -top-1 -right-1 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                          title="Remove Profile Picture"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-300 mb-2">
+                        {isDragOver ? 'Drop your image here' : 'Drag and drop an image here, or click to browse'}
+                      </p>
+                      <div className="flex space-x-2 justify-center">
+                        <label className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 cursor-pointer transition-colors">
+                          <Camera className="w-4 h-4 inline mr-2" />
+                          Choose Image
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="hidden"
+                          />
+                        </label>
+                        {profileImage && (
+                          <button
+                            onClick={saveProfileImage}
+                            disabled={savingProfileImage}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                          >
+                            {savingProfileImage ? 'Saving...' : 'Save'}
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2">
+                        Supports PNG, JPG, WebP up to 5MB
+                      </p>
+                    </div>
                   </div>
-                  <button
-                    onClick={removeProfileImage}
-                    className="absolute -top-1 -right-1 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
-                    title="Remove Profile Picture"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-                <div className="flex space-x-2">
-                  <label className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 cursor-pointer transition-colors">
-                    <Camera className="w-4 h-4 inline mr-2" />
-                    Choose Image
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="hidden"
-                    />
-                  </label>
-                  {profileImage && (
-                    <button
-                      onClick={saveProfileImage}
-                      disabled={savingProfileImage}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                    >
-                      {savingProfileImage ? 'Saving...' : 'Save'}
-                    </button>
-                  )}
                 </div>
               </div>
             </div>

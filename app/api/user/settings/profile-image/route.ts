@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { existsSync } from 'fs'
 
 export async function PUT(request: NextRequest) {
   try {
@@ -44,32 +41,16 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Handle profile image upload
+    // Convert image to base64 data URL
     const bytes = await profileImage.arrayBuffer()
     const buffer = Buffer.from(bytes)
-
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'profiles')
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true })
-    }
-
-    // Generate unique filename
-    const timestamp = Date.now()
-    const fileExtension = profileImage.name.split('.').pop()
-    const filename = `${session.user.id}-${timestamp}.${fileExtension}`
-    const filepath = join(uploadsDir, filename)
-
-    // Write file
-    await writeFile(filepath, buffer)
-    
-    // Update image path
-    const imagePath = `/uploads/profiles/${filename}`
+    const base64 = buffer.toString('base64')
+    const dataUrl = `data:${profileImage.type};base64,${base64}`
 
     // Update user's profile image
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
-      data: { image: imagePath },
+      data: { image: dataUrl },
       select: {
         id: true,
         name: true,
