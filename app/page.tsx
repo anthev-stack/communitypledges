@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Server, Users, DollarSign, Heart } from 'lucide-react'
+import LiveStreamEmbed from '@/components/LiveStreamEmbed'
 
 export default function HomePage() {
   return (
@@ -111,6 +112,11 @@ export default function HomePage() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Live Stream Section */}
+      <div className="mb-16">
+        <LiveStreamEmbed username="hrry" />
       </div>
     </div>
   )
