@@ -806,7 +806,7 @@ export default function StaffDashboard() {
   
   const [dashboardData, setDashboardData] = useState<StaffDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'servers' | 'tickets' | 'transactions' | 'stripe'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'servers' | 'tickets' | 'streamers' | 'transactions' | 'stripe'>('overview')
 
   useEffect(() => {
     if (status === 'loading') return
