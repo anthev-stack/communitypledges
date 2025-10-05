@@ -11,9 +11,3 @@ CREATE TABLE IF NOT EXISTS "PartnerStreamer" (
 
     CONSTRAINT "PartnerStreamer_pkey" PRIMARY KEY ("id")
 );
-
--- Create unique index on username
-CREATE UNIQUE INDEX IF NOT EXISTS "PartnerStreamer_username_key" ON "PartnerStreamer"("username");
-
--- Create foreign key constraint
-ALTER TABLE "PartnerStreamer" ADD CONSTRAINT "PartnerStreamer_addedBy_fkey" FOREIGN KEY ("addedBy") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

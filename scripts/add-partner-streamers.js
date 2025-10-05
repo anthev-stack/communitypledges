@@ -58,6 +58,14 @@ async function addPartnerStreamersTable() {
         await prisma.$executeRawUnsafe(sqlContent)
         console.log('✅ PartnerStreamer table created successfully')
         
+        // Create unique index
+        await prisma.$executeRawUnsafe('CREATE UNIQUE INDEX IF NOT EXISTS "PartnerStreamer_username_key" ON "PartnerStreamer"("username")')
+        console.log('✅ Unique index created successfully')
+        
+        // Create foreign key constraint
+        await prisma.$executeRawUnsafe('ALTER TABLE "PartnerStreamer" ADD CONSTRAINT "PartnerStreamer_addedBy_fkey" FOREIGN KEY ("addedBy") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE')
+        console.log('✅ Foreign key constraint created successfully')
+        
         // Now try to add default streamers
         console.log('🎮 Adding default partner streamers...')
         
