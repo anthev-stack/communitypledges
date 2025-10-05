@@ -1,0 +1,8 @@
+Contact: mailto:support@communitypledges.com
+Contact: https://communitypledges.com/support
+Expires: 2025-12-31T23:59:59.000Z
+Encryption: https://communitypledges.com/pgp-key.txt
+Acknowledgments: https://communitypledges.com/security-acknowledgments
+Preferred-Languages: en
+Canonical: https://communitypledges.com/.well-known/security.txt
+Policy: https://communitypledges.com/security-policy

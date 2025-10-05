@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://communitypledges.com/sitemap.xml
+
+# Security
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /auth/
