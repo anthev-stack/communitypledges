@@ -88,7 +88,8 @@ export const authOptions: NextAuthOptions = {
         userEmail: user?.email, 
         userName: user?.name,
         accountProvider: account?.provider,
-        hasProfile: !!profile
+        hasProfile: !!profile,
+        userId: user?.id
       })
       
       // Handle Discord OAuth
@@ -120,7 +121,8 @@ export const authOptions: NextAuthOptions = {
         userEmail: user?.email,
         userRole: user?.role,
         userIsNewUser: user?.isNewUser,
-        accountProvider: account?.provider
+        accountProvider: account?.provider,
+        tokenEmail: token?.email
       })
       
       // For Discord OAuth, we need to fetch user data from database
@@ -194,7 +196,10 @@ export const authOptions: NextAuthOptions = {
         sessionUser: session?.user,
         tokenId: token?.id,
         tokenRole: token?.role,
-        tokenIsNewUser: token?.isNewUser
+        tokenIsNewUser: token?.isNewUser,
+        tokenEmail: token?.email,
+        hasSession: !!session,
+        hasToken: !!token
       })
       
       if (token) {
