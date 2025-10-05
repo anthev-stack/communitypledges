@@ -50,10 +50,22 @@ export default function LoginPage() {
     
     try {
       // For OAuth providers, let NextAuth handle the redirect
-      await signIn(provider, { 
-        callbackUrl: '/dashboard'
-        // Remove redirect: false to allow proper OAuth flow
+      const result = await signIn(provider, { 
+        callbackUrl: '/dashboard',
+        redirect: false
       })
+      
+      if (result?.error) {
+        if (result.error === 'AccessDenied') {
+          setError('This Discord account is not registered. Would you like to create a new account?')
+        } else {
+          setError(`Failed to sign in with ${provider}. Please try again.`)
+        }
+        setLoading(false)
+      } else if (result?.ok) {
+        // Successful sign in, redirect will be handled by NextAuth
+        router.push('/dashboard')
+      }
     } catch (error) {
       setError(`Failed to sign in with ${provider}. Please try again.`)
       setLoading(false)
@@ -169,6 +181,16 @@ export default function LoginPage() {
           {error && (
             <div className="bg-red-900/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
               {error}
+              {error.includes('not registered') && (
+                <div className="mt-3">
+                  <Link
+                    href="/auth/signup"
+                    className="inline-flex items-center text-emerald-400 hover:text-emerald-300 text-sm font-medium"
+                  >
+                    Create Account →
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 

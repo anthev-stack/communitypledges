@@ -65,6 +65,7 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/auth/login',
+    error: '/auth/error',
   },
   callbacks: {
     async signIn({ user, account, profile }) {
@@ -73,17 +74,23 @@ export const authOptions: NextAuthOptions = {
       // Handle Discord OAuth
       if (account?.provider === 'discord') {
         try {
+          // Validate required user data
+          if (!user.email) {
+            console.error('Discord OAuth: No email provided')
+            return '/auth/error?error=Configuration'
+          }
+
           // Check if user already exists
           const existingUser = await prisma.user.findUnique({
-            where: { email: user.email! }
+            where: { email: user.email }
           })
 
           if (!existingUser) {
             // Create new user from Discord OAuth
             const newUser = await prisma.user.create({
               data: {
-                email: user.email!,
-                name: user.name!,
+                email: user.email,
+                name: user.name || 'Discord User',
                 image: user.image,
                 emailVerified: new Date(), // Discord emails are pre-verified
                 role: 'user'
@@ -95,7 +102,8 @@ export const authOptions: NextAuthOptions = {
           }
         } catch (error) {
           console.error('Error in Discord OAuth signIn:', error)
-          return false
+          // Return error page URL instead of false
+          return '/auth/error?error=Configuration'
         }
       }
       
