@@ -51,9 +51,11 @@ export default function LiveStreamerEmbed() {
         const data = await response.json()
 
         if (response.ok) {
+          console.log('Live streamer data:', data)
           setLiveData(data)
           setError(null)
         } else {
+          console.error('Failed to get live streamer:', data)
           setError(data.message || 'Failed to check live streamers')
         }
       } catch (err) {
@@ -181,18 +183,19 @@ export default function LiveStreamerEmbed() {
             <div className="aspect-video bg-slate-700 rounded-lg overflow-hidden relative">
               {!embedError ? (
                 <iframe
-                  src={`https://embed.twitch.tv/?channel=${user.login}&autoplay=true&muted=true`}
+                  src={`https://player.twitch.tv/?channel=${user.login}&parent=communitypledges.com&autoplay=true&muted=true`}
                   height="100%"
                   width="100%"
                   allowFullScreen
                   className="w-full h-full"
                   title={`${user.displayName} Live Stream`}
-                  onError={() => {
-                    console.error('Twitch embed failed to load, showing fallback')
+                  onError={(e) => {
+                    console.error('Twitch embed failed to load:', e)
+                    console.log('Channel:', user.login, 'Display Name:', user.displayName)
                     setEmbedError(true)
                   }}
                   onLoad={() => {
-                    console.log('Twitch embed loaded successfully')
+                    console.log('Twitch embed loaded successfully for:', user.login)
                     setEmbedError(false)
                   }}
                 />
