@@ -69,16 +69,23 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      console.log('SignIn callback:', { user, account, profile })
+      console.log('🔐 SignIn callback called:', { 
+        userEmail: user?.email, 
+        userName: user?.name,
+        accountProvider: account?.provider,
+        hasProfile: !!profile
+      })
       
       // Handle Discord OAuth
       if (account?.provider === 'discord') {
         try {
           // Validate required user data
           if (!user.email) {
-            console.error('Discord OAuth: No email provided')
+            console.error('❌ Discord OAuth: No email provided')
             return '/auth/error?error=Configuration'
           }
+          
+          console.log('✅ Discord OAuth: Email validated:', user.email)
 
           // Check if user already exists
           const existingUser = await prisma.user.findUnique({
@@ -86,6 +93,7 @@ export const authOptions: NextAuthOptions = {
           })
 
           if (!existingUser) {
+            console.log('🆕 Creating new user from Discord OAuth:', user.email)
             // Create new user from Discord OAuth
             const newUser = await prisma.user.create({
               data: {
@@ -96,20 +104,21 @@ export const authOptions: NextAuthOptions = {
                 role: 'user'
               }
             })
-            console.log('Created new user from Discord OAuth:', user.email, 'with ID:', newUser.id)
+            console.log('✅ Created new user from Discord OAuth:', user.email, 'with ID:', newUser.id)
             
             // Store in user object that this is a new signup
             user.isNewUser = true
           } else {
-            console.log('Existing user found:', user.email, 'with ID:', existingUser.id, 'role:', existingUser.role)
+            console.log('👤 Existing user found:', user.email, 'with ID:', existingUser.id, 'role:', existingUser.role)
           }
         } catch (error) {
-          console.error('Error in Discord OAuth signIn:', error)
+          console.error('❌ Error in Discord OAuth signIn:', error)
           // Return error page URL instead of false
           return '/auth/error?error=Configuration'
         }
       }
       
+      console.log('✅ SignIn callback returning true')
       return true
     },
     async jwt({ token, user, account, trigger }) {
@@ -204,24 +213,33 @@ export const authOptions: NextAuthOptions = {
       return session
     },
     async redirect({ url, baseUrl }) {
-      console.log('Redirect callback:', { url, baseUrl })
+      console.log('🔄 Redirect callback:', { url, baseUrl })
       
       // If url is a callback URL, redirect to dashboard
       if (url.includes('/api/auth/callback')) {
+        console.log('🔄 Redirecting from callback to dashboard')
         return `${baseUrl}/dashboard`
       }
       
       // If url is the login page, redirect to dashboard (successful OAuth)
       if (url.includes('/auth/login')) {
+        console.log('🔄 Redirecting from login to dashboard')
         return `${baseUrl}/dashboard`
       }
       
       // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`
+      if (url.startsWith("/")) {
+        console.log('🔄 Using relative URL:', `${baseUrl}${url}`)
+        return `${baseUrl}${url}`
+      }
       // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url
+      else if (new URL(url).origin === baseUrl) {
+        console.log('🔄 Using same origin URL:', url)
+        return url
+      }
       
       // Default redirect to dashboard for successful logins
+      console.log('🔄 Default redirect to dashboard')
       return `${baseUrl}/dashboard`
     }
   }
