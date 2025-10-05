@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Play, Users, Eye, ExternalLink } from 'lucide-react'
+import { Users, Eye, ExternalLink } from 'lucide-react'
 
 interface StreamData {
   id: string
@@ -65,8 +65,8 @@ export default function LiveStreamerEmbed() {
 
     checkLiveStreamer()
     
-    // Check every 30 seconds if a streamer is live
-    const interval = setInterval(checkLiveStreamer, 30000)
+    // Check every 2 minutes if a streamer is live (less frequent since we have live embed)
+    const interval = setInterval(checkLiveStreamer, 120000)
     
     return () => clearInterval(interval)
   }, [])
@@ -127,8 +127,8 @@ export default function LiveStreamerEmbed() {
     <div className="relative">
       {/* Partner Badge */}
       <div className="absolute -top-3 left-4 z-10">
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg">
-          🎮 Community Pledges Partner
+          <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg">
+          Pledge Partner
         </div>
       </div>
 
@@ -175,28 +175,18 @@ export default function LiveStreamerEmbed() {
             </span>
           </div>
 
-          {/* Stream Thumbnail/Embed */}
-          <div className="relative group">
+          {/* Live Twitch Stream Embed */}
+          <div className="relative">
             <div className="aspect-video bg-slate-700 rounded-lg overflow-hidden relative">
-              <img
-                src={stream.thumbnailUrl.replace('{width}', '640').replace('{height}', '360')}
-                alt="Stream thumbnail"
-                className="w-full h-full object-cover"
+              <iframe
+                src={`https://player.twitch.tv/?channel=${user.login}&parent=communitypledges.com&autoplay=true&muted=true`}
+                height="100%"
+                width="100%"
+                allowFullScreen
+                className="w-full h-full"
+                title={`${user.displayName} Live Stream`}
               />
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
               
-              {/* Play Button Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <a
-                  href={streamUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-red-600 hover:bg-red-700 text-white p-4 rounded-full shadow-lg transform hover:scale-110 transition-all duration-200"
-                >
-                  <Play className="w-8 h-8 fill-current" />
-                </a>
-              </div>
-
               {/* Live Badge */}
               <div className="absolute top-3 left-3">
                 <div className="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold flex items-center space-x-1">
@@ -215,18 +205,21 @@ export default function LiveStreamerEmbed() {
               rel="noopener noreferrer"
               className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
             >
-              <Play className="w-4 h-4" />
-              <span>Watch Live</span>
-            </a>
-            <a
-              href={streamUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-lg transition-colors"
-              title="Open in Twitch"
-            >
               <ExternalLink className="w-4 h-4" />
+              <span>Open in Twitch</span>
             </a>
+            <button
+              onClick={() => {
+                const iframe = document.querySelector('iframe[src*="player.twitch.tv"]') as HTMLIFrameElement;
+                if (iframe) {
+                  iframe.contentWindow?.postMessage({ type: 'toggleMute' }, '*');
+                }
+              }}
+              className="bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-lg transition-colors"
+              title="Toggle Sound"
+            >
+              🔊
+            </button>
           </div>
         </div>
       </div>
