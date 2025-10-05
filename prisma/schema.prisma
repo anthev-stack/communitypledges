@@ -111,6 +111,21 @@ model User {
   banActions BanAction[]
   ticketMessages TicketMessage[]
   userBanTargets BanAction[] @relation("UserBanTarget")
+  addedStreamers PartnerStreamer[]
+}
+
+model PartnerStreamer {
+  id          String   @id @default(cuid())
+  username    String   @unique
+  displayName String
+  priority    Int      @default(0) // Higher number = higher priority
+  isActive    Boolean  @default(true)
+  addedBy     String   // User ID who added this streamer
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  addedByUser User @relation(fields: [addedBy], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {

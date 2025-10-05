@@ -8,6 +8,7 @@ import bcrypt from 'bcryptjs'
 export const authOptions: NextAuthOptions = {
   // Force fresh build - Google OAuth removed
   adapter: PrismaAdapter(prisma),
+  debug: process.env.NODE_ENV === 'development',
   providers: [
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID!,
@@ -59,7 +60,8 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   session: {
-    strategy: 'jwt'
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
     signIn: '/auth/login',
@@ -99,8 +101,25 @@ export const authOptions: NextAuthOptions = {
       
       return true
     },
-    async jwt({ token, user }) {
-      console.log('JWT callback:', { token, user })
+    async jwt({ token, user, account }) {
+      console.log('JWT callback:', { token, user, account })
+      
+      // For Discord OAuth, we need to fetch user data from database
+      if (account?.provider === 'discord' && user?.email) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            select: { id: true, role: true }
+          })
+          
+          if (dbUser) {
+            token.id = dbUser.id
+            token.role = dbUser.role
+          }
+        } catch (error) {
+          console.error('Error fetching user in JWT callback:', error)
+        }
+      }
       
       if (user) {
         token.id = user.id
@@ -118,11 +137,20 @@ export const authOptions: NextAuthOptions = {
       return session
     },
     async redirect({ url, baseUrl }) {
+      console.log('Redirect callback:', { url, baseUrl })
+      
+      // If url is a callback URL, redirect to dashboard
+      if (url.includes('/api/auth/callback')) {
+        return `${baseUrl}/dashboard`
+      }
+      
       // Allows relative callback URLs
       if (url.startsWith("/")) return `${baseUrl}${url}`
       // Allows callback URLs on the same origin
       else if (new URL(url).origin === baseUrl) return url
-      return baseUrl
+      
+      // Default redirect to dashboard for successful logins
+      return `${baseUrl}/dashboard`
     }
   }
 }
