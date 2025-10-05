@@ -4,8 +4,22 @@ Allow: /
 # Sitemap
 Sitemap: https://communitypledges.com/sitemap.xml
 
-# Security
+# Security - Block sensitive areas
 Disallow: /api/
 Disallow: /admin/
+Disallow: /staff/
 Disallow: /_next/
 Disallow: /auth/
+Disallow: /dashboard/
+Disallow: /settings/
+
+# Allow public pages
+Allow: /servers
+Allow: /members
+Allow: /about
+Allow: /contact
+Allow: /privacy
+Allow: /terms
+
+# Crawl delay for respectful crawling
+Crawl-delay: 1
