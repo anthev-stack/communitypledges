@@ -22,10 +22,28 @@ import {
   RefreshCw,
   DollarSign,
   Building2,
-  CreditCard
+  CreditCard,
+  Play,
+  Plus,
+  Edit,
+  Star
 } from 'lucide-react'
 import { useCurrency } from '@/contexts/CurrencyContext'
 import PriceDisplay from '@/components/PriceDisplay'
+
+interface PartnerStreamer {
+  id: string
+  username: string
+  displayName: string
+  priority: number
+  isActive: boolean
+  createdAt: string
+  addedByUser: {
+    id: string
+    name: string
+    email: string
+  }
+}
 
 interface StaffDashboardData {
   totalUsers: number
@@ -925,6 +943,16 @@ export default function StaffDashboard() {
             >
               Tickets
             </button>
+            <button
+              onClick={() => setActiveTab('streamers')}
+              className={`pb-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'streamers'
+                  ? 'border-emerald-500 text-emerald-400'
+                  : 'border-transparent text-gray-400 hover:text-white hover:border-slate-500'
+              }`}
+            >
+              Streamers
+            </button>
             {session?.user?.role === 'admin' && (
               <>
                 <button
@@ -945,7 +973,7 @@ export default function StaffDashboard() {
                       : 'border-transparent text-gray-400 hover:text-white hover:border-slate-500'
                   }`}
                 >
-                  Config
+                  Configuration
                 </button>
               </>
             )}
@@ -1139,6 +1167,13 @@ export default function StaffDashboard() {
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Streamers Tab */}
+        {activeTab === 'streamers' && (
+          <div className="space-y-6">
+            <PartnerStreamerManagement />
           </div>
         )}
 
