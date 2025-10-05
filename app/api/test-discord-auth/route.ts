@@ -28,14 +28,12 @@ export async function GET() {
     
     // Check recent accounts
     const recentAccounts = await prisma.account.findMany({
-      orderBy: { createdAt: 'desc' },
       take: 5,
       select: {
         id: true,
         userId: true,
         provider: true,
         providerAccountId: true,
-        createdAt: true,
         user: {
           select: {
             email: true,
