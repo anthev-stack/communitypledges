@@ -97,6 +97,9 @@ export const authOptions: NextAuthOptions = {
               }
             })
             console.log('Created new user from Discord OAuth:', user.email, 'with ID:', newUser.id)
+            
+            // Store in user object that this is a new signup
+            user.isNewUser = true
           } else {
             console.log('Existing user found:', user.email, 'with ID:', existingUser.id, 'role:', existingUser.role)
           }
@@ -135,7 +138,11 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             token.id = dbUser.id
             token.role = dbUser.role
-            console.log('Updated token with database user data:', { id: dbUser.id, role: dbUser.role })
+            // Pass through isNewUser flag if it exists
+            if (user.isNewUser) {
+              token.isNewUser = true
+            }
+            console.log('Updated token with database user data:', { id: dbUser.id, role: dbUser.role, isNewUser: user.isNewUser })
           } else {
             console.error('No user found in database for email:', user.email)
           }
@@ -185,7 +192,11 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         session.user.id = token.id as string
         session.user.role = token.role as string
-        console.log('Updated session with:', { id: session.user.id, role: session.user.role })
+        // Pass through isNewUser flag if it exists
+        if (token.isNewUser) {
+          session.user.isNewUser = true
+        }
+        console.log('Updated session with:', { id: session.user.id, role: session.user.role, isNewUser: token.isNewUser })
       } else {
         console.error('No token provided to session callback')
       }
@@ -197,6 +208,11 @@ export const authOptions: NextAuthOptions = {
       
       // If url is a callback URL, redirect to dashboard
       if (url.includes('/api/auth/callback')) {
+        return `${baseUrl}/dashboard`
+      }
+      
+      // If url is the login page, redirect to dashboard (successful OAuth)
+      if (url.includes('/auth/login')) {
         return `${baseUrl}/dashboard`
       }
       

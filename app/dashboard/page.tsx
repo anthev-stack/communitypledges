@@ -141,8 +141,18 @@ export default function DashboardPage() {
       router.push('/auth/login')
     } else if (status === 'authenticated') {
       fetchDashboardData()
+      
+      // Show welcome notification for new Discord users
+      if (session?.user?.isNewUser) {
+        addNotification({
+          type: 'success',
+          title: 'Welcome to CommunityPledges! 🎉',
+          message: 'Your Discord account has been successfully connected. You can now create servers and start building your community!',
+          duration: 8000
+        })
+      }
     }
-  }, [status, router])
+  }, [status, router, session, addNotification])
 
   // Mark activities as read when dashboard data is loaded
   useEffect(() => {

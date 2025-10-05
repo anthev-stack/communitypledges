@@ -49,23 +49,11 @@ export default function LoginPage() {
     setError('')
     
     try {
-      // For OAuth providers, let NextAuth handle the redirect
-      const result = await signIn(provider, { 
-        callbackUrl: '/dashboard',
-        redirect: false
+      // For OAuth providers, let NextAuth handle the full redirect flow
+      await signIn(provider, { 
+        callbackUrl: '/dashboard'
+        // Remove redirect: false to allow proper OAuth flow
       })
-      
-      if (result?.error) {
-        if (result.error === 'AccessDenied') {
-          setError('This Discord account is not registered. Would you like to create a new account?')
-        } else {
-          setError(`Failed to sign in with ${provider}. Please try again.`)
-        }
-        setLoading(false)
-      } else if (result?.ok) {
-        // Successful sign in, redirect will be handled by NextAuth
-        router.push('/dashboard')
-      }
     } catch (error) {
       setError(`Failed to sign in with ${provider}. Please try again.`)
       setLoading(false)
