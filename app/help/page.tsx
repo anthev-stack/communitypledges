@@ -108,6 +108,8 @@ export default function HelpPage() {
         <div className="relative max-w-2xl mx-auto">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
+            id="help-search"
+            name="help-search"
             type="text"
             placeholder="Search for help..."
             value={searchQuery}

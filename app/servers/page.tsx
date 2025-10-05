@@ -502,6 +502,8 @@ export default function ServersPage() {
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
               <input
+                id="server-search"
+                name="server-search"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
