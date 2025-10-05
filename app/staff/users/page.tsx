@@ -55,7 +55,7 @@ export default function UserManagementPage() {
     }
 
     // Check if user has staff permissions
-    if (session.user?.role !== 'moderator' && session.user?.role !== 'admin') {
+    if (session.user?.role !== 'MODERATOR' && session.user?.role !== 'ADMIN') {
       router.push('/dashboard')
       return
     }
@@ -181,7 +181,7 @@ export default function UserManagementPage() {
     setUserToPromote(null)
   }
 
-  const isAdmin = session?.user?.role === 'admin'
+  const isAdmin = session?.user?.role === 'ADMIN'
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -205,7 +205,7 @@ export default function UserManagementPage() {
     )
   }
 
-  if (!session || (session.user?.role !== 'moderator' && session.user?.role !== 'admin')) {
+  if (!session || (session.user?.role !== 'MODERATOR' && session.user?.role !== 'ADMIN')) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -313,10 +313,10 @@ export default function UserManagementPage() {
                         <h4 className="text-lg font-medium text-white">
                           {user.name || 'Unnamed User'}
                         </h4>
-                        {user.role !== 'user' && (
+                        {user.role !== 'USER' && (
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            user.role === 'admin' ? 'bg-red-500/20 text-red-400' :
-                            user.role === 'moderator' ? 'bg-blue-500/20 text-blue-400' :
+                            user.role === 'ADMIN' ? 'bg-red-500/20 text-red-400' :
+                            user.role === 'MODERATOR' ? 'bg-blue-500/20 text-blue-400' :
                             'bg-gray-500/20 text-gray-400'
                           }`}>
                             {user.role}
@@ -352,7 +352,7 @@ export default function UserManagementPage() {
                     {/* Role Management - Admin Only */}
                     {isAdmin && user.id !== session?.user?.id && (
                       <div className="flex items-center space-x-1">
-                        {user.role === 'user' && (
+                        {user.role === 'USER' && (
                           <button
                             onClick={() => openPromoteModal(user)}
                             className="flex items-center space-x-1 px-3 py-1 text-sm text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-colors"
@@ -361,7 +361,7 @@ export default function UserManagementPage() {
                             <span>Promote</span>
                           </button>
                         )}
-                        {user.role === 'moderator' && (
+                        {user.role === 'MODERATOR' && (
                           <button
                             onClick={() => openDemoteModal(user)}
                             className="flex items-center space-x-1 px-3 py-1 text-sm text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 rounded-lg transition-colors"
@@ -370,7 +370,7 @@ export default function UserManagementPage() {
                             <span>Demote</span>
                           </button>
                         )}
-                        {user.role === 'admin' && (
+                        {user.role === 'ADMIN' && (
                           <span className="flex items-center space-x-1 px-3 py-1 text-sm text-gray-400 bg-slate-700/50 rounded-lg">
                             <Crown className="w-4 h-4" />
                             <span>Admin</span>
@@ -456,7 +456,7 @@ export default function UserManagementPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => handlePromoteUser(userToPromote.id, 'moderator')}
+                  onClick={() => handlePromoteUser(userToPromote.id, 'MODERATOR')}
                   disabled={promoting}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
                 >
@@ -511,7 +511,7 @@ export default function UserManagementPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleDemoteUser(userToPromote.id, 'user')}
+                  onClick={() => handleDemoteUser(userToPromote.id, 'USER')}
                   disabled={promoting}
                   className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
                 >

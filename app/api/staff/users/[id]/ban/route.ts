@@ -20,7 +20,7 @@ export async function POST(
     }
 
     // Check if user has staff permissions
-    if (session.user.role !== 'moderator' && session.user.role !== 'admin') {
+    if (session.user.role !== 'MODERATOR' && session.user.role !== 'ADMIN') {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
     }
 
@@ -39,11 +39,11 @@ export async function POST(
     }
 
     // Prevent banning other staff members (only admins can ban moderators)
-    if (targetUser.role === 'admin') {
+    if (targetUser.role === 'ADMIN') {
       return NextResponse.json({ message: 'Cannot ban administrators' }, { status: 403 })
     }
 
-    if (targetUser.role === 'moderator' && session.user.role !== 'admin') {
+    if (targetUser.role === 'MODERATOR' && session.user.role !== 'ADMIN') {
       return NextResponse.json({ message: 'Only administrators can ban moderators' }, { status: 403 })
     }
 

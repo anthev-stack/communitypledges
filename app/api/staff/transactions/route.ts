@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Only admins can view transactions
-    if (session.user.role !== 'admin') {
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { message: 'Forbidden - Admin access required' },
         { status: 403 }

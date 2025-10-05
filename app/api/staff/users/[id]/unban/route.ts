@@ -15,7 +15,7 @@ export async function POST(
     }
 
     // Check if user has admin permissions (only admins can unban)
-    if (session.user.role !== 'admin') {
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json({ message: 'Only administrators can unban users' }, { status: 403 })
     }
 

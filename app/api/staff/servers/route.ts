@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user has staff permissions
-    if (session.user.role !== 'moderator' && session.user.role !== 'admin') {
+    if (session.user.role !== 'MODERATOR' && session.user.role !== 'ADMIN') {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
     }
 

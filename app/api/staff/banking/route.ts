@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Only admins can view banking information
-    if (session.user.role !== 'admin') {
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { message: 'Forbidden - Admin access required' },
         { status: 403 }
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only admins can manage banking information
-    if (session.user.role !== 'admin') {
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { message: 'Forbidden - Admin access required' },
         { status: 403 }

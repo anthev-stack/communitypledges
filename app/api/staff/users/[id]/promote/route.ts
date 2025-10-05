@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
 const promoteUserSchema = z.object({
-  role: z.enum(['user', 'moderator', 'admin'])
+  role: z.enum(['USER', 'MODERATOR', 'ADMIN'])
 })
 
 export async function POST(
@@ -20,7 +20,7 @@ export async function POST(
     }
 
     // Only admins can promote/demote users
-    if (session.user.role !== 'admin') {
+    if (session.user.role !== 'ADMIN') {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
     }
 
@@ -52,7 +52,7 @@ export async function POST(
     })
 
     return NextResponse.json({
-      message: `User ${role === 'user' ? 'demoted' : 'promoted'} successfully`,
+      message: `User ${role === 'USER' ? 'demoted' : 'promoted'} successfully`,
       user: {
         id: updatedUser.id,
         name: updatedUser.name,

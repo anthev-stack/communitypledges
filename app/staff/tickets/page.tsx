@@ -59,7 +59,7 @@ export default function StaffTicketsPage() {
     }
 
     // Check if user has staff permissions
-    if (session.user?.role !== 'moderator' && session.user?.role !== 'admin') {
+    if (session.user?.role !== 'MODERATOR' && session.user?.role !== 'ADMIN') {
       router.push('/dashboard')
       return
     }
@@ -186,7 +186,7 @@ export default function StaffTicketsPage() {
     )
   }
 
-  if (!session || (session.user?.role !== 'moderator' && session.user?.role !== 'admin')) {
+  if (!session || (session.user?.role !== 'MODERATOR' && session.user?.role !== 'ADMIN')) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

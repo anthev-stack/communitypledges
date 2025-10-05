@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user has staff permissions
-    if (session.user.role !== 'moderator' && session.user.role !== 'admin') {
+    if (session.user.role !== 'MODERATOR' && session.user.role !== 'ADMIN') {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
     }
 
@@ -38,10 +38,10 @@ export async function GET(request: NextRequest) {
       where.isBanned = true
     } else if (status === 'payment_suspended') {
       where.isPaymentSuspended = true
-    } else if (status === 'moderator') {
-      where.role = 'moderator'
-    } else if (status === 'admin') {
-      where.role = 'admin'
+    } else if (status === 'MODERATOR') {
+      where.role = 'MODERATOR'
+    } else if (status === 'ADMIN') {
+      where.role = 'ADMIN'
     }
 
     const users = await prisma.user.findMany({
