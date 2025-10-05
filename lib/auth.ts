@@ -104,7 +104,6 @@ export const authOptions: NextAuthOptions = {
         }
         
         console.log('✅ Discord OAuth: Email validated:', user.email)
-        console.log('✅ Allowing Discord OAuth (PrismaAdapter will handle account linking)')
         
         try {
           // Check if user already exists
@@ -113,15 +112,49 @@ export const authOptions: NextAuthOptions = {
           })
           
           if (existingUser) {
-            console.log('👤 Existing user found, will link Discord account:', existingUser.email, 'ID:', existingUser.id)
+            console.log('👤 Existing user found, manually linking Discord account:', existingUser.email, 'ID:', existingUser.id)
+            
+            // Manually create the account link since PrismaAdapter isn't doing it
+            await prisma.account.upsert({
+              where: {
+                provider_providerAccountId: {
+                  provider: 'discord',
+                  providerAccountId: account.providerAccountId
+                }
+              },
+              update: {
+                access_token: account.access_token,
+                refresh_token: account.refresh_token,
+                expires_at: account.expires_at,
+                token_type: account.token_type,
+                scope: account.scope,
+                id_token: account.id_token,
+                session_state: account.session_state
+              },
+              create: {
+                userId: existingUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                access_token: account.access_token,
+                refresh_token: account.refresh_token,
+                expires_at: account.expires_at,
+                token_type: account.token_type,
+                scope: account.scope,
+                id_token: account.id_token,
+                session_state: account.session_state
+              }
+            })
+            
+            console.log('✅ Discord account linked successfully to existing user')
           } else {
             console.log('🆕 New user, will be created by PrismaAdapter')
           }
         } catch (error) {
-          console.error('❌ Error checking existing user:', error)
+          console.error('❌ Error in Discord OAuth signIn callback:', error)
+          return '/auth/error?error=Configuration'
         }
         
-        // Always allow Discord OAuth - PrismaAdapter will handle account linking automatically
         return true
       }
       
