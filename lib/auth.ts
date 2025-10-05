@@ -128,7 +128,7 @@ export const authOptions: NextAuthOptions = {
           if (user) {
             token.id = user.id
             token.role = 'user' // Default role
-            console.log('Using fallback user data:', { id: user.id, role: 'USER' })
+            console.log('Using fallback user data:', { id: user.id, role: 'user' })
           }
         }
       }
