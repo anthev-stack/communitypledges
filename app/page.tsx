@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Server, Users, DollarSign, Heart } from 'lucide-react'
-import LiveStreamEmbed from '@/components/LiveStreamEmbed'
+import LiveStreamerEmbed from '@/components/LiveStreamerEmbed'
 
 export default function HomePage() {
   return (
@@ -30,6 +30,11 @@ export default function HomePage() {
             <span>Create Server</span>
           </Link>
         </div>
+      </div>
+
+      {/* Live Stream Section */}
+      <div className="mb-16">
+        <LiveStreamerEmbed />
       </div>
 
       {/* Features Section */}
@@ -112,11 +117,6 @@ export default function HomePage() {
             </p>
           </div>
         </div>
-      </div>
-
-      {/* Live Stream Section */}
-      <div className="mb-16">
-        <LiveStreamEmbed username="hrry" />
       </div>
     </div>
   )
