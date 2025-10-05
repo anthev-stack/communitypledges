@@ -143,13 +143,19 @@ export default function DashboardPage() {
       fetchDashboardData()
       
       // Show welcome notification for new Discord users
+      console.log('[Dashboard] Checking isNewUser:', session?.user?.isNewUser)
+      console.log('[Dashboard] Session user:', session?.user)
+      
       if (session?.user?.isNewUser) {
+        console.log('[Dashboard] Showing welcome notification for new user')
         addNotification({
           type: 'success',
           title: 'Welcome to CommunityPledges! 🎉',
           message: 'Your Discord account has been successfully connected. You can now create servers and start building your community!',
           duration: 8000
         })
+      } else {
+        console.log('[Dashboard] No welcome notification - user is not new')
       }
     }
   }, [status, router, session, addNotification])
