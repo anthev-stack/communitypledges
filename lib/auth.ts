@@ -103,6 +103,21 @@ export const authOptions: NextAuthOptions = {
         console.log('✅ Discord OAuth: Email validated:', user.email)
         console.log('✅ Allowing Discord OAuth (NextAuth will handle account linking)')
         
+        try {
+          // Check if user already exists
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email }
+          })
+          
+          if (existingUser) {
+            console.log('👤 Existing user found, will link Discord account:', existingUser.email, 'ID:', existingUser.id)
+          } else {
+            console.log('🆕 New user, will be created by NextAuth')
+          }
+        } catch (error) {
+          console.error('❌ Error checking existing user:', error)
+        }
+        
         // Always allow Discord OAuth - NextAuth will handle account linking automatically
         return true
       }
@@ -150,6 +165,10 @@ export const authOptions: NextAuthOptions = {
             console.log('✅ Token updated with user data:', { id: dbUser.id, role: dbUser.role, isNewUser })
           } else {
             console.error('❌ No user found in database for email:', user.email)
+            console.log('🔄 Will use user data from OAuth:', { id: user.id, email: user.email })
+            // Use the user data from OAuth if database user not found
+            token.id = user.id
+            token.role = 'user' // Default role
           }
         } catch (error) {
           console.error('Error fetching user in JWT callback:', error)
