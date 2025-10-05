@@ -9,12 +9,31 @@ export async function GET() {
   try {
     console.log('[Settings API] Starting request...')
     const session = await getServerSession(authOptions)
-    console.log('[Settings API] Session:', session?.user?.id ? 'Found' : 'Not found')
+    console.log('[Settings API] Raw session:', JSON.stringify(session, null, 2))
+    console.log('[Settings API] Session user ID:', session?.user?.id)
+    console.log('[Settings API] Session user email:', session?.user?.email)
+    console.log('[Settings API] Session user role:', session?.user?.role)
     
-    if (!session?.user?.id) {
-      console.log('[Settings API] No session, returning 401')
+    if (!session) {
+      console.log('[Settings API] No session at all, returning 401')
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { message: 'No session found' },
+        { status: 401 }
+      )
+    }
+    
+    if (!session.user) {
+      console.log('[Settings API] Session exists but no user, returning 401')
+      return NextResponse.json(
+        { message: 'Session exists but no user' },
+        { status: 401 }
+      )
+    }
+    
+    if (!session.user.id) {
+      console.log('[Settings API] User exists but no ID, returning 401')
+      return NextResponse.json(
+        { message: 'User exists but no ID' },
         { status: 401 }
       )
     }
