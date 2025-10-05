@@ -67,6 +67,21 @@ export const authOptions: NextAuthOptions = {
     signIn: '/auth/login',
     error: '/auth/error',
   },
+  events: {
+    async linkAccount({ user, account, profile }) {
+      console.log('🔗 Account linked:', { 
+        userEmail: user.email, 
+        provider: account.provider,
+        providerAccountId: account.providerAccountId 
+      })
+    },
+    async createUser({ user }) {
+      console.log('👤 User created:', { 
+        userEmail: user.email, 
+        userId: user.id 
+      })
+    },
+  },
   callbacks: {
     async signIn({ user, account, profile }) {
       console.log('🔐 SignIn callback called:', { 
@@ -85,20 +100,10 @@ export const authOptions: NextAuthOptions = {
         }
         
         console.log('✅ Discord OAuth: Email validated:', user.email)
+        console.log('✅ Allowing Discord OAuth (NextAuth will handle account linking)')
         
-        // Check if user already exists with this email
-        const existingUser = await prisma.user.findUnique({
-          where: { email: user.email }
-        })
-        
-        if (existingUser) {
-          console.log('👤 Existing user found, linking Discord account:', existingUser.email)
-          // Update the user object with existing user data
-          user.id = existingUser.id
-          user.role = existingUser.role
-        } else {
-          console.log('🆕 New user, will be created by NextAuth')
-        }
+        // Always allow Discord OAuth - NextAuth will handle account linking automatically
+        return true
       }
       
       console.log('✅ SignIn callback returning true')
