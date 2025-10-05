@@ -89,7 +89,7 @@ export async function PUT(request: NextRequest) {
 
     // Check if username is already taken by another user
     if (name !== user.name) {
-      const existingUser = await prisma.user.findUnique({
+      const existingUser = await prisma.user.findFirst({
         where: { name },
         select: { id: true }
       })
