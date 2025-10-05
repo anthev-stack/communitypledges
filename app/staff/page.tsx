@@ -30,20 +30,7 @@ import {
 } from 'lucide-react'
 import { useCurrency } from '@/contexts/CurrencyContext'
 import PriceDisplay from '@/components/PriceDisplay'
-
-interface PartnerStreamer {
-  id: string
-  username: string
-  displayName: string
-  priority: number
-  isActive: boolean
-  createdAt: string
-  addedByUser: {
-    id: string
-    name: string
-    email: string
-  }
-}
+import PartnerStreamerManagement from '@/components/PartnerStreamerManagement'
 
 interface StaffDashboardData {
   totalUsers: number

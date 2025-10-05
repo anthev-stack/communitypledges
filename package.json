@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/vercel-migration.js && node scripts/add-failed-payment-tracking.js && node scripts/add-auth-email-fields.js && node scripts/add-username-tracking.js && prisma generate && next build",
+    "build": "node scripts/vercel-migration.js && node scripts/add-failed-payment-tracking.js && node scripts/add-auth-email-fields.js && node scripts/add-username-tracking.js && node scripts/add-partner-streamers.js && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "seed-admin": "node scripts/seed-admin.js",
