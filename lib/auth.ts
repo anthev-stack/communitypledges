@@ -63,6 +63,7 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  allowDangerousEmailAccountLinking: true,
   pages: {
     signIn: '/auth/login',
     error: '/auth/error',
@@ -78,47 +79,14 @@ export const authOptions: NextAuthOptions = {
       
       // Handle Discord OAuth
       if (account?.provider === 'discord') {
-        try {
-          // Validate required user data
-          if (!user.email) {
-            console.error('❌ Discord OAuth: No email provided')
-            return '/auth/error?error=Configuration'
-          }
-          
-          console.log('✅ Discord OAuth: Email validated:', user.email)
-
-          // Check if user already exists
-          const existingUser = await prisma.user.findUnique({
-            where: { email: user.email }
-          })
-
-          if (!existingUser) {
-            console.log('🆕 Creating new user from Discord OAuth:', user.email)
-            // Create new user from Discord OAuth
-            const newUser = await prisma.user.create({
-              data: {
-                email: user.email,
-                name: user.name || `Discord User ${user.email.split('@')[0]}`,
-                image: user.image,
-                emailVerified: new Date(), // Discord emails are pre-verified
-                role: 'user'
-              }
-            })
-            console.log('✅ Created new user from Discord OAuth:', user.email, 'with ID:', newUser.id)
-            
-            // Store in user object that this is a new signup
-            user.isNewUser = true
-          } else {
-            console.log('👤 Existing user found:', user.email, 'with ID:', existingUser.id, 'role:', existingUser.role)
-            // Ensure user object has the correct data for JWT callback
-            user.id = existingUser.id
-            user.role = existingUser.role
-          }
-        } catch (error) {
-          console.error('❌ Error in Discord OAuth signIn:', error)
-          // Return error page URL instead of false
+        // Validate required user data
+        if (!user.email) {
+          console.error('❌ Discord OAuth: No email provided')
           return '/auth/error?error=Configuration'
         }
+        
+        console.log('✅ Discord OAuth: Email validated:', user.email)
+        console.log('✅ Allowing Discord OAuth account linking')
       }
       
       console.log('✅ SignIn callback returning true')
@@ -141,24 +109,28 @@ export const authOptions: NextAuthOptions = {
       // For Discord OAuth, we need to fetch user data from database
       if (account?.provider === 'discord' && user?.email) {
         try {
-          console.log('Fetching user from database for Discord OAuth:', user.email)
+          console.log('🔍 Fetching user from database for Discord OAuth:', user.email)
           const dbUser = await prisma.user.findUnique({
             where: { email: user.email },
-            select: { id: true, role: true }
+            select: { id: true, role: true, createdAt: true }
           })
           
-          console.log('Database user found:', dbUser)
+          console.log('📊 Database user found:', dbUser)
           
           if (dbUser) {
             token.id = dbUser.id
             token.role = dbUser.role
-            // Pass through isNewUser flag if it exists
-            if (user.isNewUser) {
+            
+            // Check if this is a new user (created within last 5 minutes)
+            const isNewUser = new Date().getTime() - new Date(dbUser.createdAt).getTime() < 5 * 60 * 1000
+            if (isNewUser) {
               token.isNewUser = true
+              console.log('🆕 Marking as new user (created recently)')
             }
-            console.log('Updated token with database user data:', { id: dbUser.id, role: dbUser.role, isNewUser: user.isNewUser })
+            
+            console.log('✅ Token updated with user data:', { id: dbUser.id, role: dbUser.role, isNewUser })
           } else {
-            console.error('No user found in database for email:', user.email)
+            console.error('❌ No user found in database for email:', user.email)
           }
         } catch (error) {
           console.error('Error fetching user in JWT callback:', error)
