@@ -63,7 +63,6 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  allowDangerousEmailAccountLinking: true,
   pages: {
     signIn: '/auth/login',
     error: '/auth/error',
@@ -86,7 +85,20 @@ export const authOptions: NextAuthOptions = {
         }
         
         console.log('✅ Discord OAuth: Email validated:', user.email)
-        console.log('✅ Allowing Discord OAuth account linking')
+        
+        // Check if user already exists with this email
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email }
+        })
+        
+        if (existingUser) {
+          console.log('👤 Existing user found, linking Discord account:', existingUser.email)
+          // Update the user object with existing user data
+          user.id = existingUser.id
+          user.role = existingUser.role
+        } else {
+          console.log('🆕 New user, will be created by NextAuth')
+        }
       }
       
       console.log('✅ SignIn callback returning true')
