@@ -584,10 +584,21 @@ export default function SettingsPage() {
 
   // Load settings on mount
   useEffect(() => {
-    if (session) {
+    console.log('[Settings Page] Session check:', {
+      session: !!session,
+      user: !!session?.user,
+      userId: session?.user?.id,
+      userRole: session?.user?.role,
+      status: status
+    })
+    
+    if (session && session.user && session.user.id) {
+      console.log('[Settings Page] Session is ready, fetching settings...')
       fetchUserSettings()
+    } else {
+      console.log('[Settings Page] Session not ready yet, waiting...')
     }
-  }, [session])
+  }, [session, status])
 
   // Handle PayPal OAuth callback
   useEffect(() => {

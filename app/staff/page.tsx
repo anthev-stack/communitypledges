@@ -810,19 +810,30 @@ export default function StaffDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'servers' | 'tickets' | 'streamers' | 'transactions' | 'stripe'>('overview')
 
   useEffect(() => {
+    console.log('[Staff Page] Session check:', {
+      status: status,
+      session: !!session,
+      user: !!session?.user,
+      userId: session?.user?.id,
+      userRole: session?.user?.role
+    })
+    
     if (status === 'loading') return
     
     if (!session) {
+      console.log('[Staff Page] No session, redirecting to login')
       router.push('/auth/login')
       return
     }
 
     // Check if user has staff permissions
     if (session.user?.role !== 'moderator' && session.user?.role !== 'admin') {
+      console.log('[Staff Page] User role is not moderator/admin:', session.user?.role)
       router.push('/dashboard')
       return
     }
 
+    console.log('[Staff Page] User has staff permissions, fetching dashboard data')
     fetchDashboardData()
   }, [session, status])
 
