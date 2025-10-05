@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
 const promoteUserSchema = z.object({
-  role: z.enum(['user', 'moderator', 'admin'])
+  role: z.enum(['user', 'partner', 'moderator', 'admin'])
 })
 
 export async function POST(
