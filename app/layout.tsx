@@ -7,6 +7,7 @@ import { NotificationProvider } from '@/contexts/NotificationContext'
 import { ActivityNotificationProvider } from '@/contexts/ActivityNotificationContext'
 import { CurrencyProvider } from '@/contexts/CurrencyContext'
 import NotificationContainer from '@/components/NotificationContainer'
+import SessionDebug from '@/components/SessionDebug'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -33,6 +34,7 @@ export default function RootLayout({
                 </main>
                 <Footer />
                 <NotificationContainer />
+                <SessionDebug />
               </div>
             </CurrencyProvider>
           </NotificationProvider>
