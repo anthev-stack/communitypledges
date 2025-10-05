@@ -181,7 +181,7 @@ export default function LiveStreamerEmbed() {
             <div className="aspect-video bg-slate-700 rounded-lg overflow-hidden relative">
               {!embedError ? (
                 <iframe
-                  src={`https://player.twitch.tv/?channel=${user.login}&parent=communitypledges.com&autoplay=true&muted=true`}
+                  src={`https://embed.twitch.tv/?channel=${user.login}&autoplay=true&muted=true`}
                   height="100%"
                   width="100%"
                   allowFullScreen
