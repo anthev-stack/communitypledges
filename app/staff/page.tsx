@@ -125,7 +125,7 @@ function ServerManagement() {
   const [banningServer, setBanningServer] = useState<string | null>(null)
   const [showBanModal, setShowBanModal] = useState(false)
 
-  const isAdmin = session?.user?.role === 'ADMIN'
+  const isAdmin = session?.user?.role === 'admin'
 
   useEffect(() => {
     fetchServers()
@@ -399,7 +399,7 @@ function UserManagement() {
   const [showPromoteModal, setShowPromoteModal] = useState(false)
   const [newRole, setNewRole] = useState('user')
 
-  const isAdmin = session?.user?.role === 'ADMIN'
+  const isAdmin = session?.user?.role === 'admin'
 
   useEffect(() => {
     fetchUsers()
@@ -622,8 +622,9 @@ function UserManagement() {
                               </span>
                             )}
                             <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              user.role === 'ADMIN' ? 'bg-purple-500/20 text-purple-400' :
-                              user.role === 'MODERATOR' ? 'bg-blue-500/20 text-blue-400' :
+                              user.role === 'admin' ? 'bg-red-500/20 text-red-400' :
+                              user.role === 'moderator' ? 'bg-blue-500/20 text-blue-400' :
+                              user.role === 'partner' ? 'bg-purple-500/20 text-purple-400' :
                               'bg-gray-500/20 text-gray-400'
                             }`}>
                               {user.role}
@@ -940,7 +941,7 @@ export default function StaffDashboard() {
             >
               Streamers
             </button>
-            {session?.user?.role === 'ADMIN' && (
+            {session?.user?.role === 'admin' && (
               <>
                 <button
                   onClick={() => setActiveTab('transactions')}
@@ -1165,7 +1166,7 @@ export default function StaffDashboard() {
         )}
 
         {/* Transactions Tab - Admin Only */}
-        {activeTab === 'transactions' && session?.user?.role === 'ADMIN' && (
+        {activeTab === 'transactions' && session?.user?.role === 'admin' && (
           <div className="space-y-6">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow border border-slate-700/50">
               <div className="px-6 py-4 border-b border-slate-600">
@@ -1182,7 +1183,7 @@ export default function StaffDashboard() {
         )}
 
         {/* Stripe Configuration Tab - Admin Only */}
-        {activeTab === 'stripe' && session?.user?.role === 'ADMIN' && (
+        {activeTab === 'stripe' && session?.user?.role === 'admin' && (
           <div className="space-y-6">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow border border-slate-700/50">
               <div className="px-6 py-4 border-b border-slate-600">
