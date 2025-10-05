@@ -242,28 +242,16 @@ export default function LiveStreamerEmbed() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex space-x-3 mt-4">
+          <div className="mt-4">
             <a
               href={streamUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+              className="block bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
             >
               <ExternalLink className="w-4 h-4" />
               <span>Open in Twitch</span>
             </a>
-            <button
-              onClick={() => {
-                const iframe = document.querySelector('iframe[src*="player.twitch.tv"]') as HTMLIFrameElement;
-                if (iframe) {
-                  iframe.contentWindow?.postMessage({ type: 'toggleMute' }, '*');
-                }
-              }}
-              className="bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-lg transition-colors"
-              title="Toggle Sound"
-            >
-              🔊
-            </button>
           </div>
         </div>
       </div>
