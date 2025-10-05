@@ -35,6 +35,9 @@ export default function MembersPage() {
       }
       
       const data = await response.json();
+      console.log('[Members Page] Received data:', data);
+      console.log('[Members Page] Members count:', data.members?.length || 0);
+      console.log('[Members Page] Members:', data.members?.map((m: any) => ({ id: m.id, name: m.name, role: m.role, createdAt: m.createdAt })));
       setMembers(data.members || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');

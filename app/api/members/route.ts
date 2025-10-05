@@ -33,7 +33,15 @@ export async function GET(request: NextRequest) {
     });
 
     console.log(`[Members API] Found ${members.length} total users in database`)
-    console.log('[Members API] Users found:', members.map(m => ({ id: m.id, name: m.name, role: m.role })))
+    console.log('[Members API] Users found:', members.map(m => ({ id: m.id, name: m.name, role: m.role, createdAt: m.createdAt })))
+    
+    // Debug: Check for recent users (last 24 hours)
+    const recentUsers = members.filter(m => {
+      const createdAt = new Date(m.createdAt)
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+      return createdAt > oneDayAgo
+    })
+    console.log(`[Members API] Found ${recentUsers.length} users created in last 24 hours:`, recentUsers.map(m => ({ id: m.id, name: m.name, role: m.role, createdAt: m.createdAt })))
 
     // Transform the data to include basic stats only
     const membersWithStats = members.map(member => ({
