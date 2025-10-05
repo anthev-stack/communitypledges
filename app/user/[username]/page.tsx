@@ -12,7 +12,7 @@ export default async function UserPage({ params }: UserPageProps) {
   const { username } = params
 
   // Fetch user data from database
-  const user = await prisma.user.findUnique({
+  const user = await prisma.user.findFirst({
     where: {
       name: username
     },
