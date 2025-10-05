@@ -37,6 +37,13 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+enum UserRole {
+  USER
+  PARTNER
+  MODERATOR
+  ADMIN
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?   @unique
@@ -46,7 +53,7 @@ model User {
   password      String?
   
   // Staff system
-  role          String    @default("user") // user, moderator, admin
+  role          UserRole  @default(USER)
   isBanned      Boolean   @default(false)
   bannedAt      DateTime?
   bannedBy      String?

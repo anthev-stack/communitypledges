@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Users, Eye, ExternalLink } from 'lucide-react'
+import { Users, Eye, ExternalLink, Play } from 'lucide-react'
 
 interface StreamData {
   id: string
@@ -41,6 +41,7 @@ export default function LiveStreamerEmbed() {
   const [liveData, setLiveData] = useState<LiveStreamerData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [embedError, setEmbedError] = useState(false)
 
   useEffect(() => {
     const checkLiveStreamer = async () => {
@@ -178,14 +179,46 @@ export default function LiveStreamerEmbed() {
           {/* Live Twitch Stream Embed */}
           <div className="relative">
             <div className="aspect-video bg-slate-700 rounded-lg overflow-hidden relative">
-              <iframe
-                src={`https://player.twitch.tv/?channel=${user.login}&parent=communitypledges.com&autoplay=true&muted=true`}
-                height="100%"
-                width="100%"
-                allowFullScreen
-                className="w-full h-full"
-                title={`${user.displayName} Live Stream`}
-              />
+              {!embedError ? (
+                <iframe
+                  src={`https://player.twitch.tv/?channel=${user.login}&parent=communitypledges.com&autoplay=true&muted=true`}
+                  height="100%"
+                  width="100%"
+                  allowFullScreen
+                  className="w-full h-full"
+                  title={`${user.displayName} Live Stream`}
+                  onError={() => {
+                    console.error('Twitch embed failed to load, showing fallback')
+                    setEmbedError(true)
+                  }}
+                  onLoad={() => {
+                    console.log('Twitch embed loaded successfully')
+                    setEmbedError(false)
+                  }}
+                />
+              ) : (
+                // Fallback: Show thumbnail with play button
+                <div className="relative group w-full h-full">
+                  <img
+                    src={stream.thumbnailUrl.replace('{width}', '640').replace('{height}', '360')}
+                    alt="Stream thumbnail"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+                  
+                  {/* Play Button Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <a
+                      href={streamUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-red-600 hover:bg-red-700 text-white p-4 rounded-full shadow-lg transform hover:scale-110 transition-all duration-200"
+                    >
+                      <Play className="w-8 h-8 fill-current" />
+                    </a>
+                  </div>
+                </div>
+              )}
               
               {/* Live Badge */}
               <div className="absolute top-3 left-3">

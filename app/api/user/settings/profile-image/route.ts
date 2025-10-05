@@ -24,11 +24,24 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // Validate file type
+    // Get user role to determine allowed file types
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true }
+    })
+
+    // Validate file type based on user role
     const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
-    if (!validTypes.includes(profileImage.type)) {
+    const premiumTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
+    
+    const allowedTypes = (user?.role === 'PARTNER' || user?.role === 'MODERATOR' || user?.role === 'ADMIN') 
+      ? premiumTypes 
+      : validTypes
+    
+    if (!allowedTypes.includes(profileImage.type)) {
+      const allowedFormats = allowedTypes.map(type => type.split('/')[1].toUpperCase()).join(', ')
       return NextResponse.json(
-        { message: 'Invalid file type. Please upload a PNG, JPG, or WebP image.' },
+        { message: `Invalid file type. Please upload a ${allowedFormats} image.` },
         { status: 400 }
       )
     }

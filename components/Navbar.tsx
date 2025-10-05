@@ -41,7 +41,7 @@ export default function Navbar() {
                     </span>
                   )}
                 </Link>
-                {(session.user?.role === 'moderator' || session.user?.role === 'admin') && (
+                {(session.user?.role === 'MODERATOR' || session.user?.role === 'ADMIN') && (
                   <Link href="/staff" className="text-gray-300 hover:text-emerald-400 transition-colors">
                     Staff
                   </Link>
@@ -141,7 +141,7 @@ export default function Navbar() {
                       </span>
                     )}
                   </Link>
-                  {(session.user?.role === 'moderator' || session.user?.role === 'admin') && (
+                  {(session.user?.role === 'MODERATOR' || session.user?.role === 'ADMIN') && (
                     <Link 
                       href="/staff" 
                       className="text-gray-300 hover:text-emerald-400 transition-colors"

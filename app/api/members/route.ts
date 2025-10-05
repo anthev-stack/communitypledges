@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
         id: true,
         name: true,
         image: true,
+        role: true,
         createdAt: true,
         servers: {
           where: {
@@ -38,6 +39,7 @@ export async function GET(request: NextRequest) {
       id: member.id,
       name: member.name,
       image: member.image,
+      role: member.role,
       createdAt: member.createdAt.toISOString(),
       serverCount: member.servers.length,
       pledgeCount: member._count.pledges

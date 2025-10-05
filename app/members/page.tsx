@@ -9,6 +9,7 @@ interface Member {
   id: string;
   name: string;
   image: string | null;
+  role: string;
   createdAt: string;
   pledgeCount: number;
   serverCount: number;
@@ -48,6 +49,21 @@ export default function MembersPage() {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const getRoleDisplay = (role: string) => {
+    switch (role) {
+      case 'USER':
+        return { text: '@user', color: 'text-gray-400' };
+      case 'PARTNER':
+        return { text: '@partner', color: 'text-purple-400' };
+      case 'MODERATOR':
+        return { text: '@moderator', color: 'text-blue-400' };
+      case 'ADMIN':
+        return { text: '@admin', color: 'text-red-400' };
+      default:
+        return { text: '@user', color: 'text-gray-400' };
+    }
   };
 
 
@@ -168,6 +184,9 @@ export default function MembersPage() {
                     <h3 className="text-lg font-semibold text-white truncate">
                       {member.name}
                     </h3>
+                    <p className={`text-sm font-medium ${getRoleDisplay(member.role).color}`}>
+                      {getRoleDisplay(member.role).text}
+                    </p>
                   </div>
                 </div>
 
