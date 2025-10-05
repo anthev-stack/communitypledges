@@ -49,19 +49,13 @@ export default function LoginPage() {
     setError('')
     
     try {
-      const result = await signIn(provider, { 
-        callbackUrl: '/dashboard',
-        redirect: false
+      // For OAuth providers, let NextAuth handle the redirect
+      await signIn(provider, { 
+        callbackUrl: '/dashboard'
+        // Remove redirect: false to allow proper OAuth flow
       })
-      
-      if (result?.error) {
-        setError(`Failed to sign in with ${provider}. Please try again.`)
-      } else if (result?.ok) {
-        router.push('/dashboard')
-      }
     } catch (error) {
       setError(`Failed to sign in with ${provider}. Please try again.`)
-    } finally {
       setLoading(false)
     }
   }

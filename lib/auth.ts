@@ -68,7 +68,35 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       console.log('SignIn callback:', { user, account, profile })
       
-      // Allow all sign-ins for now
+      // Handle Discord OAuth
+      if (account?.provider === 'discord') {
+        try {
+          // Check if user already exists
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email! }
+          })
+
+          if (!existingUser) {
+            // Create new user from Discord OAuth
+            await prisma.user.create({
+              data: {
+                email: user.email!,
+                name: user.name!,
+                image: user.image,
+                emailVerified: new Date(), // Discord emails are pre-verified
+                role: 'USER'
+              }
+            })
+            console.log('Created new user from Discord OAuth:', user.email)
+          } else {
+            console.log('Existing user found:', user.email)
+          }
+        } catch (error) {
+          console.error('Error in Discord OAuth signIn:', error)
+          return false
+        }
+      }
+      
       return true
     },
     async jwt({ token, user }) {
