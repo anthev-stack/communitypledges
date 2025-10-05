@@ -90,7 +90,7 @@ export const authOptions: NextAuthOptions = {
             const newUser = await prisma.user.create({
               data: {
                 email: user.email,
-                name: user.name || 'Discord User',
+                name: user.name || `Discord User ${user.email.split('@')[0]}`,
                 image: user.image,
                 emailVerified: new Date(), // Discord emails are pre-verified
                 role: 'user'
