@@ -352,6 +352,13 @@ export default function UserManagementPage() {
                   
                   <div className="flex items-center space-x-2">
                     {/* Role Management - Admin Only */}
+                    {console.log('[Staff Users] Role check:', {
+                      isAdmin,
+                      userId: user.id,
+                      sessionUserId: session?.user?.id,
+                      userRole: user.role,
+                      canPromote: isAdmin && user.id !== session?.user?.id
+                    })}
                     {isAdmin && user.id !== session?.user?.id && (
                       <div className="flex items-center space-x-1">
                         {user.role === 'user' && (
