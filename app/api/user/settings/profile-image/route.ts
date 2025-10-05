@@ -34,7 +34,7 @@ export async function PUT(request: NextRequest) {
     const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
     const premiumTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
     
-    const allowedTypes = (user?.role === 'PARTNER' || user?.role === 'MODERATOR' || user?.role === 'ADMIN') 
+    const allowedTypes = (user?.role === 'partner' || user?.role === 'moderator' || user?.role === 'admin') 
       ? premiumTypes 
       : validTypes
     

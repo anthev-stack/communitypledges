@@ -53,13 +53,13 @@ export default function MembersPage() {
 
   const getRoleDisplay = (role: string) => {
     switch (role) {
-      case 'USER':
+      case 'user':
         return { text: '@user', color: 'text-gray-400' };
-      case 'PARTNER':
+      case 'partner':
         return { text: '@partner', color: 'text-purple-400' };
-      case 'MODERATOR':
+      case 'moderator':
         return { text: '@moderator', color: 'text-blue-400' };
-      case 'ADMIN':
+      case 'admin':
         return { text: '@admin', color: 'text-red-400' };
       default:
         return { text: '@user', color: 'text-gray-400' };
@@ -182,7 +182,7 @@ export default function MembersPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-semibold text-white truncate">
-                      {member.name}
+                      {member.name || 'Unnamed User'}
                     </h3>
                     <p className={`text-sm font-medium ${getRoleDisplay(member.role).color}`}>
                       {getRoleDisplay(member.role).text}

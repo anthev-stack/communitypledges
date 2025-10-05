@@ -18,7 +18,7 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || session.user.role !== 'admin') {
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
@@ -66,7 +66,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || session.user.role !== 'admin') {
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }

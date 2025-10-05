@@ -324,7 +324,7 @@ export default function TicketPage() {
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg border border-slate-700/50">
               <div className="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-white">Messages</h2>
-                {session.user?.role === 'MODERATOR' || session.user?.role === 'ADMIN' ? (
+                {session.user?.role === 'moderator' || session.user?.role === 'admin' ? (
                   ticket.status !== 'closed' ? (
                     <button
                       onClick={() => setShowCloseConfirm(true)}

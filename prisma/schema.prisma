@@ -38,10 +38,10 @@ model Session {
 }
 
 enum UserRole {
-  USER
-  PARTNER
-  MODERATOR
-  ADMIN
+  user
+  partner
+  moderator
+  admin
 }
 
 model User {
@@ -53,7 +53,7 @@ model User {
   password      String?
   
   // Staff system
-  role          UserRole  @default(USER)
+  role          UserRole  @default(user)
   isBanned      Boolean   @default(false)
   bannedAt      DateTime?
   bannedBy      String?

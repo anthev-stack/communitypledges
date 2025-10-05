@@ -12,7 +12,7 @@ async function updateUserRoles() {
     // Use raw SQL to get users with old role values since Prisma can't read them
     const usersWithOldRoles = await prisma.$queryRaw`
       SELECT id, role FROM "User" 
-      WHERE role IN ('user', 'moderator', 'admin')
+      WHERE role IN ('USER', 'MODERATOR', 'ADMIN')
     `
     
     console.log(`📊 Found ${usersWithOldRoles.length} users with old role values`)
@@ -28,18 +28,18 @@ async function updateUserRoles() {
       let newRole
       
       switch (user.role) {
-        case 'user':
-          newRole = 'USER'
+        case 'USER':
+          newRole = 'user'
           break
-        case 'moderator':
-          newRole = 'MODERATOR'
+        case 'MODERATOR':
+          newRole = 'moderator'
           break
-        case 'admin':
-          newRole = 'ADMIN'
+        case 'ADMIN':
+          newRole = 'admin'
           break
         default:
-          newRole = 'USER' // Default to USER for any unknown roles
-          console.log(`⚠️  Unknown role "${user.role}" for user ${user.id}, defaulting to USER`)
+          newRole = 'user' // Default to user for any unknown roles
+          console.log(`⚠️  Unknown role "${user.role}" for user ${user.id}, defaulting to user`)
       }
       
       // Use raw SQL to update the role since Prisma might not handle the enum conversion properly

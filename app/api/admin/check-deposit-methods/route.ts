@@ -21,7 +21,7 @@ export async function POST() {
       select: { role: true }
     })
 
-    if (user?.role !== 'ADMIN') {
+    if (user?.role !== 'admin') {
       return NextResponse.json(
         { message: 'Admin access required' },
         { status: 403 }

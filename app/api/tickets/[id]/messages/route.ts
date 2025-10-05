@@ -38,7 +38,7 @@ export async function POST(
       return NextResponse.json({ message: 'Ticket not found' }, { status: 404 })
     }
 
-    const isStaff = session.user.role === 'MODERATOR' || session.user.role === 'ADMIN'
+    const isStaff = session.user.role === 'moderator' || session.user.role === 'admin'
     if (!isStaff && ticket.createdById !== session.user.id) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
     }

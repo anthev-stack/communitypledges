@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     const priority = searchParams.get('priority')
 
     // Check if user is staff
-    const isStaff = session.user.role === 'MODERATOR' || session.user.role === 'ADMIN'
+    const isStaff = session.user.role === 'moderator' || session.user.role === 'admin'
 
     const whereClause: any = {}
     

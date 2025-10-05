@@ -15,7 +15,7 @@ export async function POST(
     }
 
     // Only admins can unban servers
-    if (session.user.role !== 'ADMIN') {
+    if (session.user.role !== 'admin') {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
     }
 

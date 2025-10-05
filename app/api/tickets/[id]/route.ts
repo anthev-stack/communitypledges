@@ -49,7 +49,7 @@ export async function GET(
     }
 
     // Check if user can access this ticket
-    const isStaff = session.user.role === 'MODERATOR' || session.user.role === 'ADMIN'
+    const isStaff = session.user.role === 'moderator' || session.user.role === 'admin'
     if (!isStaff && ticket.createdById !== session.user.id) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
     }

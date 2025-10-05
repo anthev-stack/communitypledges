@@ -86,7 +86,7 @@ export const authOptions: NextAuthOptions = {
                 name: user.name!,
                 image: user.image,
                 emailVerified: new Date(), // Discord emails are pre-verified
-                role: 'USER'
+                role: 'user'
               }
             })
             console.log('Created new user from Discord OAuth:', user.email, 'with ID:', newUser.id)
@@ -127,7 +127,7 @@ export const authOptions: NextAuthOptions = {
           // Fallback to user data if database query fails
           if (user) {
             token.id = user.id
-            token.role = 'USER' // Default role
+            token.role = 'user' // Default role
             console.log('Using fallback user data:', { id: user.id, role: 'USER' })
           }
         }
