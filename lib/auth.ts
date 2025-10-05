@@ -101,8 +101,17 @@ export const authOptions: NextAuthOptions = {
       
       return true
     },
-    async jwt({ token, user, account }) {
-      console.log('JWT callback:', { token, user, account })
+    async jwt({ token, user, account, trigger }) {
+      console.log('JWT callback called:', { 
+        hasToken: !!token, 
+        hasUser: !!user, 
+        hasAccount: !!account,
+        trigger: trigger,
+        tokenId: token?.id,
+        tokenRole: token?.role,
+        userEmail: user?.email,
+        accountProvider: account?.provider
+      })
       
       // For Discord OAuth, we need to fetch user data from database
       if (account?.provider === 'discord' && user?.email) {
@@ -138,6 +147,25 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
         token.role = user.role
         console.log('Using user data for non-OAuth:', { id: user.id, role: user.role })
+      }
+      
+      // If token doesn't have id/role but has email, try to fetch from database
+      if (!token.id && token.email && !user) {
+        try {
+          console.log('Token missing id/role, fetching from database:', token.email)
+          const dbUser = await prisma.user.findUnique({
+            where: { email: token.email as string },
+            select: { id: true, role: true }
+          })
+          
+          if (dbUser) {
+            token.id = dbUser.id
+            token.role = dbUser.role
+            console.log('Updated token from database:', { id: dbUser.id, role: dbUser.role })
+          }
+        } catch (error) {
+          console.error('Error fetching user in JWT callback (refresh):', error)
+        }
       }
       
       console.log('Final token:', { id: token.id, role: token.role })
