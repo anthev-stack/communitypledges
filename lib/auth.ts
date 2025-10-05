@@ -110,6 +110,9 @@ export const authOptions: NextAuthOptions = {
             user.isNewUser = true
           } else {
             console.log('👤 Existing user found:', user.email, 'with ID:', existingUser.id, 'role:', existingUser.role)
+            // Ensure user object has the correct data for JWT callback
+            user.id = existingUser.id
+            user.role = existingUser.role
           }
         } catch (error) {
           console.error('❌ Error in Discord OAuth signIn:', error)
@@ -122,7 +125,7 @@ export const authOptions: NextAuthOptions = {
       return true
     },
     async jwt({ token, user, account, trigger }) {
-      console.log('JWT callback called:', { 
+      console.log('🔑 JWT callback called:', { 
         hasToken: !!token, 
         hasUser: !!user, 
         hasAccount: !!account,
@@ -130,6 +133,8 @@ export const authOptions: NextAuthOptions = {
         tokenId: token?.id,
         tokenRole: token?.role,
         userEmail: user?.email,
+        userRole: user?.role,
+        userIsNewUser: user?.isNewUser,
         accountProvider: account?.provider
       })
       
@@ -196,7 +201,12 @@ export const authOptions: NextAuthOptions = {
       return token
     },
     async session({ session, token }) {
-      console.log('Session callback:', { session, token })
+      console.log('📋 Session callback:', { 
+        sessionUser: session?.user,
+        tokenId: token?.id,
+        tokenRole: token?.role,
+        tokenIsNewUser: token?.isNewUser
+      })
       
       if (token) {
         session.user.id = token.id as string
