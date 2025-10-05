@@ -80,7 +80,7 @@ export const authOptions: NextAuthOptions = {
 
           if (!existingUser) {
             // Create new user from Discord OAuth
-            await prisma.user.create({
+            const newUser = await prisma.user.create({
               data: {
                 email: user.email!,
                 name: user.name!,
@@ -89,9 +89,9 @@ export const authOptions: NextAuthOptions = {
                 role: 'USER'
               }
             })
-            console.log('Created new user from Discord OAuth:', user.email)
+            console.log('Created new user from Discord OAuth:', user.email, 'with ID:', newUser.id)
           } else {
-            console.log('Existing user found:', user.email)
+            console.log('Existing user found:', user.email, 'with ID:', existingUser.id, 'role:', existingUser.role)
           }
         } catch (error) {
           console.error('Error in Discord OAuth signIn:', error)
@@ -107,24 +107,40 @@ export const authOptions: NextAuthOptions = {
       // For Discord OAuth, we need to fetch user data from database
       if (account?.provider === 'discord' && user?.email) {
         try {
+          console.log('Fetching user from database for Discord OAuth:', user.email)
           const dbUser = await prisma.user.findUnique({
             where: { email: user.email },
             select: { id: true, role: true }
           })
           
+          console.log('Database user found:', dbUser)
+          
           if (dbUser) {
             token.id = dbUser.id
             token.role = dbUser.role
+            console.log('Updated token with database user data:', { id: dbUser.id, role: dbUser.role })
+          } else {
+            console.error('No user found in database for email:', user.email)
           }
         } catch (error) {
           console.error('Error fetching user in JWT callback:', error)
+          // Fallback to user data if database query fails
+          if (user) {
+            token.id = user.id
+            token.role = 'USER' // Default role
+            console.log('Using fallback user data:', { id: user.id, role: 'USER' })
+          }
         }
       }
       
-      if (user) {
+      // For non-Discord OAuth (like credentials)
+      if (user && !account?.provider) {
         token.id = user.id
         token.role = user.role
+        console.log('Using user data for non-OAuth:', { id: user.id, role: user.role })
       }
+      
+      console.log('Final token:', { id: token.id, role: token.role })
       return token
     },
     async session({ session, token }) {
@@ -133,7 +149,11 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        console.log('Updated session with:', { id: session.user.id, role: session.user.role })
+      } else {
+        console.error('No token provided to session callback')
       }
+      console.log('Final session:', session)
       return session
     },
     async redirect({ url, baseUrl }) {

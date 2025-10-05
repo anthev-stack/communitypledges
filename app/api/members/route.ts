@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
     });
 
     console.log(`[Members API] Found ${members.length} total users in database`)
+    console.log('[Members API] Users found:', members.map(m => ({ id: m.id, name: m.name })))
 
     // Transform the data to include basic stats only
     const membersWithStats = members.map(member => ({
@@ -44,6 +45,8 @@ export async function GET(request: NextRequest) {
       serverCount: member.servers.length,
       pledgeCount: member._count.pledges
     }));
+
+    console.log('[Members API] Transformed members:', membersWithStats.map(m => ({ id: m.id, name: m.name, role: m.role })))
 
     return NextResponse.json({
       success: true,
