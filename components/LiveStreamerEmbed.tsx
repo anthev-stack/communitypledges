@@ -183,16 +183,24 @@ export default function LiveStreamerEmbed() {
             <div className="aspect-video bg-slate-700 rounded-lg overflow-hidden relative">
               {!embedError ? (
                 <iframe
-                  src={`https://player.twitch.tv/?channel=${user.login}&parent=communitypledges.com&autoplay=true&muted=true`}
+                  src={`https://player.twitch.tv/?channel=${user.login}&parent=${typeof window !== 'undefined' ? window.location.hostname : 'communitypledges.com'}&autoplay=true&muted=true`}
                   height="100%"
                   width="100%"
                   allowFullScreen
                   className="w-full h-full"
                   title={`${user.displayName} Live Stream`}
                   onError={(e) => {
-                    console.error('Twitch embed failed to load:', e)
+                    console.error('Twitch player embed failed to load:', e)
                     console.log('Channel:', user.login, 'Display Name:', user.displayName)
-                    setEmbedError(true)
+                    console.log('Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'unknown')
+                    // Try fallback to embed.twitch.tv
+                    setTimeout(() => {
+                      const iframe = e.target as HTMLIFrameElement
+                      if (iframe) {
+                        iframe.src = `https://embed.twitch.tv/?channel=${user.login}&autoplay=true&muted=true`
+                        console.log('Trying fallback embed method...')
+                      }
+                    }, 1000)
                   }}
                   onLoad={() => {
                     console.log('Twitch embed loaded successfully for:', user.login)
