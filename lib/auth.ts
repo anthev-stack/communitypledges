@@ -7,8 +7,7 @@ import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
   // Force fresh build - Google OAuth removed
-  // Temporarily disable adapter to debug OAuth issues
-  // adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma),
   debug: process.env.NODE_ENV === 'development',
   providers: [
     DiscordProvider({
@@ -90,11 +89,14 @@ export const authOptions: NextAuthOptions = {
         userName: user?.name,
         accountProvider: account?.provider,
         hasProfile: !!profile,
-        userId: user?.id
+        userId: user?.id,
+        userImage: user?.image
       })
       
       // Handle Discord OAuth
       if (account?.provider === 'discord') {
+        console.log('🎮 Processing Discord OAuth...')
+        
         // Validate required user data
         if (!user.email) {
           console.error('❌ Discord OAuth: No email provided')
@@ -102,7 +104,7 @@ export const authOptions: NextAuthOptions = {
         }
         
         console.log('✅ Discord OAuth: Email validated:', user.email)
-        console.log('✅ Allowing Discord OAuth (NextAuth will handle account linking)')
+        console.log('✅ Allowing Discord OAuth (PrismaAdapter will handle account linking)')
         
         try {
           // Check if user already exists
@@ -113,13 +115,13 @@ export const authOptions: NextAuthOptions = {
           if (existingUser) {
             console.log('👤 Existing user found, will link Discord account:', existingUser.email, 'ID:', existingUser.id)
           } else {
-            console.log('🆕 New user, will be created by NextAuth')
+            console.log('🆕 New user, will be created by PrismaAdapter')
           }
         } catch (error) {
           console.error('❌ Error checking existing user:', error)
         }
         
-        // Always allow Discord OAuth - NextAuth will handle account linking automatically
+        // Always allow Discord OAuth - PrismaAdapter will handle account linking automatically
         return true
       }
       
@@ -141,83 +143,42 @@ export const authOptions: NextAuthOptions = {
         tokenEmail: token?.email
       })
       
-      // For Discord OAuth, handle user creation/linking manually
+      // For Discord OAuth, fetch user data from database
       if (account?.provider === 'discord' && user?.email) {
         try {
-          console.log('🔍 Handling Discord OAuth for:', user.email)
-          
-          // Check if user already exists
-          let dbUser = await prisma.user.findUnique({
+          console.log('🔍 Fetching user from database for Discord OAuth:', user.email)
+          const dbUser = await prisma.user.findUnique({
             where: { email: user.email },
             select: { id: true, role: true, createdAt: true }
           })
           
-          if (!dbUser) {
-            // Create new user
-            console.log('🆕 Creating new user for Discord OAuth')
-            dbUser = await prisma.user.create({
-              data: {
-                email: user.email,
-                name: user.name || null,
-                image: user.image || null,
-                role: 'user'
-              },
-              select: { id: true, role: true, createdAt: true }
-            })
-            console.log('✅ New user created:', dbUser)
-            token.isNewUser = true
-          } else {
-            console.log('👤 Existing user found:', dbUser)
+          console.log('📊 Database user found:', dbUser)
+          
+          if (dbUser) {
+            token.id = dbUser.id
+            token.role = dbUser.role
+            
             // Check if this is a new user (created within last 5 minutes)
             const isNewUser = new Date().getTime() - new Date(dbUser.createdAt).getTime() < 5 * 60 * 1000
             if (isNewUser) {
               token.isNewUser = true
               console.log('🆕 Marking as new user (created recently)')
             }
+            
+            console.log('✅ Token updated with user data:', { id: dbUser.id, role: dbUser.role, isNewUser })
+          } else {
+            console.error('❌ No user found in database for email:', user.email)
+            console.log('🔄 Will use user data from OAuth:', { id: user.id, email: user.email })
+            // Use the user data from OAuth if database user not found
+            token.id = user.id
+            token.role = 'user' // Default role
           }
-          
-          // Create or update account link
-          await prisma.account.upsert({
-            where: {
-              provider_providerAccountId: {
-                provider: 'discord',
-                providerAccountId: account.providerAccountId
-              }
-            },
-            update: {
-              access_token: account.access_token,
-              refresh_token: account.refresh_token,
-              expires_at: account.expires_at,
-              token_type: account.token_type,
-              scope: account.scope,
-              id_token: account.id_token,
-              session_state: account.session_state
-            },
-            create: {
-              userId: dbUser.id,
-              type: account.type,
-              provider: account.provider,
-              providerAccountId: account.providerAccountId,
-              access_token: account.access_token,
-              refresh_token: account.refresh_token,
-              expires_at: account.expires_at,
-              token_type: account.token_type,
-              scope: account.scope,
-              id_token: account.id_token,
-              session_state: account.session_state
-            }
-          })
-          
-          token.id = dbUser.id
-          token.role = dbUser.role
-          console.log('✅ Token updated with user data:', { id: dbUser.id, role: dbUser.role, isNewUser: token.isNewUser })
-          
         } catch (error) {
-          console.error('❌ Error in Discord OAuth JWT callback:', error)
-          // Fallback - still try to create a basic token
+          console.error('Error fetching user in JWT callback:', error)
+          // Fallback to user data if database query fails
           if (user) {
             token.id = user.id
-            token.role = 'user'
+            token.role = 'user' // Default role
             console.log('Using fallback user data:', { id: user.id, role: 'user' })
           }
         }
