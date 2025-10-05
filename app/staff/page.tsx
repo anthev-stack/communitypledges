@@ -771,6 +771,7 @@ function UserManagement() {
                 className="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="user">User</option>
+                <option value="partner">Partner</option>
                 <option value="moderator">Moderator</option>
                 <option value="admin">Admin</option>
               </select>
