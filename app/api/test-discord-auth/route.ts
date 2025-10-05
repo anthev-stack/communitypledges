@@ -17,8 +17,7 @@ export async function GET() {
         accounts: {
           select: {
             provider: true,
-            providerAccountId: true,
-            createdAt: true
+            providerAccountId: true
           }
         }
       }
