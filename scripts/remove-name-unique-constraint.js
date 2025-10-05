@@ -8,12 +8,8 @@ async function removeNameUniqueConstraint() {
   try {
     console.log('🔧 Removing unique constraint from name field...')
     
-    // Read the SQL file
-    const sqlPath = path.join(__dirname, 'remove-name-unique-constraint.sql')
-    const sql = fs.readFileSync(sqlPath, 'utf8')
-    
-    // Execute the SQL
-    await prisma.$executeRawUnsafe(sql)
+    // Execute the SQL commands separately
+    await prisma.$executeRawUnsafe('ALTER TABLE "User" DROP CONSTRAINT IF EXISTS "User_name_key";')
     
     console.log('✅ Successfully removed unique constraint from name field')
     
