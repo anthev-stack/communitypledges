@@ -191,20 +191,42 @@ export async function GET(request: NextRequest) {
     const prisma = new PrismaClient()
     
     try {
-      // Prepare data to save
-      const updateData: any = {
-        paypalConnected: true,
-        paypalConnectedAt: new Date()
-      }
+      // Determine if this is for payment or payout based on query parameter
+      const url = new URL(request.url)
+      const type = url.searchParams.get('type') || 'payment'
+      const isPayout = type === 'payout'
       
-      if (paypalEmail) {
-        updateData.paypalEmail = paypalEmail
-        console.log('✅ Will save PayPal email:', paypalEmail)
-      }
+      // Prepare data to save based on context
+      const updateData: any = {}
       
-      if (paypalUserId) {
-        updateData.paypalUserId = paypalUserId
-        console.log('✅ Will save PayPal user ID:', paypalUserId)
+      if (isPayout) {
+        // Payout PayPal (for receiving money)
+        updateData.payoutPaypalConnected = true
+        updateData.payoutPaypalConnectedAt = new Date()
+        
+        if (paypalEmail) {
+          updateData.payoutPaypalEmail = paypalEmail
+          console.log('✅ Will save payout PayPal email:', paypalEmail)
+        }
+        
+        if (paypalUserId) {
+          updateData.payoutPaypalUserId = paypalUserId
+          console.log('✅ Will save payout PayPal user ID:', paypalUserId)
+        }
+      } else {
+        // Payment PayPal (for paying pledges)
+        updateData.paymentPaypalConnected = true
+        updateData.paymentPaypalConnectedAt = new Date()
+        
+        if (paypalEmail) {
+          updateData.paymentPaypalEmail = paypalEmail
+          console.log('✅ Will save payment PayPal email:', paypalEmail)
+        }
+        
+        if (paypalUserId) {
+          updateData.paymentPaypalUserId = paypalUserId
+          console.log('✅ Will save payment PayPal user ID:', paypalUserId)
+        }
       }
       
       await prisma.user.update({

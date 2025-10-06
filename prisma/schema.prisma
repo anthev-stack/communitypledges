@@ -63,11 +63,17 @@ model User {
   stripeAccountId String?
   stripeCustomerId String?
   
-  // PayPal integration
-  paypalEmail String?
-  paypalUserId String?
-  paypalConnected Boolean @default(false)
-  paypalConnectedAt DateTime?
+  // PayPal integration - Payout (for receiving money)
+  payoutPaypalEmail String?
+  payoutPaypalUserId String?
+  payoutPaypalConnected Boolean @default(false)
+  payoutPaypalConnectedAt DateTime?
+  
+  // PayPal integration - Payment (for paying pledges)
+  paymentPaypalEmail String?
+  paymentPaypalUserId String?
+  paymentPaypalConnected Boolean @default(false)
+  paymentPaypalConnectedAt DateTime?
   
   // Payment details for pledgers
   hasPaymentMethod     Boolean @default(false)

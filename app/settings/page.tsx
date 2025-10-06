@@ -27,10 +27,16 @@ interface UserSettings {
   cardExpMonth?: number
   cardExpYear?: number
   stripePaymentMethodId?: string
-  paypalEmail?: string | null
-  paypalUserId?: string | null
-  paypalConnected?: boolean
-  paypalConnectedAt?: string | null
+  // Payout PayPal (for receiving money)
+  payoutPaypalEmail?: string | null
+  payoutPaypalUserId?: string | null
+  payoutPaypalConnected?: boolean
+  payoutPaypalConnectedAt?: string | null
+  // Payment PayPal (for paying pledges)
+  paymentPaypalEmail?: string | null
+  paymentPaypalUserId?: string | null
+  paymentPaypalConnected?: boolean
+  paymentPaypalConnectedAt?: string | null
   name?: string
   email?: string
   image?: string
@@ -256,7 +262,9 @@ export default function SettingsPage() {
 
   // Handle PayPal OAuth
   const handlePayPalOAuth = () => {
-    window.location.href = '/api/paypal/oauth'
+    // Add referrer to distinguish between payment and payout
+    const referrer = activeTab === 'deposit' ? 'payout' : 'payment'
+    window.location.href = `/api/paypal/oauth?type=${referrer}`
   }
 
   // Handle PayPal update (fallback for manual email entry)
@@ -301,15 +309,15 @@ export default function SettingsPage() {
   // Handle PayPal remove
   const handlePayPalRemove = async () => {
     try {
-      const response = await fetch('/api/user/settings/paypal', {
+      const response = await fetch('/api/user/settings/payout-paypal', {
         method: 'DELETE'
       })
 
       if (response.ok) {
         addNotification({
           type: 'success',
-          title: 'PayPal Removed',
-          message: 'Your PayPal email has been removed.',
+          title: 'PayPal Payout Removed',
+          message: 'Your PayPal payout account has been removed.',
           duration: 4000
         })
         fetchUserSettings()
@@ -317,16 +325,49 @@ export default function SettingsPage() {
         addNotification({
           type: 'error',
           title: 'Remove Failed',
-          message: 'Failed to remove PayPal email',
+          message: 'Failed to remove PayPal payout account',
           duration: 4000
         })
       }
     } catch (error) {
-      console.error('Error removing PayPal:', error)
+      console.error('Error removing PayPal payout:', error)
       addNotification({
         type: 'error',
         title: 'Remove Failed',
-        message: 'Failed to remove PayPal email',
+        message: 'Failed to remove PayPal payout account',
+        duration: 4000
+      })
+    }
+  }
+
+  const handlePaymentPayPalRemove = async () => {
+    try {
+      const response = await fetch('/api/user/settings/payment-paypal', {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        addNotification({
+          type: 'success',
+          title: 'PayPal Payment Removed',
+          message: 'Your PayPal payment method has been removed.',
+          duration: 4000
+        })
+        fetchUserSettings()
+      } else {
+        addNotification({
+          type: 'error',
+          title: 'Remove Failed',
+          message: 'Failed to remove PayPal payment method',
+          duration: 4000
+        })
+      }
+    } catch (error) {
+      console.error('Error removing PayPal payment:', error)
+      addNotification({
+        type: 'error',
+        title: 'Remove Failed',
+        message: 'Failed to remove PayPal payment method',
         duration: 4000
       })
     }
@@ -1052,7 +1093,7 @@ export default function SettingsPage() {
             )}
 
             {/* PayPal Payment Method */}
-            {userSettings.paypalConnected && (
+            {userSettings.paymentPaypalConnected && (
               <div className="space-y-4 mb-6">
                 <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
                   <div className="flex items-center justify-between">
@@ -1061,25 +1102,25 @@ export default function SettingsPage() {
                         <span className="text-white font-bold text-xs">P</span>
                       </div>
                       <div>
-                        <p className="text-white font-medium">PayPal Connected</p>
+                        <p className="text-white font-medium">PayPal Payment Method</p>
                         <p className="text-gray-400 text-sm">
-                          {userSettings.paypalEmail || 'Connected via OAuth'}
+                          {userSettings.paymentPaypalEmail || 'Connected via OAuth'}
                         </p>
-                        {userSettings.paypalConnectedAt && (
+                        {userSettings.paymentPaypalConnectedAt && (
                           <p className="text-gray-500 text-xs">
-                            Connected: {new Date(userSettings.paypalConnectedAt).toLocaleDateString()}
+                            Connected: {new Date(userSettings.paymentPaypalConnectedAt).toLocaleDateString()}
                           </p>
                         )}
                       </div>
                     </div>
                     <button
                       onClick={() => {
-                        if (confirm('Disconnect PayPal account?')) {
-                          handlePayPalRemove()
+                        if (confirm('Remove PayPal payment method?')) {
+                          handlePaymentPayPalRemove()
                         }
                       }}
                       className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
-                      title="Disconnect PayPal"
+                      title="Remove PayPal Payment Method"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -1088,10 +1129,23 @@ export default function SettingsPage() {
               </div>
             )}
 
+            {/* Payment Method Conflict Warning */}
+            {(userSettings.hasPaymentMethod && userSettings.paymentPaypalConnected) && (
+              <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-lg p-4 mb-6">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="w-5 h-5 text-yellow-400" />
+                  <div>
+                    <p className="text-yellow-400 font-medium">Multiple Payment Methods Detected</p>
+                    <p className="text-yellow-300 text-sm">You currently have both Stripe and PayPal payment methods. Please remove one to avoid conflicts.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Add Payment Methods */}
-            {!userSettings.hasPaymentMethod && !userSettings.paypalConnected && (
+            {!userSettings.hasPaymentMethod && !userSettings.paymentPaypalConnected && (
               <div>
-                <p className="text-gray-300 mb-4">No payment methods added yet. Choose how you want to pay for pledges and server boosts.</p>
+                <p className="text-gray-300 mb-4">No payment methods added yet. Choose ONE payment method for paying pledges and server boosts.</p>
                 <div className="space-y-4">
                   {/* PayPal - Recommended */}
                   <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
@@ -1148,11 +1202,16 @@ export default function SettingsPage() {
                     </div>
                     <div>
                       <p className="text-white font-medium">
-                        PayPal Email
+                        PayPal Payout Account
                       </p>
                       <p className="text-gray-400 text-sm">
-                        {userSettings.paypalEmail || 'Not set'}
+                        {userSettings.payoutPaypalEmail || 'Not connected'}
                       </p>
+                      {userSettings.payoutPaypalConnectedAt && (
+                        <p className="text-gray-500 text-xs">
+                          Connected: {new Date(userSettings.payoutPaypalConnectedAt).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex space-x-2">
@@ -1163,7 +1222,7 @@ export default function SettingsPage() {
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
-                    {userSettings.paypalEmail && (
+                    {userSettings.payoutPaypalConnected && (
                       <button
                         onClick={() => {
                           if (confirm('Remove PayPal email?')) {
