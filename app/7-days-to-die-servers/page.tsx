@@ -58,7 +58,7 @@ export default function SevenDaysToDieServersPage() {
         </p>
         <Link
           href="/servers?game=7dtd"
-          className="inline-flex items-center bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+          className="inline-flex items-center bg-white hover:bg-gray-100 text-gray-900 px-8 py-3 rounded-lg font-medium transition-colors"
         >
           <Server className="w-5 h-5 mr-2" />
           Browse 7DTD Servers
@@ -137,7 +137,7 @@ export default function SevenDaysToDieServersPage() {
         </p>
         <Link
           href="/servers?game=7dtd"
-          className="inline-flex items-center bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+          className="inline-flex items-center bg-white hover:bg-gray-100 text-gray-900 px-8 py-3 rounded-lg font-medium transition-colors"
         >
           Start Browsing 7DTD Servers
         </Link>

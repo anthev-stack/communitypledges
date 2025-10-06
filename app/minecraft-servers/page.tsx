@@ -57,7 +57,7 @@ export default function MinecraftServersPage() {
         </p>
         <Link
           href="/servers?game=minecraft"
-          className="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+          className="inline-flex items-center bg-white hover:bg-gray-100 text-gray-900 px-8 py-3 rounded-lg font-medium transition-colors"
         >
           <Server className="w-5 h-5 mr-2" />
           Browse Minecraft Servers
@@ -136,7 +136,7 @@ export default function MinecraftServersPage() {
         </p>
         <Link
           href="/servers?game=minecraft"
-          className="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+          className="inline-flex items-center bg-white hover:bg-gray-100 text-gray-900 px-8 py-3 rounded-lg font-medium transition-colors"
         >
           Start Browsing Minecraft Servers
         </Link>

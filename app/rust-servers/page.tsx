@@ -56,7 +56,7 @@ export default function RustServersPage() {
         </p>
         <Link
           href="/servers?game=rust"
-          className="inline-flex items-center bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+          className="inline-flex items-center bg-white hover:bg-gray-100 text-gray-900 px-8 py-3 rounded-lg font-medium transition-colors"
         >
           <Server className="w-5 h-5 mr-2" />
           Browse Rust Servers
@@ -129,7 +129,7 @@ export default function RustServersPage() {
         </p>
         <Link
           href="/servers?game=rust"
-          className="inline-flex items-center bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+          className="inline-flex items-center bg-white hover:bg-gray-100 text-gray-900 px-8 py-3 rounded-lg font-medium transition-colors"
         >
           Start Browsing Rust Servers
         </Link>

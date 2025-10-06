@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { Server, Users, MapPin, Pickaxe } from 'lucide-react'
+import { Server, Users, MapPin, Hammer } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Terraria Server Browser - Find the Best Terraria Servers',
@@ -47,7 +47,7 @@ export default function TerrariaServersPage() {
       {/* Hero Section */}
       <div className="text-center mb-12">
         <div className="flex items-center justify-center mb-4">
-          <Pickaxe className="w-12 h-12 text-orange-500 mr-3" />
+          <Hammer className="w-12 h-12 text-orange-500 mr-3" />
           <h1 className="text-4xl md:text-5xl font-bold text-white">
             Terraria Server Browser
           </h1>
@@ -58,7 +58,7 @@ export default function TerrariaServersPage() {
         </p>
         <Link
           href="/servers?game=terraria"
-          className="inline-flex items-center bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+          className="inline-flex items-center bg-white hover:bg-gray-100 text-gray-900 px-8 py-3 rounded-lg font-medium transition-colors"
         >
           <Server className="w-5 h-5 mr-2" />
           Browse Terraria Servers
@@ -137,7 +137,7 @@ export default function TerrariaServersPage() {
         </p>
         <Link
           href="/servers?game=terraria"
-          className="inline-flex items-center bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+          className="inline-flex items-center bg-white hover:bg-gray-100 text-gray-900 px-8 py-3 rounded-lg font-medium transition-colors"
         >
           Start Browsing Terraria Servers
         </Link>
