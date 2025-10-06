@@ -165,9 +165,7 @@ export default function FlyingBats({ enabled = true }: { enabled?: boolean }) {
   }
 
   useEffect(() => {
-    console.log('🦇 FlyingBats useEffect called with enabled:', enabled)
     if (enabled) {
-      console.log('🦇 Starting bats animation...')
       startBats()
 
       const handleResize = () => {
@@ -182,7 +180,6 @@ export default function FlyingBats({ enabled = true }: { enabled?: boolean }) {
         stopBats()
       }
     } else {
-      console.log('🦇 Stopping bats animation...')
       stopBats()
     }
   }, [enabled])
