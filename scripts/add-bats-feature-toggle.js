@@ -28,11 +28,25 @@ async function addBatsFeatureToggle() {
     console.log('✅ Successfully added batsEnabled column to User table')
     
     // Set bats enabled for admin users using raw SQL to avoid type casting issues
-    await prisma.$executeRaw`
-      UPDATE "User" 
-      SET "batsEnabled" = true 
-      WHERE role = 'admin'::UserRole
-    `
+    // First check if UserRole enum exists, if not, use string comparison
+    try {
+      await prisma.$executeRaw`
+        UPDATE "User" 
+        SET "batsEnabled" = true 
+        WHERE role = 'admin'::UserRole
+      `
+    } catch (error) {
+      if (error.message.includes('type "UserRole" does not exist')) {
+        console.log('⚠️ UserRole enum not found, using string comparison instead')
+        await prisma.$executeRaw`
+          UPDATE "User" 
+          SET "batsEnabled" = true 
+          WHERE role = 'admin'
+        `
+      } else {
+        throw error
+      }
+    }
     
     console.log('✅ Set bats enabled for admin users')
     
