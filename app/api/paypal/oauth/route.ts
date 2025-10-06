@@ -52,6 +52,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Handle OAuth callback
+    if (!state) {
+      return NextResponse.json({ message: 'Missing state parameter' }, { status: 400 })
+    }
+    
     let stateData
     try {
       stateData = JSON.parse(Buffer.from(state, 'base64').toString())
