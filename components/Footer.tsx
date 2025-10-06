@@ -18,7 +18,7 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="lg:col-span-1">
             <div className="flex items-center space-x-2 mb-4">
-              <h3 className="text-xl font-bold">COMMUNITYPLEDGES</h3>
+              <h3 className="text-xl font-bold">Community Pledges</h3>
             </div>
             <p className="text-gray-400 mb-4">
               Keeping community servers alive since 2025. Share the cost with your community or simply pledge to your favorite community server.

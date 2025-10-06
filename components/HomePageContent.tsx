@@ -13,7 +13,8 @@ export default function HomePageContent() {
       {/* Hero Section */}
       <div className="text-center py-16 px-4">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
-          COMMUNITYPLEDGES
+          Community Pledges
+          <span className="text-lg sm:text-xl md:text-2xl text-gray-400 ml-2">BETA</span>
         </h1>
         <p className="text-lg sm:text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
           The ultimate server browser for Minecraft, Rust, Terraria, ARK, Valheim, 7 Days to Die, and Discord servers. Share the cost of community servers with others. Pledge what you can afford, 
