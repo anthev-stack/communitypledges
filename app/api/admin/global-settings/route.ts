@@ -73,12 +73,17 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { batsEnabled } = body
 
+    console.log('🦇 Admin API: Received batsEnabled:', batsEnabled, 'Type:', typeof batsEnabled)
+
     if (typeof batsEnabled !== 'boolean') {
+      console.log('❌ Admin API: Invalid batsEnabled type:', typeof batsEnabled)
       return NextResponse.json(
         { message: 'Invalid batsEnabled value' },
         { status: 400 }
       )
     }
+
+    console.log('🦇 Admin API: Updating database with batsEnabled:', batsEnabled)
 
     // Update global settings
     const updatedSettings = await prisma.globalSettings.upsert({
@@ -89,6 +94,8 @@ export async function POST(request: Request) {
         batsEnabled
       }
     })
+
+    console.log('✅ Admin API: Database updated successfully:', updatedSettings)
 
     return NextResponse.json({
       message: `Global bats setting ${batsEnabled ? 'enabled' : 'disabled'} successfully`,
