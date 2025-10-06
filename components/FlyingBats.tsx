@@ -32,7 +32,7 @@ export default function FlyingBats({ enabled = true }: { enabled?: boolean }) {
 
   const defaultOptions: BatOptions = {
     image: 'https://raw.githubusercontent.com/Artimon/jquery-halloween-bats/master/bats.png',
-    zIndex: -1, // Behind content
+    zIndex: 1, // Behind content but in front of background
     amount: 6,
     width: 35,
     height: 20,
@@ -165,7 +165,9 @@ export default function FlyingBats({ enabled = true }: { enabled?: boolean }) {
   }
 
   useEffect(() => {
+    console.log('🦇 FlyingBats useEffect called with enabled:', enabled)
     if (enabled) {
+      console.log('🦇 Starting bats animation...')
       startBats()
 
       const handleResize = () => {
@@ -180,6 +182,7 @@ export default function FlyingBats({ enabled = true }: { enabled?: boolean }) {
         stopBats()
       }
     } else {
+      console.log('🦇 Stopping bats animation...')
       stopBats()
     }
   }, [enabled])

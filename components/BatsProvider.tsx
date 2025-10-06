@@ -11,13 +11,18 @@ export default function BatsProvider() {
     // Fetch global bats setting
     const fetchBatsSetting = async () => {
       try {
-        const response = await fetch('/api/admin/global-settings')
+        console.log('🦇 Fetching global bats setting...')
+        const response = await fetch('/api/public/global-settings')
         if (response.ok) {
           const settings = await response.json()
+          console.log('🦇 Global bats setting:', settings)
           setBatsEnabled(settings.batsEnabled || false)
+        } else {
+          console.error('🦇 Failed to fetch bats setting:', response.status)
+          setBatsEnabled(false)
         }
       } catch (error) {
-        console.error('Error fetching bats setting:', error)
+        console.error('🦇 Error fetching bats setting:', error)
         setBatsEnabled(false)
       } finally {
         setLoading(false)
