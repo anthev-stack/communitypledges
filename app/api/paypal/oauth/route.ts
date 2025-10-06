@@ -26,14 +26,14 @@ export async function GET(request: NextRequest) {
       }
 
       const stateParam = session.user.id // Use user ID as state for security
-      const paypalAuthUrl = `https://www.paypal.com/signin/authorize?client_id=${clientId}&response_type=code&scope=openid&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateParam}`
+      const paypalAuthUrl = `https://www.paypal.com/signin/authorize?client_id=${clientId}&response_type=code&scope=openid%20email&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateParam}`
 
       // Debug logging
       console.log('PayPal OAuth Debug Info:')
       console.log('- Client ID:', clientId)
       console.log('- Redirect URI:', redirectUri)
       console.log('- State:', stateParam)
-      console.log('- Scopes: openid')
+      console.log('- Scopes: openid email')
       console.log('- Full URL:', paypalAuthUrl)
 
       return NextResponse.redirect(paypalAuthUrl)
@@ -81,10 +81,19 @@ export async function GET(request: NextRequest) {
 
     // Try multiple approaches to get PayPal email
     let paypalEmail = null
+    let paypalUserId = null
     let userInfo = null
+    
+    console.log('Token data received:', {
+      hasAccessToken: !!accessToken,
+      hasIdToken: !!idToken,
+      scopes: tokenData.scope,
+      tokenType: tokenData.token_type
+    })
     
     // Approach 1: Try OpenID Connect userinfo endpoint
     try {
+      console.log('Trying OpenID Connect userinfo endpoint...')
       const userInfoResponse = await fetch('https://api-m.paypal.com/v1/identity/openidconnect/userinfo', {
         method: 'GET',
         headers: {
@@ -97,7 +106,14 @@ export async function GET(request: NextRequest) {
       if (userInfoResponse.ok) {
         userInfo = await userInfoResponse.json()
         console.log('PayPal user info response:', userInfo)
-        paypalEmail = userInfo.email || userInfo.email_verified || userInfo.sub
+        paypalEmail = userInfo.email || userInfo.email_verified
+        paypalUserId = userInfo.sub || userInfo.user_id
+        if (paypalEmail) {
+          console.log('✅ Got email from userinfo:', paypalEmail)
+        }
+        if (paypalUserId) {
+          console.log('✅ Got user ID from userinfo:', paypalUserId)
+        }
       } else {
         const errorText = await userInfoResponse.text()
         console.error('PayPal user info failed:', {
@@ -115,11 +131,18 @@ export async function GET(request: NextRequest) {
       try {
         console.log('Attempting to decode ID token...')
         // ID tokens are JWT tokens, we can decode the payload
-        const payload = JSON.parse(Buffer.from(idToken.split('.')[1], 'base64').toString())
-        console.log('ID token payload:', payload)
-        paypalEmail = payload.email || payload.email_verified
-        if (paypalEmail) {
-          console.log('Got email from ID token:', paypalEmail)
+        const parts = idToken.split('.')
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString())
+          console.log('ID token payload:', payload)
+          paypalEmail = payload.email || payload.email_verified
+          paypalUserId = payload.sub || payload.user_id
+          if (paypalEmail) {
+            console.log('✅ Got email from ID token:', paypalEmail)
+          }
+          if (paypalUserId) {
+            console.log('✅ Got user ID from ID token:', paypalUserId)
+          }
         }
       } catch (tokenError) {
         console.error('Error decoding ID token:', tokenError)
@@ -143,6 +166,13 @@ export async function GET(request: NextRequest) {
           const identityData = await identityResponse.json()
           console.log('PayPal Identity API response:', identityData)
           paypalEmail = identityData.email || identityData.email_verified
+          paypalUserId = identityData.sub || identityData.user_id
+          if (paypalEmail) {
+            console.log('✅ Got email from Identity API:', paypalEmail)
+          }
+          if (paypalUserId) {
+            console.log('✅ Got user ID from Identity API:', paypalUserId)
+          }
         } else {
           const errorText = await identityResponse.text()
           console.error('PayPal Identity API failed:', {
@@ -156,35 +186,52 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // If we still couldn't get the email, ask the user to enter it manually
-    if (!paypalEmail) {
-      console.log('Could not retrieve PayPal email automatically')
-      console.log('Token response keys:', Object.keys(tokenData))
-      console.log('Available scopes:', tokenData.scope)
-      
-      // Store the access token temporarily and redirect to manual entry
-      // We'll create a simple form where the user can enter their PayPal email
-      return NextResponse.redirect(`https://communitypledges.com/settings?paypal=manual&connected=true`)
-    }
-
-    // Save paypalEmail to database
+    // Save PayPal information to database
     const { PrismaClient } = await import('@prisma/client')
     const prisma = new PrismaClient()
     
     try {
+      // Prepare data to save
+      const updateData: any = {
+        paypalConnected: true,
+        paypalConnectedAt: new Date()
+      }
+      
+      if (paypalEmail) {
+        updateData.paypalEmail = paypalEmail
+        console.log('✅ Will save PayPal email:', paypalEmail)
+      }
+      
+      if (paypalUserId) {
+        updateData.paypalUserId = paypalUserId
+        console.log('✅ Will save PayPal user ID:', paypalUserId)
+      }
+      
       await prisma.user.update({
         where: { id: session.user.id },
-        data: { paypalEmail: paypalEmail }
+        data: updateData
       })
-      console.log('PayPal email saved successfully:', paypalEmail)
+      
+      console.log('✅ PayPal information saved successfully:', updateData)
+      
+      // Redirect based on what we got
+      if (paypalEmail) {
+        return NextResponse.redirect(`https://communitypledges.com/settings?paypal=success&email=${encodeURIComponent(paypalEmail)}`)
+      } else if (paypalUserId) {
+        return NextResponse.redirect(`https://communitypledges.com/settings?paypal=success&id=${encodeURIComponent(paypalUserId)}`)
+      } else {
+        // If we got neither email nor user ID, redirect to manual entry
+        console.log('⚠️ No email or user ID retrieved, redirecting to manual entry')
+        return NextResponse.redirect(`https://communitypledges.com/settings?paypal=manual&connected=true`)
+      }
+      
     } catch (dbError) {
-      console.error('Failed to save PayPal email to database:', dbError)
+      console.error('❌ Failed to save PayPal information to database:', dbError)
       // Continue anyway - the OAuth was successful
+      return NextResponse.redirect(`https://communitypledges.com/settings?paypal=success&manual=true`)
     } finally {
       await prisma.$disconnect()
     }
-
-    return NextResponse.redirect(`https://communitypledges.com/settings?paypal=success&email=${encodeURIComponent(paypalEmail)}`)
   } catch (error) {
     console.error('PayPal OAuth error:', error)
     console.error('Error details:', {
