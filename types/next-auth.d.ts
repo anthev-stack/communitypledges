@@ -9,6 +9,7 @@ declare module "next-auth" {
       image?: string | null
       role?: string
       isNewUser?: boolean
+      batsEnabled?: boolean
     }
   }
 
@@ -19,6 +20,7 @@ declare module "next-auth" {
     image?: string | null
     role?: string
     isNewUser?: boolean
+    batsEnabled?: boolean
   }
 }
 
@@ -27,6 +29,7 @@ declare module "next-auth/jwt" {
     id: string
     role?: string
     isNewUser?: boolean
+    batsEnabled?: boolean
   }
 }
 

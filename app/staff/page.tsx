@@ -31,6 +31,7 @@ import {
 import { useCurrency } from '@/contexts/CurrencyContext'
 import PriceDisplay from '@/components/PriceDisplay'
 import PartnerStreamerManagement from '@/components/PartnerStreamerManagement'
+import BatsToggle from '@/components/BatsToggle'
 
 interface StaffDashboardData {
   totalUsers: number
@@ -808,7 +809,7 @@ export default function StaffDashboard() {
   
   const [dashboardData, setDashboardData] = useState<StaffDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'servers' | 'tickets' | 'streamers' | 'transactions' | 'stripe'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'servers' | 'tickets' | 'streamers' | 'transactions' | 'stripe' | 'settings'>('overview')
 
   useEffect(() => {
     console.log('[Staff Page] Session check:', {
@@ -974,6 +975,16 @@ export default function StaffDashboard() {
                   }`}
                 >
                   Configuration
+                </button>
+                <button
+                  onClick={() => setActiveTab('settings')}
+                  className={`pb-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'settings'
+                      ? 'border-emerald-500 text-emerald-400'
+                      : 'border-transparent text-gray-400 hover:text-white hover:border-slate-500'
+                  }`}
+                >
+                  Settings
                 </button>
               </>
             )}
@@ -1206,6 +1217,23 @@ export default function StaffDashboard() {
               </div>
               <div className="p-6">
                 <StripeManagement />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && session?.user?.role === 'admin' && (
+          <div className="space-y-6">
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow border border-slate-700/50">
+              <div className="px-6 py-4 border-b border-slate-600">
+                <h3 className="text-lg font-medium text-white">UI Features</h3>
+                <p className="text-sm text-gray-400 mt-1">
+                  Manage UI features and animations
+                </p>
+              </div>
+              <div className="p-6">
+                <BatsToggle />
               </div>
             </div>
           </div>
