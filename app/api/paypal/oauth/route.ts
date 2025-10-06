@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     if (!code) {
       // Generate PayPal OAuth URL
       const clientId = process.env.PAYPAL_CLIENT_ID
-      const redirectUri = process.env.NEXTAUTH_URL ? `${process.env.NEXTAUTH_URL}/api/paypal/oauth` : `https://communitypledges.vercel.app/api/paypal/oauth`
+      const redirectUri = process.env.NEXTAUTH_URL ? `${process.env.NEXTAUTH_URL}/api/paypal/oauth` : `https://communitypledges.com/api/paypal/oauth`
       
       if (!clientId) {
         return NextResponse.json({ message: 'PayPal not configured' }, { status: 500 })
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code: code,
-        redirect_uri: process.env.NEXTAUTH_URL ? `${process.env.NEXTAUTH_URL}/api/paypal/oauth` : `https://communitypledges.vercel.app/api/paypal/oauth`
+        redirect_uri: process.env.NEXTAUTH_URL ? `${process.env.NEXTAUTH_URL}/api/paypal/oauth` : `https://communitypledges.com/api/paypal/oauth`
       })
     })
 
@@ -164,7 +164,7 @@ export async function GET(request: NextRequest) {
       
       // Store the access token temporarily and redirect to manual entry
       // We'll create a simple form where the user can enter their PayPal email
-      return NextResponse.redirect(`https://communitypledges.vercel.app/settings?paypal=manual&connected=true`)
+      return NextResponse.redirect(`https://communitypledges.com/settings?paypal=manual&connected=true`)
     }
 
     // Save paypalEmail to database
@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
       await prisma.$disconnect()
     }
 
-    return NextResponse.redirect(`https://communitypledges.vercel.app/settings?paypal=success&email=${encodeURIComponent(paypalEmail)}`)
+    return NextResponse.redirect(`https://communitypledges.com/settings?paypal=success&email=${encodeURIComponent(paypalEmail)}`)
   } catch (error) {
     console.error('PayPal OAuth error:', error)
     console.error('Error details:', {
@@ -192,6 +192,6 @@ export async function GET(request: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : 'Unknown'
     })
-    return NextResponse.redirect(`https://communitypledges.vercel.app/settings?paypal=error`)
+    return NextResponse.redirect(`https://communitypledges.com/settings?paypal=error`)
   }
 }
