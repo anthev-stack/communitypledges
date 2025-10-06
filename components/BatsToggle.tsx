@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { Switch } from '@headlessui/react'
+// Using custom toggle instead of @headlessui/react
 import { useNotifications } from '@/contexts/NotificationContext'
 import { Moon, Sun } from 'lucide-react'
 
@@ -124,9 +124,8 @@ const BatsToggle: React.FC = () => {
             </p>
           </div>
         </div>
-        <Switch
-          checked={enabled}
-          onChange={handleToggle}
+        <button
+          onClick={() => handleToggle(!enabled)}
           disabled={toggling}
           className={`${
             enabled ? 'bg-emerald-600' : 'bg-gray-600'
@@ -140,7 +139,7 @@ const BatsToggle: React.FC = () => {
               enabled ? 'translate-x-6' : 'translate-x-1'
             } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
           />
-        </Switch>
+        </button>
       </div>
       
       <div className="text-sm text-gray-400 bg-slate-700/20 rounded-lg p-3">
