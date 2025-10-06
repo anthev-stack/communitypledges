@@ -183,21 +183,22 @@ export default function LiveStreamerEmbed() {
             <div className="aspect-video bg-slate-700 rounded-lg overflow-hidden relative">
               {!embedError ? (
                 <iframe
-                  src={`https://player.twitch.tv/?channel=${user.login}&parent=${typeof window !== 'undefined' ? window.location.hostname : 'communitypledges.com'}&autoplay=true&muted=true`}
+                  src={`https://player.twitch.tv/?channel=${user.login}&parent=${typeof window !== 'undefined' ? window.location.hostname : 'communitypledges.com'}&autoplay=true&muted=true&playsinline=true`}
                   height="100%"
                   width="100%"
                   allowFullScreen
+                  allow="autoplay; fullscreen; picture-in-picture"
                   className="w-full h-full"
                   title={`${user.displayName} Live Stream`}
                   onError={(e) => {
                     console.error('Twitch player embed failed to load:', e)
                     console.log('Channel:', user.login, 'Display Name:', user.displayName)
                     console.log('Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'unknown')
-                    // Try fallback to embed.twitch.tv
+                    // Try fallback to embed.twitch.tv with more aggressive autoplay
                     setTimeout(() => {
                       const iframe = e.target as HTMLIFrameElement
                       if (iframe) {
-                        iframe.src = `https://embed.twitch.tv/?channel=${user.login}&autoplay=true&muted=true`
+                        iframe.src = `https://embed.twitch.tv/?channel=${user.login}&autoplay=true&muted=true&playsinline=true`
                         console.log('Trying fallback embed method...')
                       }
                     }, 1000)
@@ -205,6 +206,18 @@ export default function LiveStreamerEmbed() {
                   onLoad={() => {
                     console.log('Twitch embed loaded successfully for:', user.login)
                     setEmbedError(false)
+                    
+                    // Try to force autoplay after load if it didn't start automatically
+                    setTimeout(() => {
+                      try {
+                        const iframe = document.querySelector('iframe[title*="Live Stream"]') as HTMLIFrameElement
+                        if (iframe && iframe.contentWindow) {
+                          iframe.contentWindow.postMessage({ event: 'play' }, 'https://player.twitch.tv')
+                        }
+                      } catch (err) {
+                        console.log('Could not force autoplay via postMessage:', err)
+                      }
+                    }, 2000)
                   }}
                 />
               ) : (
