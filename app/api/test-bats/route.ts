@@ -39,7 +39,7 @@ export async function GET() {
   } catch (error) {
     console.error('❌ Error testing bats:', error)
     return NextResponse.json({
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
       batsEnabled: false,
       success: false
     }, { status: 500 })
