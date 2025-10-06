@@ -131,7 +131,7 @@ export default function LiveStreamerEmbed() {
       {/* Partner Badge */}
       <div className="absolute -top-3 left-4 z-10">
           <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow-lg">
-          Pledge Partner
+          Partner
         </div>
       </div>
 
@@ -247,10 +247,10 @@ export default function LiveStreamerEmbed() {
               href={streamUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="block bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+              className="inline-block bg-purple-600 hover:bg-purple-700 text-white py-1.5 px-3 rounded-lg font-medium transition-colors flex items-center space-x-2 text-sm"
             >
-              <ExternalLink className="w-4 h-4" />
-              <span>Open in Twitch</span>
+              <ExternalLink className="w-3 h-3" />
+              <span>Twitch</span>
             </a>
           </div>
         </div>
