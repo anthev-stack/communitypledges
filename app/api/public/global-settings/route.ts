@@ -5,14 +5,21 @@ import { prisma } from '@/lib/prisma'
          export async function GET() {
            try {
              console.log('🦇 Public API: Fetching global settings...')
+             const fetchStart = Date.now()
 
              // Disable Prisma caching and get fresh data with connection refresh
+             const disconnectStart = Date.now()
              await prisma.$disconnect()
              await prisma.$connect()
+             const disconnectEnd = Date.now()
+             console.log('⏱️ Public API: Connection refresh took', disconnectEnd - disconnectStart, 'ms')
              
+             const queryStart = Date.now()
              const settings = await prisma.$queryRaw`
                SELECT * FROM "GlobalSettings" WHERE id = 'settings'
              ` as Array<{id: string, batsEnabled: boolean, createdAt: Date, updatedAt: Date}>
+             const queryEnd = Date.now()
+             console.log('⏱️ Public API: Database query took', queryEnd - queryStart, 'ms')
 
              const settingsRecord = settings[0] || null
 

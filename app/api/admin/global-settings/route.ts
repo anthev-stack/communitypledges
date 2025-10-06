@@ -84,6 +84,7 @@ export async function POST(request: Request) {
     }
 
              console.log('🦇 Admin API: Updating database with batsEnabled:', batsEnabled)
+             const updateStart = Date.now()
 
              // Update global settings
              const updatedSettings = await prisma.globalSettings.upsert({
@@ -95,13 +96,18 @@ export async function POST(request: Request) {
                }
              })
 
+             const updateEnd = Date.now()
              console.log('✅ Admin API: Database updated successfully:', updatedSettings)
+             console.log('⏱️ Admin API: Update took', updateEnd - updateStart, 'ms')
 
              // Verify the update by reading it back
+             const verifyStart = Date.now()
              const verifySettings = await prisma.globalSettings.findUnique({
                where: { id: 'settings' }
              })
+             const verifyEnd = Date.now()
              console.log('🔍 Admin API: Verification read - current value:', verifySettings?.batsEnabled)
+             console.log('⏱️ Admin API: Verification took', verifyEnd - verifyStart, 'ms')
 
     return NextResponse.json({
       message: `Global bats setting ${batsEnabled ? 'enabled' : 'disabled'} successfully`,

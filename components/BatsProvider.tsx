@@ -32,8 +32,8 @@ export default function BatsProvider() {
 
     fetchBatsSetting()
 
-    // Poll for updates every 5 seconds to catch admin changes
-    const interval = setInterval(fetchBatsSetting, 5000)
+    // Poll for updates every 10 seconds to catch admin changes (increased for database replication delays)
+    const interval = setInterval(fetchBatsSetting, 10000)
 
     return () => clearInterval(interval)
   }, [])
