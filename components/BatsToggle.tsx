@@ -37,7 +37,10 @@ const BatsToggle: React.FC = () => {
   }, [isAdmin])
 
   const handleToggle = async (checked: boolean) => {
+    console.log('🦇 BatsToggle: handleToggle called with checked:', checked)
+    
     if (!isAdmin) {
+      console.log('🦇 BatsToggle: User is not admin')
       addNotification({
         type: 'error',
         title: 'Permission Denied',
@@ -46,10 +49,12 @@ const BatsToggle: React.FC = () => {
       return
     }
 
+    console.log('🦇 BatsToggle: User is admin, proceeding with toggle')
     setToggling(true)
     setEnabled(checked)
     
     try {
+      console.log('🦇 BatsToggle: Calling admin API with batsEnabled:', checked)
       const response = await fetch('/api/admin/global-settings', {
         method: 'POST',
         headers: {
@@ -57,6 +62,9 @@ const BatsToggle: React.FC = () => {
         },
         body: JSON.stringify({ batsEnabled: checked }),
       })
+
+      console.log('🦇 BatsToggle: API response status:', response.status)
+      console.log('🦇 BatsToggle: API response ok:', response.ok)
 
       if (response.ok) {
         addNotification({
