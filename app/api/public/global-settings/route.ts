@@ -11,17 +11,17 @@ export async function GET() {
       where: { id: 'settings' }
     })
 
-    console.log('🦇 Public API: Database settings:', settings)
+             console.log('🦇 Public API: Database settings:', settings)
 
-    // If no settings exist, return default
-    if (!settings) {
-      console.log('🦇 Public API: No settings found, returning default false')
-      return NextResponse.json({
-        batsEnabled: false
-      })
-    }
+             // If no settings exist, return default
+             if (!settings) {
+               console.log('🦇 Public API: No settings found, returning default false')
+               return NextResponse.json({
+                 batsEnabled: false
+               })
+             }
 
-    console.log('🦇 Public API: Returning batsEnabled:', settings.batsEnabled)
+             console.log('🦇 Public API: Returning batsEnabled:', settings.batsEnabled, 'Type:', typeof settings.batsEnabled)
 
     // Only return the batsEnabled setting (public information)
     return NextResponse.json({
