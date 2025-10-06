@@ -133,7 +133,7 @@ export default function SevenDaysToDieServersPage() {
       <div className="text-center mt-12">
         <h2 className="text-2xl font-bold text-white mb-4">Ready to Find Your Perfect 7DTD Server?</h2>
         <p className="text-gray-300 mb-6">
-          Join thousands of survivors who have found their home on CommunityPledges servers.
+          Join survivors who have found their home on CommunityPledges servers.
         </p>
         <Link
           href="/servers?game=7dtd"
