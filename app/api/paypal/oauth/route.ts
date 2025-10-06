@@ -19,21 +19,21 @@ export async function GET(request: NextRequest) {
     if (!code) {
       // Generate PayPal OAuth URL
       const clientId = process.env.PAYPAL_CLIENT_ID
-      const redirectUri = `https://communitypledges.vercel.app/api/paypal/oauth`
+      const redirectUri = process.env.NEXTAUTH_URL ? `${process.env.NEXTAUTH_URL}/api/paypal/oauth` : `https://communitypledges.vercel.app/api/paypal/oauth`
       
       if (!clientId) {
         return NextResponse.json({ message: 'PayPal not configured' }, { status: 500 })
       }
 
       const stateParam = session.user.id // Use user ID as state for security
-      const paypalAuthUrl = `https://www.paypal.com/signin/authorize?client_id=${clientId}&response_type=code&scope=openid%20profile&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateParam}`
+      const paypalAuthUrl = `https://www.paypal.com/signin/authorize?client_id=${clientId}&response_type=code&scope=openid&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateParam}`
 
       // Debug logging
       console.log('PayPal OAuth Debug Info:')
       console.log('- Client ID:', clientId)
       console.log('- Redirect URI:', redirectUri)
       console.log('- State:', stateParam)
-      console.log('- Scopes: openid profile')
+      console.log('- Scopes: openid')
       console.log('- Full URL:', paypalAuthUrl)
 
       return NextResponse.redirect(paypalAuthUrl)
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code: code,
-        redirect_uri: `https://communitypledges.vercel.app/api/paypal/oauth`
+        redirect_uri: process.env.NEXTAUTH_URL ? `${process.env.NEXTAUTH_URL}/api/paypal/oauth` : `https://communitypledges.vercel.app/api/paypal/oauth`
       })
     })
 
