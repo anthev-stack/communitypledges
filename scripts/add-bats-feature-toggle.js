@@ -27,11 +27,12 @@ async function addBatsFeatureToggle() {
     
     console.log('✅ Successfully added batsEnabled column to User table')
     
-    // Set bats enabled for admin users
-    await prisma.user.updateMany({
-      where: { role: 'admin' },
-      data: { batsEnabled: true }
-    })
+    // Set bats enabled for admin users using raw SQL to avoid type casting issues
+    await prisma.$executeRaw`
+      UPDATE "User" 
+      SET "batsEnabled" = true 
+      WHERE role = 'admin'::UserRole
+    `
     
     console.log('✅ Set bats enabled for admin users')
     
