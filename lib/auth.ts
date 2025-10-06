@@ -173,7 +173,8 @@ export const authOptions: NextAuthOptions = {
         userRole: user?.role,
         userIsNewUser: user?.isNewUser,
         accountProvider: account?.provider,
-        tokenEmail: token?.email
+        tokenEmail: token?.email,
+        tokenIsNewUser: token?.isNewUser
       })
       
       // For Discord OAuth, fetch user data from database
@@ -243,7 +244,13 @@ export const authOptions: NextAuthOptions = {
         }
       }
       
-      console.log('Final token:', { id: token.id, role: token.role })
+      // Clear isNewUser flag after first use to prevent repeated notifications
+      if (token.isNewUser && trigger !== 'signIn') {
+        console.log('🧹 Clearing isNewUser flag after first use')
+        delete token.isNewUser
+      }
+      
+      console.log('Final token:', { id: token.id, role: token.role, isNewUser: token.isNewUser })
       return token
     },
     async session({ session, token }) {
