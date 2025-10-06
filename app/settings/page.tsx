@@ -275,6 +275,7 @@ export default function SettingsPage() {
   const handlePayPalOAuth = () => {
     // Add referrer to distinguish between payment and payout
     const referrer = activeTab === 'deposit' ? 'payout' : 'payment'
+    console.log('PayPal OAuth - activeTab:', activeTab, 'referrer:', referrer)
     window.location.href = `/api/paypal/oauth?type=${referrer}`
   }
 

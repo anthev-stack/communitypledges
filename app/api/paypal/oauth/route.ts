@@ -195,6 +195,7 @@ export async function GET(request: NextRequest) {
       const url = new URL(request.url)
       const type = url.searchParams.get('type') || 'payment'
       const isPayout = type === 'payout'
+      console.log('PayPal OAuth - type parameter:', type, 'isPayout:', isPayout)
       
       // Prepare data to save based on context
       const updateData: any = {}
