@@ -36,7 +36,8 @@ async function addBatsFeatureToggle() {
         WHERE role = 'admin'::UserRole
       `
     } catch (error) {
-      if (error.message.includes('type "UserRole" does not exist')) {
+      console.log('⚠️ Error with enum casting, trying string comparison instead:', error.message)
+      if (error.message.includes('type') && error.message.includes('does not exist')) {
         console.log('⚠️ UserRole enum not found, using string comparison instead')
         await prisma.$executeRaw`
           UPDATE "User" 
