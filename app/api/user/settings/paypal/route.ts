@@ -20,14 +20,14 @@ export async function POST(request: NextRequest) {
     // Update user with PayPal email
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { paypalEmail: email }
+      data: { payoutPaypalEmail: email, payoutPaypalConnected: true }
     })
     
     console.log('PayPal email saved for user:', session.user.id, 'email:', email)
 
     return NextResponse.json({ 
       message: 'PayPal email saved successfully',
-      paypalEmail: email
+      payoutPaypalEmail: email
     })
   } catch (error) {
     console.error('Error saving PayPal email:', error)
@@ -46,7 +46,7 @@ export async function DELETE(request: NextRequest) {
     // Remove PayPal email
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { paypalEmail: null }
+      data: { payoutPaypalEmail: null, payoutPaypalConnected: false }
     })
     
     console.log('PayPal email removed for user:', session.user.id)

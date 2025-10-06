@@ -116,7 +116,7 @@ export async function POST(
             netAmount: netAmount.toString()
           }
         });
-      } else if (user.paypalEmail) {
+      } else if (user.paymentPaypalConnected) {
         // User has PayPal - create a payment intent for manual processing
         paymentIntent = await stripe.paymentIntents.create({
           amount: Math.round(boostAmount * 100),
@@ -129,7 +129,7 @@ export async function POST(
             payerId: session.user.id,
             type: 'boost',
             paymentMethod: 'paypal',
-            paypalEmail: user.paypalEmail,
+            paypalEmail: user.paymentPaypalEmail,
             platformFee: '0.00', // No platform fee for boosts
             stripeFee: stripeFee.toString(),
             netAmount: netAmount.toString()

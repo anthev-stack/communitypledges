@@ -89,10 +89,14 @@ export default function SettingsPage() {
         const settings = await response.json()
         console.log('[Settings Page] Settings data received:', JSON.stringify(settings, null, 2))
         console.log('[Settings Page] PayPal fields:', {
-          paypalConnected: settings.paypalConnected,
-          paypalEmail: settings.paypalEmail,
-          paypalUserId: settings.paypalUserId,
-          paypalConnectedAt: settings.paypalConnectedAt
+          payoutPaypalConnected: settings.payoutPaypalConnected,
+          payoutPaypalEmail: settings.payoutPaypalEmail,
+          payoutPaypalUserId: settings.payoutPaypalUserId,
+          payoutPaypalConnectedAt: settings.payoutPaypalConnectedAt,
+          paymentPaypalConnected: settings.paymentPaypalConnected,
+          paymentPaypalEmail: settings.paymentPaypalEmail,
+          paymentPaypalUserId: settings.paymentPaypalUserId,
+          paymentPaypalConnectedAt: settings.paymentPaypalConnectedAt
         })
         setUserSettings(settings)
         accountForm.reset({
@@ -108,7 +112,10 @@ export default function SettingsPage() {
       } else {
         setUserSettings({
           hasPaymentMethod: false,
-          paypalEmail: null,
+          payoutPaypalEmail: null,
+          payoutPaypalConnected: false,
+          paymentPaypalEmail: null,
+          paymentPaypalConnected: false,
           name: session?.user?.name || '',
           email: session?.user?.email || '',
           image: session?.user?.image || undefined
@@ -124,7 +131,10 @@ export default function SettingsPage() {
       console.error('Error fetching user settings:', error)
       setUserSettings({
         hasPaymentMethod: false,
-        paypalEmail: null,
+        payoutPaypalEmail: null,
+        payoutPaypalConnected: false,
+        paymentPaypalEmail: null,
+        paymentPaypalConnected: false,
         name: session?.user?.name || '',
         email: session?.user?.email || '',
         image: session?.user?.image || undefined
@@ -1240,7 +1250,7 @@ export default function SettingsPage() {
               </div>
 
               {/* Add PayPal Method */}
-              {!userSettings.paypalEmail && (
+              {!userSettings.payoutPaypalConnected && (
                 <div className="border-t border-slate-600 pt-4">
                   <h3 className="text-lg font-medium text-white mb-4">Add PayPal Account</h3>
                   <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
