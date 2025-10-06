@@ -272,11 +272,9 @@ export default function SettingsPage() {
   }
 
   // Handle PayPal OAuth
-  const handlePayPalOAuth = () => {
-    // Add referrer to distinguish between payment and payout
-    const referrer = activeTab === 'deposit' ? 'payout' : 'payment'
-    console.log('PayPal OAuth - activeTab:', activeTab, 'referrer:', referrer)
-    window.location.href = `/api/paypal/oauth?type=${referrer}`
+  const handlePayPalOAuth = (context: 'payment' | 'payout' = 'payment') => {
+    console.log('PayPal OAuth - context:', context, 'activeTab:', activeTab)
+    window.location.href = `/api/paypal/oauth?type=${context}`
   }
 
   // Handle PayPal update (fallback for manual email entry)
@@ -1167,7 +1165,7 @@ export default function SettingsPage() {
                         <p className="text-gray-400 text-sm">Simple setup, widely accepted</p>
                       </div>
                       <button
-                        onClick={handlePayPalOAuth}
+                        onClick={() => handlePayPalOAuth('payment')}
                         className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
                       >
                         Connect PayPal
@@ -1228,7 +1226,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={handlePayPalOAuth}
+                      onClick={() => handlePayPalOAuth('payout')}
                       className="p-1.5 text-gray-400 hover:text-blue-400 transition-colors"
                       title="Connect PayPal Account"
                     >
@@ -1262,7 +1260,7 @@ export default function SettingsPage() {
                         <p className="text-gray-400 text-sm">All server owners must have a PayPal account to receive donations</p>
                       </div>
                       <button
-                        onClick={handlePayPalOAuth}
+                        onClick={() => handlePayPalOAuth('payout')}
                         className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
                       >
                         Connect PayPal
