@@ -36,7 +36,7 @@ export default function HomePage() {
           COMMUNITYPLEDGES
         </h1>
         <p className="text-lg sm:text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-          The ultimate server browser for Minecraft, Rust, and Discord servers. Share the cost of community servers with others. Pledge what you can afford, 
+          The ultimate server browser for Minecraft, Rust, Terraria, ARK, Valheim, 7 Days to Die, and Discord servers. Share the cost of community servers with others. Pledge what you can afford, 
           and we'll optimize the costs to make hosting affordable for everyone.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
