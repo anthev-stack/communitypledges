@@ -10,7 +10,7 @@ export async function GET() {
       SELECT table_name 
       FROM information_schema.tables 
       WHERE table_name = 'GlobalSettings'
-    `
+    ` as Array<{ table_name: string }>
     
     console.log('📊 GlobalSettings table exists:', tableExists.length > 0)
     
