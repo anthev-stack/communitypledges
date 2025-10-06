@@ -11,14 +11,19 @@ export default function BatsProvider() {
     // Fetch global bats setting
     const fetchBatsSetting = async () => {
       try {
+        console.log('🦇 BatsProvider: Fetching bats setting...')
         const response = await fetch(`/api/public/global-settings?t=${Date.now()}`)
         if (response.ok) {
           const settings = await response.json()
+          console.log('🦇 BatsProvider: Received settings:', settings)
           setBatsEnabled(settings.batsEnabled || false)
+          console.log('🦇 BatsProvider: Set batsEnabled to:', settings.batsEnabled || false)
         } else {
+          console.log('🦇 BatsProvider: API response not ok:', response.status)
           setBatsEnabled(false)
         }
       } catch (error) {
+        console.log('🦇 BatsProvider: Error fetching settings:', error)
         setBatsEnabled(false)
       } finally {
         setLoading(false)
@@ -26,6 +31,11 @@ export default function BatsProvider() {
     }
 
     fetchBatsSetting()
+
+    // Poll for updates every 5 seconds to catch admin changes
+    const interval = setInterval(fetchBatsSetting, 5000)
+
+    return () => clearInterval(interval)
   }, [])
 
   // Don't render anything while loading
