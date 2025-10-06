@@ -6,7 +6,10 @@ import { prisma } from '@/lib/prisma'
            try {
              console.log('🦇 Public API: Fetching global settings...')
 
-             // Disable Prisma caching and get fresh data
+             // Disable Prisma caching and get fresh data with connection refresh
+             await prisma.$disconnect()
+             await prisma.$connect()
+             
              const settings = await prisma.$queryRaw`
                SELECT * FROM "GlobalSettings" WHERE id = 'settings'
              ` as Array<{id: string, batsEnabled: boolean, createdAt: Date, updatedAt: Date}>
@@ -27,7 +30,9 @@ import { prisma } from '@/lib/prisma'
 
              // Only return the batsEnabled setting (public information)
              const response = NextResponse.json({
-               batsEnabled: settingsRecord.batsEnabled
+               batsEnabled: settingsRecord.batsEnabled,
+               timestamp: new Date().toISOString(),
+               updatedAt: settingsRecord.updatedAt
              })
              
              // Add cache-busting headers
