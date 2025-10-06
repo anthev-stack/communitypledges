@@ -26,14 +26,14 @@ export async function GET(request: NextRequest) {
       }
 
       const stateParam = session.user.id // Use user ID as state for security
-      const paypalAuthUrl = `https://www.paypal.com/signin/authorize?client_id=${clientId}&response_type=code&scope=openid%20email&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateParam}`
+      const paypalAuthUrl = `https://www.paypal.com/signin/authorize?client_id=${clientId}&response_type=code&scope=openid&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateParam}`
 
       // Debug logging
       console.log('PayPal OAuth Debug Info:')
       console.log('- Client ID:', clientId)
       console.log('- Redirect URI:', redirectUri)
       console.log('- State:', stateParam)
-      console.log('- Scopes: openid email')
+      console.log('- Scopes: openid')
       console.log('- Full URL:', paypalAuthUrl)
 
       return NextResponse.redirect(paypalAuthUrl)
@@ -220,9 +220,10 @@ export async function GET(request: NextRequest) {
       } else if (paypalUserId) {
         return NextResponse.redirect(`https://communitypledges.com/settings?paypal=success&id=${encodeURIComponent(paypalUserId)}`)
       } else {
-        // If we got neither email nor user ID, redirect to manual entry
-        console.log('⚠️ No email or user ID retrieved, redirecting to manual entry')
-        return NextResponse.redirect(`https://communitypledges.com/settings?paypal=manual&connected=true`)
+        // If we got neither email nor user ID, still redirect to success
+        // The user can add their email manually in settings if needed
+        console.log('⚠️ No email or user ID retrieved, but PayPal is connected')
+        return NextResponse.redirect(`https://communitypledges.com/settings?paypal=success&connected=true`)
       }
       
     } catch (dbError) {
