@@ -5,10 +5,12 @@ import { useSession } from 'next-auth/react'
 // Using custom toggle instead of @headlessui/react
 import { useNotifications } from '@/contexts/NotificationContext'
 import { Moon, Sun } from 'lucide-react'
+import { useThemeColors } from '@/utils/theme'
 
 const BatsToggle: React.FC = () => {
   const { data: session } = useSession()
   const { addNotification } = useNotifications()
+  const colors = useThemeColors()
   const [enabled, setEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [toggling, setToggling] = useState(false)
@@ -118,7 +120,7 @@ const BatsToggle: React.FC = () => {
       <div className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg border border-slate-600/50">
         <div className="flex items-center space-x-3">
           {enabled ? (
-            <Moon className="w-5 h-5 text-emerald-400" />
+            <Moon className={`w-5 h-5 ${colors.primaryText}`} />
           ) : (
             <Sun className="w-5 h-5 text-gray-400" />
           )}
@@ -136,8 +138,8 @@ const BatsToggle: React.FC = () => {
           onClick={() => handleToggle(!enabled)}
           disabled={toggling}
           className={`${
-            enabled ? 'bg-emerald-600' : 'bg-gray-600'
-          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-800 ${
+            enabled ? colors.primaryBg : 'bg-gray-600'
+          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 ${colors.primaryRing} focus:ring-offset-2 focus:ring-offset-slate-800 ${
             toggling ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
           }`}
         >
