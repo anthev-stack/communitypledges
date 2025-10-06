@@ -25,14 +25,26 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ message: 'PayPal not configured' }, { status: 500 })
       }
 
-      const stateParam = session.user.id // Use user ID as state for security
+      // Get the type parameter from the request
+      const { searchParams } = new URL(request.url)
+      const type = searchParams.get('type') || 'payment'
+      
+      // Create state parameter that includes both user ID and type
+      const stateData = {
+        userId: session.user.id,
+        type: type
+      }
+      const stateParam = Buffer.from(JSON.stringify(stateData)).toString('base64')
+      
       const paypalAuthUrl = `https://www.paypal.com/signin/authorize?client_id=${clientId}&response_type=code&scope=openid&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateParam}`
 
       // Debug logging
       console.log('PayPal OAuth Debug Info:')
       console.log('- Client ID:', clientId)
       console.log('- Redirect URI:', redirectUri)
-      console.log('- State:', stateParam)
+      console.log('- Type:', type)
+      console.log('- State Data:', stateData)
+      console.log('- State Param:', stateParam)
       console.log('- Scopes: openid')
       console.log('- Full URL:', paypalAuthUrl)
 
@@ -40,9 +52,20 @@ export async function GET(request: NextRequest) {
     }
 
     // Handle OAuth callback
-    if (state !== session.user.id) {
+    let stateData
+    try {
+      stateData = JSON.parse(Buffer.from(state, 'base64').toString())
+    } catch (error) {
+      console.error('Failed to decode state parameter:', error)
       return NextResponse.json({ message: 'Invalid state parameter' }, { status: 400 })
     }
+    
+    if (stateData.userId !== session.user.id) {
+      return NextResponse.json({ message: 'Invalid state parameter' }, { status: 400 })
+    }
+    
+    const type = stateData.type || 'payment'
+    console.log('PayPal OAuth - decoded state:', stateData, 'type:', type)
 
     // Exchange code for access token
     const tokenResponse = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
@@ -191,11 +214,9 @@ export async function GET(request: NextRequest) {
     const prisma = new PrismaClient()
     
     try {
-      // Determine if this is for payment or payout based on query parameter
-      const url = new URL(request.url)
-      const type = url.searchParams.get('type') || 'payment'
+      // Determine if this is for payment or payout based on decoded state
       const isPayout = type === 'payout'
-      console.log('PayPal OAuth - type parameter:', type, 'isPayout:', isPayout)
+      console.log('PayPal OAuth - type from state:', type, 'isPayout:', isPayout)
       
       // Prepare data to save based on context
       const updateData: any = {}
