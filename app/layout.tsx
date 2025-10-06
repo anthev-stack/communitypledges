@@ -17,9 +17,15 @@ export const metadata = {
     default: 'CommunityPledges - Share Server Costs with Your Community',
     template: '%s | CommunityPledges'
   },
-  description: 'Join CommunityPledges to share server costs with your community. Discover Discord servers, pledge towards hosting costs, and build stronger gaming communities together.',
+  description: 'CommunityPledges - The ultimate server browser for Minecraft, Rust, and Discord servers. Share server costs with your community, discover gaming servers, and find the perfect multiplayer experience.',
   keywords: [
+    'community pledges',
+    'minecraft server browser',
+    'rust server browser',
     'Discord servers',
+    'gaming server browser',
+    'minecraft server finder',
+    'rust server finder',
     'community hosting',
     'server costs',
     'gaming communities',
@@ -28,7 +34,13 @@ export const metadata = {
     'server sharing',
     'gaming servers',
     'community management',
-    'server hosting costs'
+    'server hosting costs',
+    'minecraft community',
+    'rust community',
+    'gaming server list',
+    'server discovery',
+    'community server browser',
+    'multiplayer server browser'
   ],
   authors: [{ name: 'CommunityPledges Team' }],
   creator: 'CommunityPledges',
