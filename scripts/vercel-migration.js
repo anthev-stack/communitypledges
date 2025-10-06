@@ -16,31 +16,59 @@ async function runVercelMigration() {
     const userCount = await prisma.user.count()
     console.log(`✅ User table accessible, found ${userCount} users`)
     
-    // Try to add the paypalEmail column
-    console.log('🔧 Attempting to add paypalEmail column...')
+    // Run the PayPal separation migration
+    console.log('🔧 Running PayPal separation migration...')
     try {
-      await prisma.$executeRaw`ALTER TABLE "User" ADD COLUMN "paypalEmail" TEXT`
-      console.log('✅ paypalEmail column added successfully!')
+      // First, check if we need to rename existing PayPal fields
+      const hasOldPaypalFields = await prisma.$queryRaw`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'User' AND column_name = 'paypalEmail'
+      `
+      
+      if (hasOldPaypalFields.length > 0) {
+        console.log('🔄 Renaming existing PayPal fields to payout-specific...')
+        await prisma.$executeRaw`ALTER TABLE "User" RENAME COLUMN "paypalEmail" TO "payoutPaypalEmail"`
+        await prisma.$executeRaw`ALTER TABLE "User" RENAME COLUMN "paypalUserId" TO "payoutPaypalUserId"`
+        await prisma.$executeRaw`ALTER TABLE "User" RENAME COLUMN "paypalConnected" TO "payoutPaypalConnected"`
+        await prisma.$executeRaw`ALTER TABLE "User" RENAME COLUMN "paypalConnectedAt" TO "payoutPaypalConnectedAt"`
+        console.log('✅ Existing PayPal fields renamed to payout-specific')
+      }
+      
+      // Add payment-specific PayPal fields
+      console.log('➕ Adding payment-specific PayPal fields...')
+      await prisma.$executeRaw`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "paymentPaypalEmail" TEXT`
+      await prisma.$executeRaw`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "paymentPaypalUserId" TEXT`
+      await prisma.$executeRaw`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "paymentPaypalConnected" BOOLEAN NOT NULL DEFAULT false`
+      await prisma.$executeRaw`ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "paymentPaypalConnectedAt" TIMESTAMP(3)`
+      console.log('✅ Payment-specific PayPal fields added')
+      
     } catch (error) {
       if (error.message.includes('already exists') || 
           error.message.includes('duplicate column') ||
-          error.message.includes('column "paypalEmail" of relation "User" already exists')) {
-        console.log('✅ paypalEmail column already exists')
+          error.message.includes('column') && error.message.includes('already exists')) {
+        console.log('✅ PayPal fields already exist or renamed')
       } else {
-        console.error('❌ Error adding paypalEmail column:', error.message)
+        console.error('❌ Error with PayPal migration:', error.message)
         console.error('Error code:', error.code)
         console.error('Full error:', error)
         throw error
       }
     }
     
-    // Verify the column was added by trying to query it
-    console.log('🔍 Verifying column exists...')
+    // Verify the columns were added by trying to query them
+    console.log('🔍 Verifying PayPal columns exist...')
     try {
       const testUser = await prisma.user.findFirst({
-        select: { id: true, paypalEmail: true }
+        select: { 
+          id: true, 
+          payoutPaypalEmail: true,
+          paymentPaypalEmail: true,
+          payoutPaypalConnected: true,
+          paymentPaypalConnected: true
+        }
       })
-      console.log('✅ paypalEmail column verified and accessible')
+      console.log('✅ PayPal columns verified and accessible')
     } catch (verifyError) {
       console.error('❌ Column verification failed:', verifyError.message)
       throw verifyError
