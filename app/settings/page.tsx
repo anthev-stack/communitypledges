@@ -1215,7 +1215,9 @@ export default function SettingsPage() {
                         PayPal Payout Account
                       </p>
                       <p className="text-gray-400 text-sm">
-                        {userSettings.payoutPaypalEmail || 'Not connected'}
+                        {userSettings.payoutPaypalConnected 
+                          ? (userSettings.payoutPaypalEmail || 'Connected via OAuth') 
+                          : 'Not connected'}
                       </p>
                       {userSettings.payoutPaypalConnectedAt && (
                         <p className="text-gray-500 text-xs">
