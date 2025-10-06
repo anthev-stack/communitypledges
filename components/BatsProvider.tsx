@@ -40,37 +40,8 @@ export default function BatsProvider() {
 
   // Don't render anything while loading
   if (loading) {
-    return (
-      <div style={{ 
-        position: 'fixed', 
-        top: '10px', 
-        right: '10px', 
-        background: 'orange', 
-        color: 'white', 
-        padding: '5px', 
-        zIndex: 9999,
-        fontSize: '12px'
-      }}>
-        🦇 Loading...
-      </div>
-    )
+    return null
   }
   
-  return (
-    <>
-      <FlyingBats enabled={batsEnabled} />
-      <div style={{ 
-        position: 'fixed', 
-        top: '10px', 
-        right: '10px', 
-        background: batsEnabled ? 'green' : 'red', 
-        color: 'white', 
-        padding: '5px', 
-        zIndex: 9999,
-        fontSize: '12px'
-      }}>
-        🦇 {batsEnabled ? 'ON' : 'OFF'}
-      </div>
-    </>
-  )
+  return <FlyingBats enabled={batsEnabled} />
 }
