@@ -75,7 +75,7 @@ export async function GET() {
       )
     }
 
-    console.log('[Settings API] User found, returning data')
+    console.log('[Settings API] User found, returning data:', JSON.stringify(user, null, 2))
     return NextResponse.json(user)
   } catch (error) {
     console.error('[Settings API] Error fetching user settings:', error)

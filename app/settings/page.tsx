@@ -81,6 +81,13 @@ export default function SettingsPage() {
       
       if (response.ok) {
         const settings = await response.json()
+        console.log('[Settings Page] Settings data received:', JSON.stringify(settings, null, 2))
+        console.log('[Settings Page] PayPal fields:', {
+          paypalConnected: settings.paypalConnected,
+          paypalEmail: settings.paypalEmail,
+          paypalUserId: settings.paypalUserId,
+          paypalConnectedAt: settings.paypalConnectedAt
+        })
         setUserSettings(settings)
         accountForm.reset({
           name: settings.name || '',
