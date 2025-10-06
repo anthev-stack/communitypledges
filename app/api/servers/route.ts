@@ -169,12 +169,15 @@ export async function POST(request: NextRequest) {
     // Check if user has PayPal account for receiving donations
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { paypalEmail: true }
+      select: { 
+        payoutPaypalEmail: true,
+        payoutPaypalConnected: true
+      }
     })
 
-    if (!user?.paypalEmail) {
+    if (!user?.payoutPaypalConnected) {
       return NextResponse.json(
-        { message: 'PayPal account required. Please add your PayPal email in settings to create servers and receive donations.' },
+        { message: 'PayPal payout account required. Please add your PayPal account in payout methods to create servers and receive donations.' },
         { status: 400 }
       )
     }

@@ -128,11 +128,12 @@ export async function POST(
         hasPaymentMethod: true, 
         stripePaymentMethodId: true,
         stripeCustomerId: true,
-        paypalEmail: true
+        paymentPaypalEmail: true,
+        paymentPaypalConnected: true
       }
     })
 
-    if (!user?.hasPaymentMethod && !user?.paypalEmail) {
+    if (!user?.hasPaymentMethod && !user?.paymentPaypalConnected) {
       return NextResponse.json(
         { message: 'Payment method required. Please add a payment method (card or PayPal) in your settings.' },
         { status: 400 }

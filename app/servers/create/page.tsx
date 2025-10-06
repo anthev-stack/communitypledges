@@ -279,7 +279,8 @@ const GAME_SPECIFIC_TAGS: { [key: string]: string[] } = {
 
 interface UserSettings {
   hasPaymentMethod: boolean
-  paypalEmail: string | null
+  payoutPaypalEmail: string | null
+  payoutPaypalConnected: boolean
 }
 
 export default function CreateServerPage() {
@@ -454,7 +455,7 @@ export default function CreateServerPage() {
     )
   }
 
-  if (!userSettings?.paypalEmail) {
+  if (!userSettings?.payoutPaypalConnected) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md">

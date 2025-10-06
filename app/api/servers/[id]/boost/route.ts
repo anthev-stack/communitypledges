@@ -69,12 +69,13 @@ export async function POST(
         hasPaymentMethod: true,
         stripePaymentMethodId: true,
         stripeCustomerId: true,
-        paypalEmail: true,
+        paymentPaypalEmail: true,
+        paymentPaypalConnected: true,
         isPaymentSuspended: true
       }
     });
 
-    if (!user?.hasPaymentMethod && !user?.paypalEmail) {
+    if (!user?.hasPaymentMethod && !user?.paymentPaypalConnected) {
       return NextResponse.json({ error: 'Payment method required to boost server. Please add a card or PayPal in your settings.' }, { status: 400 });
     }
 

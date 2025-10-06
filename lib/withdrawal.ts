@@ -174,13 +174,14 @@ export async function processPendingWithdrawals() {
             select: { 
               stripePaymentMethodId: true, 
               stripeCustomerId: true,
-              paypalEmail: true,
+              payoutPaypalEmail: true,
+              payoutPaypalConnected: true,
               name: true,
               email: true
             }
           })
 
-          if (!user?.stripePaymentMethodId && !user?.paypalEmail) {
+          if (!user?.stripePaymentMethodId && !user?.payoutPaypalConnected) {
             console.log(`User ${pledge.userId} has no payment method, skipping payment`)
             continue
           }
@@ -212,7 +213,7 @@ export async function processPendingWithdrawals() {
                 netAmount: netAmount.toString()
               }
             })
-          } else if (user.paypalEmail) {
+          } else if (user.payoutPaypalConnected) {
             // User has PayPal - process payment via PayPal API
             try {
               const paypalResult = await processPayPalPayment(user, actualAmount, withdrawal.serverId, server.name, pledge.userId)
@@ -507,7 +508,8 @@ async function distributeToServerOwner(server: any, totalAmount: number, serverI
       where: { id: server.ownerId },
       select: {
         id: true,
-        paypalEmail: true,
+        payoutPaypalEmail: true,
+        payoutPaypalConnected: true,
         name: true,
         email: true
       }
@@ -522,7 +524,7 @@ async function distributeToServerOwner(server: any, totalAmount: number, serverI
     const platformFee = calculatePlatformFee(totalAmount)
     const netAmount = totalAmount - platformFee
 
-    if (owner.paypalEmail) {
+    if (owner.payoutPaypalConnected) {
       // Server owner has PayPal - process via PayPal
       await distributeToPayPal(owner, netAmount, serverId, server.name)
     } else {
@@ -600,7 +602,7 @@ async function distributeToPayPal(owner: any, amount: number, serverId: string, 
             value: amount.toFixed(2),
             currency: 'AUD'
           },
-          receiver: owner.paypalEmail,
+          receiver: owner.payoutPaypalEmail,
           note: `Payment for server: ${serverName}`,
           sender_item_id: `server_${serverId}_${Date.now()}`
         }
@@ -629,7 +631,7 @@ async function distributeToPayPal(owner: any, amount: number, serverId: string, 
     await prisma.activityLog.create({
       data: {
         type: 'paypal_payout_success',
-        message: `A$${amount.toFixed(2)} sent to your PayPal account (${owner.paypalEmail}) for "${serverName}"`,
+        message: `A$${amount.toFixed(2)} sent to your PayPal account (${owner.payoutPaypalEmail}) for "${serverName}"`,
         amount: amount,
         userId: owner.id,
         serverId: serverId
@@ -700,7 +702,7 @@ async function processPayPalPayment(user: any, amount: number, serverId: string,
       payer: {
         payment_method: 'paypal',
         payer_info: {
-          email: user.paypalEmail
+          email: user.payoutPaypalEmail
         }
       },
       transactions: [
