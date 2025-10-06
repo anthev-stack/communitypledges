@@ -12,7 +12,8 @@ import {
   Edit3, 
   Camera, 
   X,
-  Check
+  Check,
+  AlertCircle
 } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
