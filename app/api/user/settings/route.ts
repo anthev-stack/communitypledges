@@ -51,7 +51,10 @@ export async function GET() {
           cardExpMonth: true,
           cardExpYear: true,
           stripePaymentMethodId: true,
-          paypalEmail: true, // Re-enabled - should work after migration
+          paypalEmail: true,
+          paypalUserId: true,
+          paypalConnected: true,
+          paypalConnectedAt: true,
           name: true,
           email: true,
           image: true,

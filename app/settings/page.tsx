@@ -28,6 +28,9 @@ interface UserSettings {
   cardExpYear?: number
   stripePaymentMethodId?: string
   paypalEmail?: string | null
+  paypalUserId?: string | null
+  paypalConnected?: boolean
+  paypalConnectedAt?: string | null
   name?: string
   email?: string
   image?: string
@@ -1042,7 +1045,7 @@ export default function SettingsPage() {
             )}
 
             {/* PayPal Payment Method */}
-            {userSettings.paypalEmail && (
+            {userSettings.paypalConnected && (
               <div className="space-y-4 mb-6">
                 <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
                   <div className="flex items-center justify-between">
@@ -1051,20 +1054,25 @@ export default function SettingsPage() {
                         <span className="text-white font-bold text-xs">P</span>
                       </div>
                       <div>
-                        <p className="text-white font-medium">PayPal</p>
+                        <p className="text-white font-medium">PayPal Connected</p>
                         <p className="text-gray-400 text-sm">
-                          {userSettings.paypalEmail}
+                          {userSettings.paypalEmail || 'Connected via OAuth'}
                         </p>
+                        {userSettings.paypalConnectedAt && (
+                          <p className="text-gray-500 text-xs">
+                            Connected: {new Date(userSettings.paypalConnectedAt).toLocaleDateString()}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <button
                       onClick={() => {
-                        if (confirm('Remove PayPal payment method?')) {
+                        if (confirm('Disconnect PayPal account?')) {
                           handlePayPalRemove()
                         }
                       }}
                       className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
-                      title="Remove PayPal"
+                      title="Disconnect PayPal"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -1074,7 +1082,7 @@ export default function SettingsPage() {
             )}
 
             {/* Add Payment Methods */}
-            {!userSettings.hasPaymentMethod && !userSettings.paypalEmail && (
+            {!userSettings.hasPaymentMethod && !userSettings.paypalConnected && (
               <div>
                 <p className="text-gray-300 mb-4">No payment methods added yet. Choose how you want to pay for pledges and server boosts.</p>
                 <div className="space-y-4">
