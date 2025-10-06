@@ -4,11 +4,13 @@ import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { User, LogOut, Menu, X, Settings } from 'lucide-react'
 import { useState } from 'react'
+import { useThemeColors } from '@/utils/theme'
 // import { useActivityNotifications } from '@/contexts/ActivityNotificationContext'
 
 export default function Navbar() {
   const { data: session, status } = useSession()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const colors = useThemeColors()
   const unreadCount = 0 // Temporarily disabled
 
   return (
@@ -16,7 +18,7 @@ export default function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="text-2xl font-bold text-emerald-400">
+          <Link href="/" className={`text-2xl font-bold ${colors.primaryText}`}>
             Community Pledges
           </Link>
 

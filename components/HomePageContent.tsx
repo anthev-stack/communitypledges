@@ -48,10 +48,10 @@ export default function HomePageContent() {
           <div className={`${colors.primaryBgOpacity} w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4`}>
             <DollarSign className={`w-8 h-8 ${colors.primaryText}`} />
           </div>
-          <h3 className="text-xl font-semibold mb-2 text-white">Fair Cost Sharing</h3>
+          <h3 className="text-xl font-semibold mb-2 text-white">Split Cost Sharing</h3>
           <p className="text-gray-300">
-            Pay only what you pledged or less. We optimize costs to reduce everyone's payments 
-            while respecting your pledged limit.
+            Pay only what you pledged or less. We optimize costs to reduce everyones payments 
+            when others pledge alongside you respecting your pledge limit.
           </p>
         </div>
         
