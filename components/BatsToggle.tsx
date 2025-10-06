@@ -1,82 +1,157 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { Switch } from '@headlessui/react'
+import { useNotifications } from '@/contexts/NotificationContext'
 import { Moon, Sun } from 'lucide-react'
 
-export default function BatsToggle() {
-  const { data: session, update } = useSession()
-  const [loading, setLoading] = useState(false)
-  
-  const isBatsEnabled = session?.user?.batsEnabled || false
+const BatsToggle: React.FC = () => {
+  const { data: session } = useSession()
+  const { addNotification } = useNotifications()
+  const [enabled, setEnabled] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [toggling, setToggling] = useState(false)
+  const isAdmin = session?.user?.role === 'admin'
 
-  const toggleBats = async () => {
+  useEffect(() => {
+    // Fetch current global bats setting
+    const fetchBatsSetting = async () => {
+      try {
+        const response = await fetch('/api/admin/global-settings')
+        if (response.ok) {
+          const settings = await response.json()
+          setEnabled(settings.batsEnabled || false)
+        }
+      } catch (error) {
+        console.error('Error fetching bats setting:', error)
+        setEnabled(false)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (isAdmin) {
+      fetchBatsSetting()
+    }
+  }, [isAdmin])
+
+  const handleToggle = async (checked: boolean) => {
+    if (!isAdmin) {
+      addNotification({
+        type: 'error',
+        title: 'Permission Denied',
+        message: 'Only administrators can toggle this feature.',
+      })
+      return
+    }
+
+    setToggling(true)
+    setEnabled(checked)
+    
     try {
-      setLoading(true)
-      const response = await fetch('/api/user/toggle-bats', {
+      const response = await fetch('/api/admin/global-settings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ batsEnabled: checked }),
       })
 
       if (response.ok) {
-        const data = await response.json()
-        // Update the session to reflect the change
-        await update()
-        console.log('Bats toggled successfully:', data.batsEnabled)
+        addNotification({
+          type: 'success',
+          title: 'Global Bats Setting Updated',
+          message: `Flying bats animation is now ${checked ? 'enabled globally' : 'disabled globally'} for all users.`,
+        })
       } else {
-        const error = await response.json()
-        console.error('Failed to toggle bats:', error.message)
+        const errorData = await response.json()
+        addNotification({
+          type: 'error',
+          title: 'Update Failed',
+          message: errorData.message || 'Failed to update global bats setting.',
+        })
+        // Revert UI if API call fails
+        setEnabled(!checked)
       }
     } catch (error) {
-      console.error('Error toggling bats:', error)
+      console.error('Error toggling global bats setting:', error)
+      addNotification({
+        type: 'error',
+        title: 'Network Error',
+        message: 'Could not connect to the server to update global bats setting.',
+      })
+      // Revert UI if network error
+      setEnabled(!checked)
     } finally {
-      setLoading(false)
+      setToggling(false)
     }
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="text-gray-500 text-sm">
+        You do not have permission to manage this feature.
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg border border-slate-600/50">
+        <span className="text-white font-medium">Loading global bats setting...</span>
+        <div className="w-11 h-6 bg-gray-600 rounded-full animate-pulse" />
+      </div>
+    )
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg border border-slate-600/50">
         <div className="flex items-center space-x-3">
-          {isBatsEnabled ? (
+          {enabled ? (
             <Moon className="w-5 h-5 text-emerald-400" />
           ) : (
             <Sun className="w-5 h-5 text-gray-400" />
           )}
           <div>
-            <h4 className="text-white font-medium">Flying Bats Animation</h4>
+            <h4 className="text-white font-medium">Global Flying Bats Animation</h4>
             <p className="text-sm text-gray-400">
-              {isBatsEnabled 
-                ? 'Halloween bats are flying in the background' 
-                : 'Enable flying bats animation for a spooky atmosphere'
+              {enabled 
+                ? 'Bats are visible to all users globally' 
+                : 'Enable flying bats animation for all users'
               }
             </p>
           </div>
         </div>
-        <button
-          onClick={toggleBats}
-          disabled={loading}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-800 ${
-            isBatsEnabled ? 'bg-emerald-600' : 'bg-gray-600'
-          } ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        <Switch
+          checked={enabled}
+          onChange={handleToggle}
+          disabled={toggling}
+          className={`${
+            enabled ? 'bg-emerald-600' : 'bg-gray-600'
+          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-800 ${
+            toggling ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+          }`}
         >
+          <span className="sr-only">Enable global bats</span>
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              isBatsEnabled ? 'translate-x-6' : 'translate-x-1'
-            }`}
+            className={`${
+              enabled ? 'translate-x-6' : 'translate-x-1'
+            } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
           />
-        </button>
+        </Switch>
       </div>
       
       <div className="text-sm text-gray-400 bg-slate-700/20 rounded-lg p-3">
         <p>
-          <strong>Note:</strong> This feature adds animated flying bats to the background of the website. 
-          The bats will appear behind all content and won't interfere with user interactions. 
-          This setting only affects your personal view of the website.
+          <strong>Admin Control:</strong> This toggle controls the global bats animation for all users. 
+          When enabled, every user will see the flying bats animation in the background. 
+          When disabled, no users will see the bats animation.
         </p>
       </div>
     </div>
   )
 }
+
+export default BatsToggle

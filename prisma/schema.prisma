@@ -103,9 +103,6 @@ model User {
   isPaymentSuspended  Boolean  @default(false)
   paymentSuspendedAt  DateTime?
   
-  // UI Features
-  batsEnabled    Boolean  @default(false)
-  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -122,6 +119,15 @@ model User {
   ticketMessages TicketMessage[]
   userBanTargets BanAction[] @relation("UserBanTarget")
   addedStreamers PartnerStreamer[]
+}
+
+model GlobalSettings {
+  id          String   @id @default("settings")
+  batsEnabled Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("GlobalSettings")
 }
 
 model PartnerStreamer {

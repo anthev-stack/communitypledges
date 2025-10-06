@@ -183,7 +183,7 @@ export const authOptions: NextAuthOptions = {
           console.log('🔍 Fetching user from database for Discord OAuth:', user.email)
           const dbUser = await prisma.user.findUnique({
             where: { email: user.email },
-            select: { id: true, role: true, createdAt: true, batsEnabled: true }
+            select: { id: true, role: true, createdAt: true }
           })
           
           console.log('📊 Database user found:', dbUser)
@@ -191,7 +191,6 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             token.id = dbUser.id
             token.role = dbUser.role
-            token.batsEnabled = dbUser.batsEnabled
             
             // Check if this is a new user (created within last 5 minutes)
             const isNewUser = new Date().getTime() - new Date(dbUser.createdAt).getTime() < 5 * 60 * 1000
@@ -200,7 +199,7 @@ export const authOptions: NextAuthOptions = {
               console.log('🆕 Marking as new user (created recently)')
             }
             
-            console.log('✅ Token updated with user data:', { id: dbUser.id, role: dbUser.role, batsEnabled: dbUser.batsEnabled, isNewUser })
+            console.log('✅ Token updated with user data:', { id: dbUser.id, role: dbUser.role, isNewUser })
           } else {
             console.error('❌ No user found in database for email:', user.email)
             console.log('🔄 Will use user data from OAuth:', { id: user.id, email: user.email })
@@ -232,14 +231,13 @@ export const authOptions: NextAuthOptions = {
           console.log('Token missing id/role, fetching from database:', token.email)
           const dbUser = await prisma.user.findUnique({
             where: { email: token.email as string },
-            select: { id: true, role: true, batsEnabled: true }
+            select: { id: true, role: true }
           })
           
           if (dbUser) {
             token.id = dbUser.id
             token.role = dbUser.role
-            token.batsEnabled = dbUser.batsEnabled
-            console.log('Updated token from database:', { id: dbUser.id, role: dbUser.role, batsEnabled: dbUser.batsEnabled })
+            console.log('Updated token from database:', { id: dbUser.id, role: dbUser.role })
           }
         } catch (error) {
           console.error('Error fetching user in JWT callback (refresh):', error)
@@ -269,12 +267,11 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         session.user.id = token.id as string
         session.user.role = token.role as string
-        session.user.batsEnabled = token.batsEnabled as boolean
         // Pass through isNewUser flag if it exists
         if (token.isNewUser) {
           session.user.isNewUser = true
         }
-        console.log('Updated session with:', { id: session.user.id, role: session.user.role, batsEnabled: token.batsEnabled, isNewUser: token.isNewUser })
+        console.log('Updated session with:', { id: session.user.id, role: session.user.role, isNewUser: token.isNewUser })
       } else {
         console.error('No token provided to session callback')
       }
