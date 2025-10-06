@@ -39,7 +39,7 @@ export default function HomePage() {
           The ultimate server browser for Minecraft, Rust, and Discord servers. Share the cost of community servers with others. Pledge what you can afford, 
           and we'll optimize the costs to make hosting affordable for everyone.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/servers"
             className="bg-emerald-600 text-white px-8 py-3 rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center space-x-2"
@@ -53,28 +53,6 @@ export default function HomePage() {
           >
             <Heart className="w-5 h-5" />
             <span>Create Server</span>
-          </Link>
-        </div>
-        
-        {/* Game-Specific Quick Links */}
-        <div className="flex flex-wrap justify-center gap-3">
-          <Link
-            href="/minecraft-servers"
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-          >
-            Minecraft Servers
-          </Link>
-          <Link
-            href="/rust-servers"
-            className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-          >
-            Rust Servers
-          </Link>
-          <Link
-            href="/servers?type=discord"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-          >
-            Discord Servers
           </Link>
         </div>
       </div>
