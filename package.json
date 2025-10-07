@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/vercel-migration.js && node scripts/add-failed-payment-tracking.js && node scripts/add-auth-email-fields.js && node scripts/add-username-tracking.js && node scripts/add-partner-streamers.js && node scripts/update-user-roles.js && node scripts/remove-name-unique-constraint.js && node scripts/add-bats-feature-toggle.js && node scripts/convert-bats-to-global.js && node scripts/add-paypal-fields.js && node scripts/fix-user-role-enum-production.js && prisma generate && next build",
+    "build": "node scripts/vercel-migration.js && node scripts/add-failed-payment-tracking.js && node scripts/add-auth-email-fields.js && node scripts/add-username-tracking.js && node scripts/add-partner-streamers.js && node scripts/update-user-roles.js && node scripts/remove-name-unique-constraint.js && node scripts/add-bats-feature-toggle.js && node scripts/convert-bats-to-global.js && node scripts/remove-paypal-add-stripe-payouts.js && node scripts/fix-user-role-enum-production.js && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "seed-admin": "node scripts/seed-admin.js",
@@ -15,7 +15,6 @@
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",
     "@next-auth/prisma-adapter": "^1.0.7",
-    "@paypal/paypal-server-sdk": "^1.1.0",
     "@prisma/client": "^5.7.1",
     "@stripe/react-stripe-js": "^4.0.2",
     "@stripe/stripe-js": "^7.9.0",

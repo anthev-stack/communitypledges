@@ -174,15 +174,13 @@ export async function processPendingWithdrawals() {
             select: { 
               stripePaymentMethodId: true, 
               stripeCustomerId: true,
-              paymentPaypalEmail: true,
-              paymentPaypalConnected: true,
               name: true,
               email: true
             }
           })
 
-          if (!user?.stripePaymentMethodId && !user?.paymentPaypalConnected) {
-            console.log(`User ${pledge.userId} has no payment method, skipping payment`)
+          if (!user?.stripePaymentMethodId || !user?.stripeCustomerId) {
+            console.log(`User ${pledge.userId} has no Stripe payment method, skipping payment`)
             continue
           }
 
@@ -193,142 +191,25 @@ export async function processPendingWithdrawals() {
 
           let paymentIntent: any = null
 
-          // Process payment based on user's payment method preference
-          if (user.stripePaymentMethodId && user.stripeCustomerId) {
-            // User has card payment method - process through Stripe
-            paymentIntent = await stripe.paymentIntents.create({
-              amount: Math.round(actualAmount * 100), // Convert to cents
-              currency: 'aud',
-              customer: user.stripeCustomerId,
-              payment_method: user.stripePaymentMethodId,
-              confirm: true,
-              metadata: {
-                serverId: withdrawal.serverId,
-                serverOwnerId: withdrawal.server.ownerId,
-                payerId: pledge.userId,
-                type: 'pledge_payment',
-                paymentMethod: 'card',
-                platformFee: platformFee.toString(),
-                stripeFee: stripeFee.toString(),
-                netAmount: netAmount.toString()
-              }
-            })
-          } else if (user.paymentPaypalConnected) {
-            // User has PayPal - process payment via PayPal API
-            try {
-              const paypalResult = await processPayPalPayment(user, actualAmount, withdrawal.serverId, server.name, pledge.userId)
-              
-              if (paypalResult.success) {
-                totalCollected += actualAmount
-                successfulPayments++
-                
-                // Reset payment failures on successful payment
-                await resetPaymentFailures(pledge.userId)
-                
-                // Log successful payment
-                await prisma.activityLog.create({
-                  data: {
-                    type: 'payment_processed',
-                    message: `PayPal payment of A$${actualAmount.toFixed(2)} processed for "${server.name}" pledge`,
-                    amount: actualAmount,
-                    userId: pledge.userId,
-                    serverId: withdrawal.serverId
-                  }
-                })
-                
-                // Send email notification for successful payment
-                try {
-                  await sendPledgePaymentEmail({
-                    userName: user.name || 'User',
-                    userEmail: user.email,
-                    serverName: server.name,
-                    pledgeAmount: pledge.amount,
-                    actualAmount: actualAmount,
-                    totalPledgers: server.pledges.length,
-                    currency: 'A$'
-                  })
-                } catch (emailError) {
-                  console.error('Failed to send payment success email:', emailError)
-                }
-                
-                // Create a mock successful payment intent for consistency
-                paymentIntent = { status: 'succeeded' }
-              } else {
-                console.log(`PayPal payment failed for user ${pledge.userId}: ${paypalResult.error}`)
-                
-                // Handle payment failure
-                const failureResult = await handlePaymentFailure(pledge.userId, `PayPal payment failed: ${paypalResult.error}`)
-                
-                // Send failed payment email notification
-                try {
-                  if (failureResult?.isSuspended) {
-                    // Send suspension email
-                    await sendSuspensionEmail({
-                      userName: user.name || 'User',
-                      userEmail: user.email,
-                      supportUrl: `${process.env.NEXTAUTH_URL}/tickets`
-                    })
-                    console.log(`User ${pledge.userId} suspended due to payment failures`)
-                  } else {
-                    // Send failed payment email
-                    await sendFailedPaymentEmail({
-                      userName: user.name || 'User',
-                      userEmail: user.email,
-                      serverName: server.name,
-                      pledgeAmount: pledge.amount,
-                      attemptNumber: failureResult?.attemptNumber || 1,
-                      currency: 'A$',
-                      supportUrl: `${process.env.NEXTAUTH_URL}/tickets`
-                    })
-                    console.log(`User ${pledge.userId} has ${failureResult?.remainingAttempts} payment attempts remaining`)
-                  }
-                } catch (emailError) {
-                  console.error('Failed to send payment failure email:', emailError)
-                }
-                
-                // Create a mock failed payment intent for consistency
-                paymentIntent = { status: 'failed' }
-              }
-            } catch (error) {
-              console.error(`Error processing PayPal payment for user ${pledge.userId}:`, error)
-              
-              // Handle payment failure
-              const errorMessage = error instanceof Error ? error.message : String(error)
-              const failureResult = await handlePaymentFailure(pledge.userId, `PayPal payment error: ${errorMessage}`)
-              
-              // Send failed payment email notification
-              try {
-                if (failureResult?.isSuspended) {
-                  // Send suspension email
-                  await sendSuspensionEmail({
-                    userName: user.name || 'User',
-                    userEmail: user.email,
-                    supportUrl: `${process.env.NEXTAUTH_URL}/tickets`
-                  })
-                } else {
-                  // Send failed payment email
-                  await sendFailedPaymentEmail({
-                    userName: user.name || 'User',
-                    userEmail: user.email,
-                    serverName: server.name,
-                    pledgeAmount: pledge.amount,
-                    attemptNumber: failureResult?.attemptNumber || 1,
-                    currency: 'A$',
-                    supportUrl: `${process.env.NEXTAUTH_URL}/tickets`
-                  })
-                }
-              } catch (emailError) {
-                console.error('Failed to send payment failure email:', emailError)
-              }
-              
-              // Create a mock failed payment intent for consistency
-              paymentIntent = { status: 'failed' }
+          // Process payment via Stripe
+          paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(actualAmount * 100), // Convert to cents
+            currency: 'aud',
+            customer: user.stripeCustomerId,
+            payment_method: user.stripePaymentMethodId,
+            confirm: true,
+            metadata: {
+              serverId: withdrawal.serverId,
+              serverOwnerId: withdrawal.server.ownerId,
+              payerId: pledge.userId,
+              type: 'pledge_payment',
+              platformFee: platformFee.toString(),
+              stripeFee: stripeFee.toString(),
+              netAmount: netAmount.toString()
             }
-          }
+          })
 
-          // Payment processing is now handled within the if/else blocks above
-          // This section is kept for Stripe card payments only
-          if (user.stripePaymentMethodId && user.stripeCustomerId && paymentIntent.status === 'succeeded') {
+          if (paymentIntent.status === 'succeeded') {
             totalCollected += actualAmount
             successfulPayments++
             
@@ -338,15 +219,15 @@ export async function processPendingWithdrawals() {
             // Log successful payment
             await prisma.activityLog.create({
               data: {
-                type: 'payment_processed',
-                message: `Payment of A$${actualAmount.toFixed(2)} processed for "${server.name}" pledge`,
+                type: 'payment_success',
+                message: `Stripe payment of A$${actualAmount.toFixed(2)} processed for "${server.name}" pledge`,
                 amount: actualAmount,
                 userId: pledge.userId,
                 serverId: withdrawal.serverId
               }
             })
             
-            // Send email notification for successful payment
+            // Send payment success email
             try {
               await sendPledgePaymentEmail({
                 userName: user.name || 'User',
@@ -360,7 +241,7 @@ export async function processPendingWithdrawals() {
             } catch (emailError) {
               console.error('Failed to send payment success email:', emailError)
             }
-          } else if (user.stripePaymentMethodId && user.stripeCustomerId && paymentIntent.status !== 'succeeded') {
+          } else {
             console.log(`Stripe payment failed for user ${pledge.userId}: ${paymentIntent.status}`)
             
             // Handle payment failure
@@ -398,7 +279,7 @@ export async function processPendingWithdrawals() {
         }
       }
 
-      // Distribute payments to server owner based on their payout method
+      // Distribute payments to server owner via Stripe
       if (totalCollected > 0) {
         // Calculate total platform fees collected from all pledges
         const totalPlatformFees = server.pledges.reduce((total, pledge, index) => {
@@ -426,16 +307,13 @@ export async function processPendingWithdrawals() {
         await prisma.activityLog.create({
           data: {
             type: 'deposit_received',
-            message: `You received $${totalCollected.toFixed(2)} from community pledges for "${withdrawal.server.name}"`,
+            message: `You received A$${totalCollected.toFixed(2)} from community pledges for "${withdrawal.server.name}"`,
             amount: totalCollected,
             userId: withdrawal.server.ownerId,
             serverId: withdrawal.serverId
           }
         })
       }
-      
-      // TODO: Send notification to server owner about successful withdrawal
-      // TODO: Send notification to pledgers about their payment being processed
     }
   } catch (error) {
     console.error('Error processing pending withdrawals:', error)
@@ -447,75 +325,41 @@ export async function processPendingWithdrawals() {
  * Calculate optimized costs for withdrawal amount
  * This is a simplified version of the main algorithm
  */
-function calculateOptimizedCosts(pledgeAmounts: number[], serverCost: number, minCostPerPerson: number) {
+function calculateOptimizedCosts(pledgeAmounts: number[], serverCost: number, platformFeeRate: number) {
   const totalPledged = pledgeAmounts.reduce((sum, amount) => sum + amount, 0)
-  const pledgeCount = pledgeAmounts.length
   
-  if (pledgeCount === 0) {
-    return { optimizedCosts: [] }
-  }
-  
-  if (totalPledged < serverCost) {
-    return { optimizedCosts: pledgeAmounts }
-  }
-  
-  // If total pledged >= server cost, optimize distribution
-  let optimizedCosts = [...pledgeAmounts]
-  let excess = totalPledged - serverCost
-  
-  // Create array of indices sorted by pledge amount (highest first)
-  const sortedIndices = pledgeAmounts
-    .map((amount, index) => ({ amount, index }))
-    .sort((a, b) => b.amount - a.amount)
-    .map(item => item.index)
-  
-  // Phase 1: Balance among top pledgers
-  for (let i = 0; i < sortedIndices.length - 1 && excess > 0; i++) {
-    const currentIndex = sortedIndices[i]
-    const nextIndex = sortedIndices[i + 1]
-    
-    const currentCost = optimizedCosts[currentIndex]
-    const nextCost = optimizedCosts[nextIndex]
-    
-    if (currentCost > nextCost) {
-      const difference = currentCost - nextCost
-      const reduction = Math.min(excess, difference)
-      
-      optimizedCosts[currentIndex] = currentCost - reduction
-      excess -= reduction
+  if (totalPledged <= serverCost) {
+    // Not enough pledges to cover server cost
+    return {
+      optimizedCosts: pledgeAmounts,
+      isAcceptingPledges: true
     }
   }
   
-  // Phase 2: Distribute remaining excess
-  for (const index of sortedIndices) {
-    if (excess <= 0) break
-    
-    const currentCost = optimizedCosts[index]
-    const maxReduction = currentCost - minCostPerPerson
-    
-    if (maxReduction > 0) {
-      const reduction = Math.min(excess, maxReduction)
-      optimizedCosts[index] = currentCost - reduction
-      excess -= reduction
-    }
-  }
+  // Calculate optimized costs (simplified algorithm)
+  const optimizationFactor = serverCost / totalPledged
+  const optimizedCosts = pledgeAmounts.map(amount => amount * optimizationFactor)
   
-  return { optimizedCosts }
+  return {
+    optimizedCosts,
+    isAcceptingPledges: false
+  }
 }
 
 /**
- * Distribute payments to server owner via PayPal
- * All payments are processed through the business Stripe account first, then distributed via PayPal
+ * Distribute payments to server owner via Stripe
+ * Uses Stripe Express accounts for individual server owners
  */
 async function distributeToServerOwner(server: any, totalAmount: number, serverId: string, totalPlatformFees: number = 0) {
   try {
-    // Get server owner's PayPal email
+    // Get server owner's Stripe payout account
     const owner = await prisma.user.findUnique({
       where: { id: server.ownerId },
       select: {
         id: true,
-        payoutPaypalEmail: true,
-        payoutPaypalConnected: true,
+        stripePayoutAccountId: true,
+        stripePayoutConnected: true,
+        stripePayoutRequirements: true,
         name: true,
         email: true
       }
@@ -529,17 +373,23 @@ async function distributeToServerOwner(server: any, totalAmount: number, serverI
     // Calculate net amount (total collected minus platform fees already calculated per pledge)
     const netAmount = totalAmount - totalPlatformFees
 
-    if (owner.payoutPaypalConnected) {
-      // Server owner has PayPal - process via PayPal
-      await distributeToPayPal(owner, netAmount, serverId, server.name)
+    if (netAmount <= 0) {
+      console.log(`No net amount to distribute for server ${serverId}`)
+      return
+    }
+
+    if (owner.stripePayoutAccountId && owner.stripePayoutConnected) {
+      // Server owner has Stripe Express account - process payout
+      await distributeToStripe(owner, netAmount, serverId, server.name)
     } else {
-      // No PayPal configured - hold funds for manual processing
-      console.log(`No PayPal account configured for server owner ${owner.name} - holding $${netAmount.toFixed(2)} for manual processing`)
+      // No Stripe payout configured - hold funds for manual processing
+      console.log(`No Stripe payout account configured for server owner ${owner.name} - holding A$${netAmount.toFixed(2)} for manual processing`)
       
+      // Log pending payout
       await prisma.activityLog.create({
         data: {
           type: 'payout_pending',
-          message: `$${netAmount.toFixed(2)} pending payout for "${server.name}" - PayPal account required`,
+          message: `A$${netAmount.toFixed(2)} pending payout for "${server.name}" - Stripe payout account required`,
           amount: netAmount,
           userId: owner.id,
           serverId: serverId
@@ -548,119 +398,63 @@ async function distributeToServerOwner(server: any, totalAmount: number, serverI
     }
   } catch (error) {
     console.error(`Error distributing payment to server owner:`, error)
+    throw error
   }
 }
 
 /**
- * Distribute payment to server owner via PayPal
- * In a real implementation, this would integrate with PayPal API
+ * Distribute payment to server owner via Stripe Express
+ * Uses Stripe's transfer API to send money to the server owner's Express account
  */
-async function distributeToPayPal(owner: any, amount: number, serverId: string, serverName: string) {
+async function distributeToStripe(owner: any, amount: number, serverId: string, serverName: string) {
   try {
-    const clientId = process.env.PAYPAL_CLIENT_ID
-    const clientSecret = process.env.PAYPAL_CLIENT_SECRET
-    
-    if (!clientId || !clientSecret) {
-      console.error('PayPal credentials not configured')
-      await prisma.activityLog.create({
-        data: {
-          type: 'paypal_payout_failed',
-          message: `PayPal payout failed: PayPal not configured for "${serverName}"`,
-          amount: amount,
-          userId: owner.id,
-          serverId: serverId
-        }
-      })
-      return
+    if (!owner.stripePayoutAccountId) {
+      throw new Error('No Stripe payout account ID found')
     }
 
-    // Get PayPal access token
-    const tokenResponse = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Accept-Language': 'en_US',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
-      },
-      body: 'grant_type=client_credentials'
+    // Create transfer to server owner's Stripe Express account
+    const transfer = await stripe.transfers.create({
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: 'aud',
+      destination: owner.stripePayoutAccountId,
+      metadata: {
+        serverId: serverId,
+        serverName: serverName,
+        type: 'server_payout'
+      }
     })
 
-    if (!tokenResponse.ok) {
-      throw new Error(`PayPal token request failed: ${tokenResponse.status}`)
-    }
-
-    const tokenData = await tokenResponse.json()
-    const accessToken = tokenData.access_token
-
-    // Create PayPal payout
-    const payoutData = {
-      sender_batch_header: {
-        sender_batch_id: `payout_${serverId}_${Date.now()}`,
-        email_subject: `Payment from Community Pledges - ${serverName}`,
-        email_message: `You have received a payment of A$${amount.toFixed(2)} from Community Pledges for your server "${serverName}". Thank you for using our platform!`
-      },
-      items: [
-        {
-          recipient_type: 'EMAIL',
-          amount: {
-            value: amount.toFixed(2),
-            currency: 'AUD'
-          },
-          receiver: owner.payoutPaypalEmail,
-          note: `Payment for server: ${serverName}`,
-          sender_item_id: `server_${serverId}_${Date.now()}`
-        }
-      ]
-    }
-
-    const payoutResponse = await fetch('https://api-m.paypal.com/v1/payments/payouts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(payoutData)
-    })
-
-    if (!payoutResponse.ok) {
-      const errorData = await payoutResponse.json()
-      throw new Error(`PayPal payout failed: ${JSON.stringify(errorData)}`)
-    }
-
-    const payoutResult = await payoutResponse.json()
-    console.log(`PayPal payout successful: ${payoutResult.batch_header.payout_batch_id}`)
+    console.log(`Stripe transfer successful: ${transfer.id}`)
     
     // Log successful payout
     await prisma.activityLog.create({
       data: {
-        type: 'paypal_payout_success',
-        message: `A$${amount.toFixed(2)} sent to your PayPal account (${owner.payoutPaypalEmail}) for "${serverName}"`,
+        type: 'stripe_payout_success',
+        message: `A$${amount.toFixed(2)} sent to your Stripe account for "${serverName}"`,
         amount: amount,
         userId: owner.id,
         serverId: serverId
       }
     })
 
-    // Store payout batch ID for tracking
+    // Store transfer ID for tracking
     await prisma.activityLog.create({
       data: {
-        type: 'paypal_payout_batch',
-        message: `PayPal Batch ID: ${payoutResult.batch_header.payout_batch_id}`,
+        type: 'stripe_transfer_id',
+        message: `Stripe Transfer ID: ${transfer.id}`,
         userId: owner.id,
         serverId: serverId
       }
     })
 
   } catch (error) {
-    console.error(`Error distributing PayPal payment:`, error)
+    console.error(`Error distributing Stripe payment:`, error)
     
     // Log failed payout
     await prisma.activityLog.create({
       data: {
-        type: 'paypal_payout_failed',
-        message: `PayPal payout failed for "${serverName}": ${error instanceof Error ? error.message : String(error)}`,
+        type: 'stripe_payout_failed',
+        message: `Stripe payout failed for "${serverName}": ${error instanceof Error ? error.message : String(error)}`,
         amount: amount,
         userId: owner.id,
         serverId: serverId
@@ -670,117 +464,106 @@ async function distributeToPayPal(owner: any, amount: number, serverId: string, 
 }
 
 /**
- * Process PayPal payment for pledge
- * Uses PayPal Payments API to charge the user's PayPal account
+ * Create Stripe Express account for server owner
+ * This initiates the Stripe Express onboarding process
  */
-async function processPayPalPayment(user: any, amount: number, serverId: string, serverName: string, userId: string) {
+export async function createStripeExpressAccount(userId: string) {
   try {
-    const clientId = process.env.PAYPAL_CLIENT_ID
-    const clientSecret = process.env.PAYPAL_CLIENT_SECRET
-    
-    if (!clientId || !clientSecret) {
-      return { success: false, error: 'PayPal credentials not configured' }
-    }
-
-    // Get PayPal access token
-    const tokenResponse = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Accept-Language': 'en_US',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
-      },
-      body: 'grant_type=client_credentials'
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true }
     })
 
-    if (!tokenResponse.ok) {
-      return { success: false, error: `PayPal token request failed: ${tokenResponse.status}` }
+    if (!user) {
+      throw new Error('User not found')
     }
 
-    const tokenData = await tokenResponse.json()
-    const accessToken = tokenData.access_token
-
-    // Create PayPal payment
-    const paymentData = {
-      intent: 'sale',
-      payer: {
-        payment_method: 'paypal',
-        payer_info: {
-          email: user.paymentPaypalEmail
-        }
+    // Create Stripe Express account
+    const account = await stripe.accounts.create({
+      type: 'express',
+      country: 'AU', // Australia
+      email: user.email,
+      capabilities: {
+        transfers: { requested: true }
       },
-      transactions: [
-        {
-          amount: {
-            total: amount.toFixed(2),
-            currency: 'AUD',
-            details: {
-              subtotal: amount.toFixed(2)
-            }
-          },
-          description: `Community Pledge Payment for ${serverName}`,
-          custom: `server_${serverId}_user_${userId}`,
-          invoice_number: `pledge_${serverId}_${userId}_${Date.now()}`
-        }
-      ],
-      redirect_urls: {
-        return_url: `${process.env.NEXTAUTH_URL}/api/paypal/payment/success`,
-        cancel_url: `${process.env.NEXTAUTH_URL}/api/paypal/payment/cancel`
+      business_type: 'individual',
+      individual: {
+        email: user.email,
+        first_name: user.name?.split(' ')[0] || 'Server',
+        last_name: user.name?.split(' ').slice(1).join(' ') || 'Owner'
       }
-    }
-
-    const paymentResponse = await fetch('https://api-m.paypal.com/v1/payments/payment', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(paymentData)
     })
 
-    if (!paymentResponse.ok) {
-      const errorData = await paymentResponse.json()
-      return { success: false, error: `PayPal payment creation failed: ${JSON.stringify(errorData)}` }
-    }
-
-    const paymentResult = await paymentResponse.json()
-    
-    // For automated processing, we'll simulate approval
-    // In a real implementation, you might need to handle the approval flow
-    // For now, we'll assume the payment is approved and execute it
-    
-    const executeData = {
-      payer_id: paymentResult.payer.payer_info.payer_id
-    }
-
-    const executeResponse = await fetch(`https://api-m.paypal.com/v1/payments/payment/${paymentResult.id}/execute`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(executeData)
+    // Update user with Stripe Express account ID
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        stripePayoutAccountId: account.id,
+        stripePayoutConnected: false, // Will be true after onboarding
+        stripePayoutRequirements: JSON.stringify(account.requirements)
+      }
     })
 
-    if (!executeResponse.ok) {
-      const errorData = await executeResponse.json()
-      return { success: false, error: `PayPal payment execution failed: ${JSON.stringify(errorData)}` }
+    return {
+      success: true,
+      accountId: account.id,
+      requirements: account.requirements
     }
-
-    const executeResult = await executeResponse.json()
-    
-    if (executeResult.state === 'approved') {
-      console.log(`PayPal payment successful: ${executeResult.id}`)
-      return { success: true, paymentId: executeResult.id }
-    } else {
-      return { success: false, error: `PayPal payment not approved: ${executeResult.state}` }
-    }
-
   } catch (error) {
-    console.error(`Error processing PayPal payment:`, error)
-    return { success: false, error: error instanceof Error ? error.message : String(error) }
+    console.error('Error creating Stripe Express account:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }
+  }
+}
+
+/**
+ * Create Stripe Express account link for onboarding
+ * This generates a URL for the user to complete their Stripe Express setup
+ */
+export async function createStripeExpressAccountLink(accountId: string, refreshUrl: string, returnUrl: string) {
+  try {
+    const accountLink = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: refreshUrl,
+      return_url: returnUrl,
+      type: 'account_onboarding'
+    })
+
+    return {
+      success: true,
+      url: accountLink.url
+    }
+  } catch (error) {
+    console.error('Error creating Stripe Express account link:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }
+  }
+}
+
+/**
+ * Check Stripe Express account status
+ * This verifies if the account is ready to receive payouts
+ */
+export async function checkStripeExpressAccountStatus(accountId: string) {
+  try {
+    const account = await stripe.accounts.retrieve(accountId)
+    
+    return {
+      success: true,
+      chargesEnabled: account.charges_enabled,
+      payoutsEnabled: account.payouts_enabled,
+      detailsSubmitted: account.details_submitted,
+      requirements: account.requirements
+    }
+  } catch (error) {
+    console.error('Error checking Stripe Express account status:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }
   }
 }

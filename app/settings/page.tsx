@@ -13,7 +13,8 @@ import {
   Camera, 
   X,
   Check,
-  AlertCircle
+  AlertCircle,
+  ExternalLink
 } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
@@ -28,16 +29,11 @@ interface UserSettings {
   cardExpMonth?: number
   cardExpYear?: number
   stripePaymentMethodId?: string
-  // Payout PayPal (for receiving money)
-  payoutPaypalEmail?: string | null
-  payoutPaypalUserId?: string | null
-  payoutPaypalConnected?: boolean
-  payoutPaypalConnectedAt?: string | null
-  // Payment PayPal (for paying pledges)
-  paymentPaypalEmail?: string | null
-  paymentPaypalUserId?: string | null
-  paymentPaypalConnected?: boolean
-  paymentPaypalConnectedAt?: string | null
+  // Stripe payout (for receiving money)
+  stripePayoutAccountId?: string | null
+  stripePayoutConnected?: boolean
+  stripePayoutConnectedAt?: string | null
+  stripePayoutRequirements?: string | null
   name?: string
   email?: string
   image?: string
@@ -48,1294 +44,672 @@ export default function SettingsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { addNotification } = useNotifications()
+  const [activeTab, setActiveTab] = useState('profile')
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState<'account' | 'payment' | 'deposit'>('account')
+  const [isLoading, setIsLoading] = useState(true)
+  const [isUpdating, setIsUpdating] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [deleteType, setDeleteType] = useState<'payment' | 'deposit'>('payment')
-  const [showCardForm, setShowCardForm] = useState(false)
-  const [showPayPalManualEntry, setShowPayPalManualEntry] = useState(false)
-  const [manualPayPalEmail, setManualPayPalEmail] = useState('')
-  const [profileImage, setProfileImage] = useState<File | null>(null)
-  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null)
-  const [savingProfileImage, setSavingProfileImage] = useState(false)
-  const [showPasswordForm, setShowPasswordForm] = useState(false)
-  const [showUsernameForm, setShowUsernameForm] = useState(false)
-  const [changingPassword, setChangingPassword] = useState(false)
-  const [changingUsername, setChangingUsername] = useState(false)
-  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false)
-  const [deletingAccount, setDeletingAccount] = useState(false)
-  const [deleteConfirmation, setDeleteConfirmation] = useState('')
-  const [isDragOver, setIsDragOver] = useState(false)
+  const [deleteType, setDeleteType] = useState<'payment' | 'payout' | null>(null)
+  const [showImageUpload, setShowImageUpload] = useState(false)
+  const [newImage, setNewImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [stripePayoutStatus, setStripePayoutStatus] = useState<any>(null)
+  const [isCreatingStripeAccount, setIsCreatingStripeAccount] = useState(false)
 
-  const accountForm = useForm({
-    defaultValues: {
-      name: '',
-      email: '',
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-      newUsername: ''
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm()
+
+  // Load user settings
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      try {
+        const response = await fetch('/api/user/settings')
+        if (response.ok) {
+          const data = await response.json()
+          setUserSettings(data)
+          console.log('[Settings Page] User settings loaded:', data)
+        } else {
+          console.error('Failed to load user settings')
+        }
+      } catch (error) {
+        console.error('Error loading user settings:', error)
+      } finally {
+        setIsLoading(false)
+      }
     }
-  })
 
-  // Fetch user settings
-  const fetchUserSettings = async () => {
+    if (session?.user?.id) {
+      loadUserSettings()
+    }
+  }, [session?.user?.id])
+
+  // Load Stripe payout status
+  useEffect(() => {
+    const loadStripePayoutStatus = async () => {
+      if (userSettings?.stripePayoutAccountId) {
+        try {
+          const response = await fetch('/api/stripe/express/status')
+          if (response.ok) {
+            const data = await response.json()
+            setStripePayoutStatus(data)
+          }
+        } catch (error) {
+          console.error('Error loading Stripe payout status:', error)
+        }
+      }
+    }
+
+    loadStripePayoutStatus()
+  }, [userSettings?.stripePayoutAccountId])
+
+  // Handle Stripe Express account creation
+  const handleCreateStripeAccount = async () => {
+    setIsCreatingStripeAccount(true)
     try {
-      setLoading(true)
-      const response = await fetch('/api/user/settings')
+      const response = await fetch('/api/stripe/express/create', {
+        method: 'POST'
+      })
       
-      if (response.ok) {
-        const settings = await response.json()
-        console.log('[Settings Page] Settings data received:', JSON.stringify(settings, null, 2))
-        console.log('[Settings Page] PayPal fields:', {
-          payoutPaypalConnected: settings.payoutPaypalConnected,
-          payoutPaypalEmail: settings.payoutPaypalEmail,
-          payoutPaypalUserId: settings.payoutPaypalUserId,
-          payoutPaypalConnectedAt: settings.payoutPaypalConnectedAt,
-          paymentPaypalConnected: settings.paymentPaypalConnected,
-          paymentPaypalEmail: settings.paymentPaypalEmail,
-          paymentPaypalUserId: settings.paymentPaypalUserId,
-          paymentPaypalConnectedAt: settings.paymentPaypalConnectedAt
+      const data = await response.json()
+      
+      if (data.success) {
+        addNotification({
+          type: 'success',
+          title: 'Stripe Account Created',
+          message: 'Your Stripe Express account has been created. Please complete the onboarding process.'
         })
-        setUserSettings(settings)
-        accountForm.reset({
-          name: settings.name || '',
-          email: settings.email || '',
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        })
-        if (settings.image) {
-          setProfileImagePreview(settings.image)
+        
+        // Reload user settings
+        const settingsResponse = await fetch('/api/user/settings')
+        if (settingsResponse.ok) {
+          const settingsData = await settingsResponse.json()
+          setUserSettings(settingsData)
         }
       } else {
-        setUserSettings({
-          hasPaymentMethod: false,
-          payoutPaypalEmail: null,
-          payoutPaypalConnected: false,
-          paymentPaypalEmail: null,
-          paymentPaypalConnected: false,
-          name: session?.user?.name || '',
-          email: session?.user?.email || '',
-          image: session?.user?.image || undefined
-        })
         addNotification({
           type: 'error',
-          title: 'Error',
-          message: 'Failed to load settings',
-          duration: 5000
+          title: 'Failed to Create Account',
+          message: data.error || 'Failed to create Stripe Express account'
         })
       }
     } catch (error) {
-      console.error('Error fetching user settings:', error)
-      setUserSettings({
-        hasPaymentMethod: false,
-        payoutPaypalEmail: null,
-        payoutPaypalConnected: false,
-        paymentPaypalEmail: null,
-        paymentPaypalConnected: false,
-        name: session?.user?.name || '',
-        email: session?.user?.email || '',
-        image: session?.user?.image || undefined
-      })
+      console.error('Error creating Stripe account:', error)
       addNotification({
         type: 'error',
         title: 'Error',
-        message: 'Error loading settings',
-        duration: 5000
+        message: 'Failed to create Stripe Express account'
       })
     } finally {
-      setLoading(false)
+      setIsCreatingStripeAccount(false)
     }
   }
 
-  // Handle image change
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      processImageFile(file)
-    }
-  }
-
-  // Process image file
-  const processImageFile = (file: File) => {
-    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
-    if (!validTypes.includes(file.type)) {
+  // Handle Stripe Express onboarding
+  const handleStripeOnboarding = async () => {
+    if (!userSettings?.stripePayoutAccountId) {
       addNotification({
         type: 'error',
-        title: 'Invalid File Type',
-        message: 'Please upload a PNG, JPG, or WebP image',
-        duration: 4000
+        title: 'No Account Found',
+        message: 'Please create a Stripe Express account first'
       })
       return
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      addNotification({
-        type: 'error',
-        title: 'File Too Large',
-        message: 'Please upload an image smaller than 5MB',
-        duration: 4000
-      })
-      return
-    }
-
-    setProfileImage(file)
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      setProfileImagePreview(e.target?.result as string)
-    }
-    reader.readAsDataURL(file)
-  }
-
-  // Remove profile image
-  const removeProfileImage = () => {
-    setProfileImage(null)
-    setProfileImagePreview(null)
-  }
-
-  // Handle drag and drop
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(true)
-  }
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-    
-    const files = Array.from(e.dataTransfer.files)
-    const imageFile = files.find(file => file.type.startsWith('image/'))
-    
-    if (imageFile) {
-      processImageFile(imageFile)
-    } else {
-      addNotification({
-        type: 'error',
-        title: 'Invalid File',
-        message: 'Please drop an image file.',
-        duration: 4000
-      })
-    }
-  }
-
-  // Save profile image
-  const saveProfileImage = async () => {
-    if (!profileImage) return
-
-    setSavingProfileImage(true)
     try {
-      const formData = new FormData()
-      formData.append('profileImage', profileImage)
-
-      const response = await fetch('/api/user/settings/profile-image', {
-        method: 'PUT',
-        body: formData
-      })
-
-      if (response.ok) {
-        await fetchUserSettings()
-        setProfileImage(null)
-        addNotification({
-          type: 'success',
-          title: 'Profile Picture Updated',
-          message: 'Your profile picture has been updated successfully!',
-          duration: 4000
+      const response = await fetch('/api/stripe/express/link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          accountId: userSettings.stripePayoutAccountId
         })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        window.location.href = data.url
       } else {
-        const error = await response.json()
         addNotification({
           type: 'error',
-          title: 'Update Failed',
-          message: error.message || 'Failed to update profile picture',
-          duration: 4000
+          title: 'Failed to Start Onboarding',
+          message: data.error || 'Failed to start Stripe onboarding'
         })
       }
     } catch (error) {
-      console.error('Error updating profile picture:', error)
+      console.error('Error starting Stripe onboarding:', error)
       addNotification({
         type: 'error',
-        title: 'Update Failed',
-        message: 'Failed to update profile picture',
-        duration: 4000
+        title: 'Error',
+        message: 'Failed to start Stripe onboarding'
       })
-    } finally {
-      setSavingProfileImage(false)
     }
   }
 
-  // Handle PayPal OAuth
-  const handlePayPalOAuth = (context: 'payment' | 'payout' = 'payment') => {
-    console.log('PayPal OAuth - context:', context, 'activeTab:', activeTab)
-    window.location.href = `/api/paypal/oauth?type=${context}`
-  }
-
-  // Handle PayPal update (fallback for manual email entry)
-  const handlePayPalUpdate = async (email: string) => {
+  // Handle Stripe payout removal
+  const handleStripePayoutRemove = async () => {
     try {
-      const response = await fetch('/api/user/settings/paypal', {
-        method: 'POST',
+      const response = await fetch('/api/user/settings', {
+        method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({
+          stripePayoutAccountId: null,
+          stripePayoutConnected: false,
+          stripePayoutConnectedAt: null,
+          stripePayoutRequirements: null
+        })
       })
 
       if (response.ok) {
         addNotification({
           type: 'success',
-          title: 'PayPal Updated',
-          message: 'Your PayPal email has been saved successfully!',
-          duration: 4000
+          title: 'Stripe Payout Removed',
+          message: 'Your Stripe payout account has been removed.'
         })
-        fetchUserSettings()
+        
+        // Reload user settings
+        const settingsResponse = await fetch('/api/user/settings')
+        if (settingsResponse.ok) {
+          const settingsData = await settingsResponse.json()
+          setUserSettings(settingsData)
+        }
+      } else {
+        const errorData = await response.json()
+        addNotification({
+          type: 'error',
+          title: 'Failed to Remove Account',
+          message: errorData.message || 'Failed to remove Stripe payout account'
+        })
+      }
+    } catch (error) {
+      console.error('Error removing Stripe payout:', error)
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to remove Stripe payout account'
+      })
+    }
+  }
+
+  // Handle profile update
+  const onSubmit = async (data: any) => {
+    setIsUpdating(true)
+    try {
+      const response = await fetch('/api/user/settings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+
+      if (response.ok) {
+        addNotification({
+          type: 'success',
+          title: 'Profile Updated',
+          message: 'Your profile has been updated successfully!'
+        })
+        
+        // Reload user settings
+        const settingsResponse = await fetch('/api/user/settings')
+        if (settingsResponse.ok) {
+          const settingsData = await settingsResponse.json()
+          setUserSettings(settingsData)
+        }
       } else {
         const errorData = await response.json()
         addNotification({
           type: 'error',
           title: 'Update Failed',
-          message: errorData.message || 'Failed to save PayPal email',
-          duration: 4000
+          message: errorData.message || 'Failed to update profile'
         })
       }
     } catch (error) {
-      console.error('Error updating PayPal:', error)
+      console.error('Error updating profile:', error)
       addNotification({
         type: 'error',
-        title: 'Update Failed',
-        message: 'Failed to save PayPal email',
-        duration: 4000
-      })
-    }
-  }
-
-  // Handle PayPal remove
-  const handlePayPalRemove = async () => {
-    try {
-      const response = await fetch('/api/user/settings/payout-paypal', {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        addNotification({
-          type: 'success',
-          title: 'PayPal Payout Removed',
-          message: 'Your PayPal payout account has been removed.',
-          duration: 4000
-        })
-        fetchUserSettings()
-      } else {
-        addNotification({
-          type: 'error',
-          title: 'Remove Failed',
-          message: 'Failed to remove PayPal payout account',
-          duration: 4000
-        })
-      }
-    } catch (error) {
-      console.error('Error removing PayPal payout:', error)
-      addNotification({
-        type: 'error',
-        title: 'Remove Failed',
-        message: 'Failed to remove PayPal payout account',
-        duration: 4000
-      })
-    }
-  }
-
-  const handlePaymentPayPalRemove = async () => {
-    try {
-      const response = await fetch('/api/user/settings/payment-paypal', {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        addNotification({
-          type: 'success',
-          title: 'PayPal Payment Removed',
-          message: 'Your PayPal payment method has been removed.',
-          duration: 4000
-        })
-        fetchUserSettings()
-      } else {
-        addNotification({
-          type: 'error',
-          title: 'Remove Failed',
-          message: 'Failed to remove PayPal payment method',
-          duration: 4000
-        })
-      }
-    } catch (error) {
-      console.error('Error removing PayPal payment:', error)
-      addNotification({
-        type: 'error',
-        title: 'Remove Failed',
-        message: 'Failed to remove PayPal payment method',
-        duration: 4000
-      })
-    }
-  }
-
-  // Handle manual PayPal email submission
-  const handleManualPayPalSubmit = async () => {
-    if (!manualPayPalEmail || !manualPayPalEmail.includes('@')) {
-      addNotification({
-        type: 'error',
-        title: 'Invalid Email',
-        message: 'Please enter a valid PayPal email address.',
-        duration: 4000
-      })
-      return
-    }
-
-    try {
-      const response = await fetch('/api/user/settings/paypal', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: manualPayPalEmail }),
-      })
-
-      if (response.ok) {
-        addNotification({
-          type: 'success',
-          title: 'PayPal Connected',
-          message: `Successfully connected PayPal account: ${manualPayPalEmail}`,
-          duration: 5000
-        })
-        setShowPayPalManualEntry(false)
-        setManualPayPalEmail('')
-        fetchUserSettings()
-      } else {
-        addNotification({
-          type: 'error',
-          title: 'Connection Failed',
-          message: 'Failed to save PayPal email. Please try again.',
-          duration: 4000
-        })
-      }
-    } catch (error) {
-      console.error('Error saving PayPal email:', error)
-      addNotification({
-        type: 'error',
-        title: 'Connection Failed',
-        message: 'Failed to save PayPal email. Please try again.',
-        duration: 4000
-      })
-    }
-  }
-
-  // Handle password change
-  const handlePasswordChange = async (data: { currentPassword: string; newPassword: string }) => {
-    setChangingPassword(true)
-    try {
-      const response = await fetch('/api/user/settings/password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        addNotification({
-          type: 'success',
-          title: 'Password Changed',
-          message: 'Your password has been changed successfully. You will receive an email confirmation.',
-          duration: 5000
-        })
-        setShowPasswordForm(false)
-        accountForm.reset()
-      } else {
-        addNotification({
-          type: 'error',
-          title: 'Password Change Failed',
-          message: result.message || 'Failed to change password. Please try again.',
-          duration: 4000
-        })
-      }
-    } catch (error) {
-      console.error('Error changing password:', error)
-      addNotification({
-        type: 'error',
-        title: 'Password Change Failed',
-        message: 'Failed to change password. Please try again.',
-        duration: 4000
+        title: 'Error',
+        message: 'Failed to update profile'
       })
     } finally {
-      setChangingPassword(false)
+      setIsUpdating(false)
     }
   }
 
-  // Handle username change
-  const handleUsernameChange = async (data: { newUsername: string }) => {
-    setChangingUsername(true)
+  // Handle image upload
+  const handleImageUpload = async () => {
+    if (!newImage) return
+
+    const formData = new FormData()
+    formData.append('image', newImage)
+
     try {
-      const response = await fetch('/api/user/settings/username', {
+      const response = await fetch('/api/user/settings/image', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+        body: formData
       })
-
-      const result = await response.json()
 
       if (response.ok) {
         addNotification({
           type: 'success',
-          title: 'Username Changed',
-          message: `Your username has been changed to "${result.newUsername}". You will receive an email confirmation.`,
-          duration: 5000
-        })
-        setShowUsernameForm(false)
-        accountForm.reset()
-        fetchUserSettings() // Refresh to get updated username
-      } else {
-        addNotification({
-          type: 'error',
-          title: 'Username Change Failed',
-          message: result.message || 'Failed to change username. Please try again.',
-          duration: 4000
-        })
-      }
-    } catch (error) {
-      console.error('Error changing username:', error)
-      addNotification({
-        type: 'error',
-        title: 'Username Change Failed',
-        message: 'Failed to change username. Please try again.',
-        duration: 4000
-      })
-    } finally {
-      setChangingUsername(false)
-    }
-  }
-
-  // Handle account deletion
-  const handleDeleteAccount = async () => {
-    if (deleteConfirmation !== 'DELETE') {
-      addNotification({
-        type: 'error',
-        title: 'Confirmation Required',
-        message: 'Please type "DELETE" to confirm account deletion.',
-        duration: 4000
-      })
-      return
-    }
-
-    setDeletingAccount(true)
-    try {
-      const response = await fetch('/api/user/settings/delete-account', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        addNotification({
-          type: 'success',
-          title: 'Account Deleted',
-          message: 'Your account has been permanently deleted. You will be redirected to the homepage.',
-          duration: 5000
+          title: 'Image Updated',
+          message: 'Your profile image has been updated!'
         })
         
-        // Sign out and redirect after a short delay
-        setTimeout(() => {
-          signOut({ callbackUrl: '/' })
-        }, 2000)
+        // Reload user settings
+        const settingsResponse = await fetch('/api/user/settings')
+        if (settingsResponse.ok) {
+          const settingsData = await settingsResponse.json()
+          setUserSettings(settingsData)
+        }
+        
+        setShowImageUpload(false)
+        setNewImage(null)
+        setImagePreview(null)
       } else {
+        const errorData = await response.json()
         addNotification({
           type: 'error',
-          title: 'Deletion Failed',
-          message: result.message || 'Failed to delete account. Please try again.',
-          duration: 4000
+          title: 'Upload Failed',
+          message: errorData.message || 'Failed to upload image'
         })
       }
     } catch (error) {
-      console.error('Error deleting account:', error)
+      console.error('Error uploading image:', error)
       addNotification({
         type: 'error',
-        title: 'Deletion Failed',
-        message: 'Failed to delete account. Please try again.',
-        duration: 4000
-      })
-    } finally {
-      setDeletingAccount(false)
-    }
-  }
-
-  // Handle card remove
-  const handleCardRemove = async () => {
-    try {
-      const response = await fetch('/api/user/settings/payment', {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        addNotification({
-          type: 'success',
-          title: 'Payment Method Removed',
-          message: 'Your payment method has been removed.',
-          duration: 4000
-        })
-        fetchUserSettings()
-      } else {
-        addNotification({
-          type: 'error',
-          title: 'Remove Failed',
-          message: 'Failed to remove payment method',
-          duration: 4000
-        })
-      }
-    } catch (error) {
-      console.error('Error removing payment method:', error)
-      addNotification({
-        type: 'error',
-        title: 'Remove Failed',
-        message: 'Failed to remove payment method',
-        duration: 4000
+        title: 'Error',
+        message: 'Failed to upload image'
       })
     }
   }
 
-  // Handle delete
-  const handleDelete = async () => {
+  // Handle image selection
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setNewImage(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // Handle logout
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/' })
+  }
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
     if (deleteType === 'payment') {
-      await handleCardRemove()
-    } else if (deleteType === 'deposit') {
-      await handlePayPalRemove()
+      // Handle payment method removal
+      try {
+        const response = await fetch('/api/user/settings', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            hasPaymentMethod: false,
+            cardLast4: null,
+            cardBrand: null,
+            cardExpMonth: null,
+            cardExpYear: null,
+            stripePaymentMethodId: null
+          })
+        })
+
+        if (response.ok) {
+          addNotification({
+            type: 'success',
+            title: 'Payment Method Removed',
+            message: 'Your payment method has been removed.'
+          })
+          
+          // Reload user settings
+          const settingsResponse = await fetch('/api/user/settings')
+          if (settingsResponse.ok) {
+            const settingsData = await settingsResponse.json()
+            setUserSettings(settingsData)
+          }
+        } else {
+          const errorData = await response.json()
+          addNotification({
+            type: 'error',
+            title: 'Failed to Remove',
+            message: errorData.message || 'Failed to remove payment method'
+          })
+        }
+      } catch (error) {
+        console.error('Error removing payment method:', error)
+        addNotification({
+          type: 'error',
+          title: 'Error',
+          message: 'Failed to remove payment method'
+        })
+      }
+    } else if (deleteType === 'payout') {
+      await handleStripePayoutRemove()
     }
-    setShowDeleteModal(false)
-  }
-
-  // Handle payment success
-  const handlePaymentSuccess = (paymentMethodId: string) => {
-    addNotification({
-      type: 'success',
-      title: 'Payment Method Added',
-      message: 'Your payment method has been added successfully!',
-      duration: 4000
-    })
-    fetchUserSettings()
-  }
-
-  // Handle payment error
-  const handlePaymentError = (error: string) => {
-    addNotification({
-      type: 'error',
-      title: 'Payment Failed',
-      message: error,
-      duration: 4000
-    })
-  }
-
-  // Load settings on mount
-  useEffect(() => {
-    console.log('[Settings Page] Session check:', {
-      session: !!session,
-      user: !!session?.user,
-      userId: session?.user?.id,
-      userRole: session?.user?.role,
-      status: status
-    })
     
-    if (session && session.user && session.user.id) {
-      console.log('[Settings Page] Session is ready, fetching settings...')
-      fetchUserSettings()
-    } else {
-      console.log('[Settings Page] Session not ready yet, waiting...')
-    }
-  }, [session, status])
+    setShowDeleteModal(false)
+    setDeleteType(null)
+  }
 
-  // Handle PayPal OAuth callback
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const paypalStatus = urlParams.get('paypal')
-    const paypalEmail = urlParams.get('email')
-
-    if (paypalStatus === 'success' && paypalEmail) {
-      addNotification({
-        type: 'success',
-        title: 'PayPal Connected',
-        message: `Successfully connected PayPal account: ${paypalEmail}`,
-        duration: 5000
-      })
-      fetchUserSettings()
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname)
-    } else if (paypalStatus === 'manual') {
-      addNotification({
-        type: 'info',
-        title: 'PayPal Connected',
-        message: 'PayPal account connected! Please enter your PayPal email address.',
-        duration: 5000
-      })
-      setShowPayPalManualEntry(true)
-      setActiveTab('deposit')
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname)
-    } else if (paypalStatus === 'error') {
-      addNotification({
-        type: 'error',
-        title: 'PayPal Connection Failed',
-        message: 'Failed to connect PayPal account. Please try again.',
-        duration: 5000
-      })
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname)
-    }
-  }, [])
-
-  // Loading state
-  if (status === 'loading' || loading) {
+  if (status === 'loading' || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-emerald-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
       </div>
     )
   }
 
-  // Not authenticated
   if (!session) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Not authenticated</h2>
-          <p className="text-gray-400">Please log in to access your settings.</p>
-        </div>
-      </div>
-    )
-  }
-
-  // No user settings
-  if (!userSettings) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Loading settings...</h2>
-          <p className="text-gray-400">Please wait while we load your account settings.</p>
-          <button
-            onClick={fetchUserSettings}
-            className="mt-4 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    )
+    router.push('/auth/login')
+    return null
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">Account Settings</h1>
-        <p className="text-gray-300 mt-2">Manage your payment and deposit methods</p>
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-8">
-        <nav className="flex space-x-8">
-          <button
-            onClick={() => setActiveTab('account')}
-            className={`pb-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'account'
-                ? 'border-emerald-500 text-emerald-400'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-slate-500'
-            }`}
-          >
-            Account
-          </button>
-          <button
-            onClick={() => setActiveTab('payment')}
-            className={`pb-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'payment'
-                ? 'border-emerald-500 text-emerald-400'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-slate-500'
-            }`}
-          >
-            Payment Methods
-          </button>
-          <button
-            onClick={() => setActiveTab('deposit')}
-            className={`pb-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'deposit'
-                ? 'border-emerald-500 text-emerald-400'
-                : 'border-transparent text-gray-400 hover:text-white hover:border-slate-500'
-            }`}
-          >
-            Payout Methods
-          </button>
-        </nav>
-      </div>
-
-      {/* Account Tab */}
-      {activeTab === 'account' && (
-        <div className="space-y-6">
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
-            <h2 className="text-xl font-semibold text-white mb-4">Profile Information</h2>
-            
-            {/* Profile Picture */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Profile Picture
-              </label>
-              
-              {/* Drag and Drop Area */}
-              <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-lg p-6 mb-4 transition-colors ${
-                  isDragOver 
-                    ? 'border-emerald-400 bg-emerald-900/20' 
-                    : 'border-slate-600 bg-slate-800/30'
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold text-white mb-8">Settings</h1>
+          
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 mb-8 bg-gray-800 rounded-lg p-1">
+            {[
+              { id: 'profile', label: 'Profile', icon: User },
+              { id: 'payment', label: 'Payment Methods', icon: CreditCard },
+              { id: 'payouts', label: 'Payouts', icon: ExternalLink }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-700'
                 }`}
               >
-                <div className="text-center">
-                  <div className="flex items-center justify-center space-x-4">
-                    <div className="relative">
-                      <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
-                        {profileImagePreview ? (
-                          <img
-                            src={profileImagePreview}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <User className="w-8 h-8 text-gray-400" />
-                        )}
-                      </div>
-                      {profileImagePreview && (
-                        <button
-                          onClick={removeProfileImage}
-                          className="absolute -top-1 -right-1 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
-                          title="Remove Profile Picture"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-300 mb-2">
-                        {isDragOver ? 'Drop your image here' : 'Drag and drop an image here, or click to browse'}
-                      </p>
-                      <div className="flex space-x-2 justify-center">
-                        <label className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 cursor-pointer transition-colors">
-                          <Camera className="w-4 h-4 inline mr-2" />
-                          Choose Image
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                            className="hidden"
-                          />
-                        </label>
-                        {profileImage && (
-                          <button
-                            onClick={saveProfileImage}
-                            disabled={savingProfileImage}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                          >
-                            {savingProfileImage ? 'Saving...' : 'Save'}
-                          </button>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-400 mt-2">
-                        Supports PNG, JPG, WebP up to 5MB
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Username and Email */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  value={userSettings.name || ''}
-                  readOnly
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={userSettings.email || ''}
-                  readOnly
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Password Change Section */}
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-white">Password</h2>
-              <button
-                onClick={() => setShowPasswordForm(!showPasswordForm)}
-                className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
-              >
-                {showPasswordForm ? 'Cancel' : 'Change Password'}
+                <tab.icon className="w-4 h-4" />
+                <span>{tab.label}</span>
               </button>
-            </div>
-            
-            {showPasswordForm && (
-              <form onSubmit={accountForm.handleSubmit((data) => handlePasswordChange({ currentPassword: data.currentPassword, newPassword: data.newPassword }))} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Current Password
-                  </label>
-                  <input
-                    {...accountForm.register('currentPassword')}
-                    type="password"
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="Enter current password"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    New Password
-                  </label>
-                  <input
-                    {...accountForm.register('newPassword')}
-                    type="password"
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="Enter new password"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Confirm New Password
-                  </label>
-                  <input
-                    {...accountForm.register('confirmPassword')}
-                    type="password"
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="Confirm new password"
-                  />
-                </div>
-                <div className="flex space-x-3">
-                  <button
-                    type="submit"
-                    disabled={changingPassword}
-                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
-                  >
-                    {changingPassword ? 'Changing...' : 'Change Password'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswordForm(false)}
-                    className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
+            ))}
           </div>
 
-          {/* Username Change Section */}
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl font-semibold text-white">Username</h2>
-                <p className="text-sm text-gray-400 mt-1">
-                  Current: {userSettings?.name || 'Not set'}
-                  {userSettings?.lastUsernameChange && (
-                    <span className="block text-xs text-yellow-400 mt-1">
-                      Last changed: {new Date(userSettings.lastUsernameChange).toLocaleDateString()}
-                    </span>
-                  )}
-                </p>
-              </div>
-              <button
-                onClick={() => setShowUsernameForm(!showUsernameForm)}
-                disabled={!!(userSettings?.lastUsernameChange && 
-                  (Date.now() - new Date(userSettings.lastUsernameChange).getTime()) < (14 * 24 * 60 * 60 * 1000))}
-                className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {showUsernameForm ? 'Cancel' : 'Change Username'}
-              </button>
-            </div>
-            
-            {userSettings?.lastUsernameChange && 
-              (Date.now() - new Date(userSettings.lastUsernameChange).getTime()) < (14 * 24 * 60 * 60 * 1000) && (
-              <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-lg p-3 mb-4">
-                <p className="text-yellow-400 text-sm">
-                  ⚠️ You can only change your username once every 14 days. 
-                  Next change available: {new Date(new Date(userSettings.lastUsernameChange).getTime() + (14 * 24 * 60 * 60 * 1000)).toLocaleDateString()}
-                </p>
-              </div>
-            )}
-            
-            {showUsernameForm && (
-              <form onSubmit={accountForm.handleSubmit((data) => handleUsernameChange({ newUsername: data.newUsername }))} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    New Username
-                  </label>
-                  <input
-                    {...accountForm.register('newUsername')}
-                    type="text"
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="Enter new username"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    3-20 characters, must be unique
-                  </p>
-                </div>
-                <div className="flex space-x-3">
-                  <button
-                    type="submit"
-                    disabled={changingUsername}
-                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
-                  >
-                    {changingUsername ? 'Changing...' : 'Change Username'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowUsernameForm(false)}
-                    className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-
-          {/* Account Deletion Section */}
-          <div className="bg-red-900/20 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-red-500/50">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl font-semibold text-red-400">Danger Zone</h2>
-                <p className="text-sm text-gray-400 mt-1">
-                  Permanently delete your account and all associated data
-                </p>
-              </div>
-              <button
-                onClick={() => setShowDeleteAccountModal(true)}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Delete Account
-              </button>
-            </div>
-            
-            <div className="bg-red-900/30 border border-red-500/30 rounded-lg p-4">
-              <h3 className="text-red-400 font-medium mb-2">⚠️ Warning: This action cannot be undone</h3>
-              <p className="text-sm text-gray-300">
-                Deleting your account will permanently remove:
-              </p>
-              <ul className="text-sm text-gray-300 mt-2 ml-4 list-disc">
-                <li>Your user account and profile</li>
-                <li>All servers you created</li>
-                <li>All pledges you made to other servers</li>
-                <li>All pledges made to your servers</li>
-                <li>All activity logs</li>
-                <li>All support tickets</li>
-                <li>All favorite servers</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Payment Methods Tab */}
-      {activeTab === 'payment' && (
-        <div className="space-y-6">
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
-            <h2 className="text-xl font-semibold text-white mb-4">Payment Methods</h2>
-            <p className="text-gray-300 mb-6">Manage how you pay for pledges and server boosts.</p>
-            
-            {/* Existing Payment Methods */}
-            {userSettings.hasPaymentMethod && (
-              <div className="space-y-4 mb-6">
-                {/* Card Payment Method */}
-                <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <CreditCard className="w-6 h-6 text-emerald-400" />
-                      <div>
-                        <p className="text-white font-medium">
-                          {userSettings.cardBrand?.toUpperCase()} •••• {userSettings.cardLast4}
-                        </p>
-                        <p className="text-gray-400 text-sm">
-                          Expires {userSettings.cardExpMonth}/{userSettings.cardExpYear}
-                        </p>
-                      </div>
-                    </div>
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-white mb-6">Profile Information</h2>
+              
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="flex items-center space-x-6">
+                  <div className="relative">
+                    <img
+                      src={userSettings?.image || '/default-avatar.png'}
+                      alt="Profile"
+                      className="w-20 h-20 rounded-full object-cover"
+                    />
                     <button
-                      onClick={() => {
-                        setDeleteType('payment')
-                        setShowDeleteModal(true)
-                      }}
-                      className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
-                      title="Remove Card"
+                      type="button"
+                      onClick={() => setShowImageUpload(true)}
+                      className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-1 hover:bg-blue-700 transition-colors"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Camera className="w-3 h-3" />
                     </button>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* PayPal Payment Method */}
-            {userSettings.paymentPaypalConnected && (
-              <div className="space-y-4 mb-6">
-                <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-                        <span className="text-white font-bold text-xs">P</span>
-                      </div>
-                      <div>
-                        <p className="text-white font-medium">PayPal Payment Method</p>
-                        <p className="text-gray-400 text-sm">
-                          {userSettings.paymentPaypalEmail || 'Connected via OAuth'}
-                        </p>
-                        {userSettings.paymentPaypalConnectedAt && (
-                          <p className="text-gray-500 text-xs">
-                            Connected: {new Date(userSettings.paymentPaypalConnectedAt).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (confirm('Remove PayPal payment method?')) {
-                          handlePaymentPayPalRemove()
-                        }
-                      }}
-                      className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
-                      title="Remove PayPal Payment Method"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Payment Method Conflict Warning */}
-            {(userSettings.hasPaymentMethod && userSettings.paymentPaypalConnected) && (
-              <div className="bg-yellow-900/20 border border-yellow-500/50 rounded-lg p-4 mb-6">
-                <div className="flex items-center space-x-2">
-                  <AlertCircle className="w-5 h-5 text-yellow-400" />
                   <div>
-                    <p className="text-yellow-400 font-medium">Multiple Payment Methods Detected</p>
-                    <p className="text-yellow-300 text-sm">You currently have both Stripe and PayPal payment methods. Please remove one to avoid conflicts.</p>
+                    <h3 className="text-lg font-medium text-white">{userSettings?.name || 'User'}</h3>
+                    <p className="text-gray-400">{userSettings?.email}</p>
                   </div>
                 </div>
-              </div>
-            )}
 
-            {/* Add Payment Methods */}
-            {!userSettings.hasPaymentMethod && !userSettings.paymentPaypalConnected && (
-              <div>
-                <p className="text-gray-300 mb-4">No payment methods added yet. Choose ONE payment method for paying pledges and server boosts.</p>
-                <div className="space-y-4">
-                  {/* PayPal - Recommended */}
-                  <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-white font-medium">PayPal (Recommended)</h4>
-                        <p className="text-gray-400 text-sm">Simple setup, widely accepted</p>
-                      </div>
-                      <button
-                        onClick={() => handlePayPalOAuth('payment')}
-                        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-                      >
-                        Connect PayPal
-                      </button>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Display Name
+                    </label>
+                    <input
+                      {...register('name', { required: 'Name is required' })}
+                      defaultValue={userSettings?.name || ''}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter your display name"
+                    />
+                    {errors.name && (
+                      <p className="mt-1 text-sm text-red-400">{String(errors.name.message)}</p>
+                    )}
                   </div>
 
-                  {/* Card Payment - Alternative */}
-                  <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-white font-medium">Credit/Debit Card</h4>
-                        <p className="text-gray-400 text-sm">Visa, Mastercard, American Express</p>
-                      </div>
-                      <button
-                        onClick={() => setShowCardForm(true)}
-                        className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700"
-                      >
-                        Add Card
-                      </button>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={userSettings?.email || ''}
+                      disabled
+                      className="w-full px-3 py-2 bg-gray-600 border border-gray-600 rounded-md text-gray-400 cursor-not-allowed"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Email cannot be changed</p>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* Payout Methods Tab */}
-      {activeTab === 'deposit' && (
-        <div className="space-y-6">
-          <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-slate-700/50">
-            <h2 className="text-xl font-semibold text-white mb-4">Payout Methods</h2>
-            <p className="text-gray-300 mb-6">Set up your PayPal account to receive monthly donations from community members. PayPal is required for all server owners.</p>
-            
-            {/* PayPal Method */}
-            <div className="space-y-4">
-              <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isUpdating}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isUpdating ? 'Updating...' : 'Update Profile'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Payment Methods Tab */}
+          {activeTab === 'payment' && (
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-white mb-6">Payment Methods</h2>
+              <p className="text-gray-300 mb-6">Add a Stripe card to pay for pledges and server boosts.</p>
+
+              {/* Stripe Payment Method */}
+              <div className="border border-gray-600 rounded-lg p-4 mb-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-                      <span className="text-white font-bold text-xs">P</span>
+                    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <CreditCard className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <p className="text-white font-medium">
-                        PayPal Payout Account
-                      </p>
-                      <p className="text-gray-400 text-sm">
-                        {userSettings.payoutPaypalConnected 
-                          ? (userSettings.payoutPaypalEmail || 'Connected via OAuth') 
-                          : 'Not connected'}
-                      </p>
-                      {userSettings.payoutPaypalConnectedAt && (
-                        <p className="text-gray-500 text-xs">
-                          Connected: {new Date(userSettings.payoutPaypalConnectedAt).toLocaleDateString()}
+                      <p className="text-white font-medium">Stripe Card</p>
+                      {userSettings?.hasPaymentMethod ? (
+                        <p className="text-gray-400 text-sm">
+                          {userSettings.cardBrand?.toUpperCase()} •••• {userSettings.cardLast4}
+                          {userSettings.cardExpMonth && userSettings.cardExpYear && (
+                            <span> • {userSettings.cardExpMonth}/{userSettings.cardExpYear}</span>
+                          )}
                         </p>
+                      ) : (
+                        <p className="text-gray-400 text-sm">No payment method added</p>
                       )}
                     </div>
                   </div>
                   <div className="flex space-x-2">
-                    <button
-                      onClick={() => handlePayPalOAuth('payout')}
-                      className="p-1.5 text-gray-400 hover:text-blue-400 transition-colors"
-                      title="Connect PayPal Account"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    {userSettings.payoutPaypalConnected && (
+                    {userSettings?.hasPaymentMethod ? (
                       <button
                         onClick={() => {
-                          if (confirm('Remove PayPal email?')) {
-                            handlePayPalRemove()
-                          }
+                          setDeleteType('payment')
+                          setShowDeleteModal(true)
                         }}
-                        className="p-1.5 text-gray-400 hover:text-red-400 transition-colors"
-                        title="Remove PayPal Email"
+                        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-md transition-colors"
+                        title="Remove Payment Method"
                       >
                         <Trash2 className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => router.push('/settings/payment')}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        Add Card
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Payouts Tab */}
+          {activeTab === 'payouts' && (
+            <div className="bg-gray-800 rounded-lg p-6">
+              <h2 className="text-xl font-semibold text-white mb-6">Payout Settings</h2>
+              <p className="text-gray-300 mb-6">Set up your Stripe Express account to receive payments from community pledges.</p>
+
+              {/* Stripe Payout Method */}
+              <div className="border border-gray-600 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                      <ExternalLink className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-white font-medium">Stripe Express Account</p>
+                      {userSettings?.stripePayoutAccountId ? (
+                        <div className="space-y-1">
+                          <p className="text-gray-400 text-sm">
+                            Account ID: {userSettings.stripePayoutAccountId.slice(0, 20)}...
+                          </p>
+                          {stripePayoutStatus && (
+                            <div className="flex items-center space-x-2">
+                              <div className={`w-2 h-2 rounded-full ${
+                                stripePayoutStatus.connected ? 'bg-green-500' : 'bg-yellow-500'
+                              }`} />
+                              <span className="text-sm text-gray-400">
+                                {stripePayoutStatus.connected ? 'Connected' : 'Setup Required'}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-gray-400 text-sm">No payout account configured</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    {userSettings?.stripePayoutAccountId ? (
+                      <>
+                        {!stripePayoutStatus?.connected && (
+                          <button
+                            onClick={handleStripeOnboarding}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                          >
+                            Complete Setup
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setDeleteType('payout')
+                            setShowDeleteModal(true)
+                          }}
+                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-md transition-colors"
+                          title="Remove Payout Account"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={handleCreateStripeAccount}
+                        disabled={isCreatingStripeAccount}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {isCreatingStripeAccount ? 'Creating...' : 'Create Account'}
                       </button>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Add PayPal Method */}
-              {!userSettings.payoutPaypalConnected && (
-                <div className="border-t border-slate-600 pt-4">
-                  <h3 className="text-lg font-medium text-white mb-4">Add PayPal Account</h3>
-                  <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-white font-medium">PayPal Account Required</h4>
-                        <p className="text-gray-400 text-sm">All server owners must have a PayPal account to receive donations</p>
-                      </div>
-                      <button
-                        onClick={() => handlePayPalOAuth('payout')}
-                        className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-                      >
-                        Connect PayPal
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Manual PayPal Email Entry */}
-              {showPayPalManualEntry && (
-                <div className="border-t border-slate-600 pt-4">
-                  <h3 className="text-lg font-medium text-white mb-4">Enter PayPal Email</h3>
-                  <div className="bg-emerald-900/20 border border-emerald-500/50 rounded-lg p-4">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-white mb-2">
-                          PayPal Email Address
-                        </label>
-                        <input
-                          type="email"
-                          value={manualPayPalEmail}
-                          onChange={(e) => setManualPayPalEmail(e.target.value)}
-                          placeholder="Enter your PayPal email address"
-                          className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-                        />
-                      </div>
-                      <div className="flex space-x-3">
-                        <button
-                          onClick={handleManualPayPalSubmit}
-                          className="bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 transition-colors"
-                        >
-                          Save PayPal Email
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowPayPalManualEntry(false)
-                            setManualPayPalEmail('')
-                          }}
-                          className="bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Stripe Express Benefits */}
+              <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
+                <h3 className="text-lg font-medium text-blue-400 mb-2">Why Stripe Express?</h3>
+                <ul className="text-blue-300 text-sm space-y-1">
+                  <li>• Simple setup for individuals (no business requirements)</li>
+                  <li>• Direct bank account transfers</li>
+                  <li>• Lower fees than traditional business accounts</li>
+                  <li>• Secure and reliable payment processing</li>
+                </ul>
+              </div>
             </div>
+          )}
+
+          {/* Logout Button */}
+          <div className="mt-8 flex justify-end">
+            <button
+              onClick={handleLogout}
+              className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Card Form Modal */}
-      {showCardForm && (
+      {/* Image Upload Modal */}
+      {showImageUpload && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Add Payment Method</h3>
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-medium text-white mb-4">Update Profile Image</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Select Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                />
+              </div>
+              
+              {imagePreview && (
+                <div className="flex justify-center">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-32 h-32 rounded-full object-cover"
+                  />
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end space-x-3 mt-6">
               <button
-                onClick={() => setShowCardForm(false)}
-                className="text-gray-400 hover:text-white"
+                onClick={() => {
+                  setShowImageUpload(false)
+                  setNewImage(null)
+                  setImagePreview(null)
+                }}
+                className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
               >
-                <X className="w-6 h-6" />
+                Cancel
+              </button>
+              <button
+                onClick={handleImageUpload}
+                disabled={!newImage}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Upload
               </button>
             </div>
-            <Elements stripe={stripePromise}>
-              <PaymentForm 
-                onSuccess={handlePaymentSuccess}
-                onError={handlePaymentError}
-                isUpdating={false}
-              />
-            </Elements>
           </div>
         </div>
       )}
@@ -1343,178 +717,31 @@ export default function SettingsPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-white mb-4">
-              Confirm Deletion
-            </h3>
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-medium text-white mb-4">Confirm Removal</h3>
             <p className="text-gray-300 mb-6">
-              Are you sure you want to remove this {deleteType === 'payment' ? 'payment method' : 'PayPal account'}? 
-              This action cannot be undone.
+              Are you sure you want to remove this {deleteType === 'payment' ? 'payment method' : 'payout account'}?
             </p>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Account Deletion Confirmation Modal */}
-      {showDeleteAccountModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-lg p-6 max-w-md w-full mx-4 border border-red-500/50">
-            <div className="text-center mb-6">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-900/20 mb-4">
-                <svg className="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-white mb-2">Delete Account</h3>
-              <p className="text-sm text-gray-300 mb-4">
-                This action cannot be undone. This will permanently delete your account and remove all data from our servers.
-              </p>
-            </div>
-            
-            <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-6">
-              <h4 className="text-red-400 font-medium mb-2">What will be deleted:</h4>
-              <ul className="text-sm text-gray-300 space-y-1">
-                <li>• Your user account and profile</li>
-                <li>• All servers you created</li>
-                <li>• All pledges you made to other servers</li>
-                <li>• All pledges made to your servers</li>
-                <li>• All activity logs</li>
-                <li>• All support tickets</li>
-                <li>• All favorite servers</li>
-              </ul>
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Type <span className="text-red-400 font-bold">DELETE</span> to confirm:
-              </label>
-              <input
-                type="text"
-                value={deleteConfirmation}
-                onChange={(e) => setDeleteConfirmation(e.target.value)}
-                placeholder="Type DELETE to confirm"
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-            </div>
-
-            <div className="flex space-x-4">
+            <div className="flex justify-end space-x-3">
               <button
                 onClick={() => {
-                  setShowDeleteAccountModal(false)
-                  setDeleteConfirmation('')
+                  setShowDeleteModal(false)
+                  setDeleteType(null)
                 }}
-                className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+                className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
-                onClick={handleDeleteAccount}
-                disabled={deletingAccount || deleteConfirmation !== 'DELETE'}
-                className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
               >
-                {deletingAccount ? 'Deleting...' : 'Delete Account'}
+                Remove
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
-  )
-}
-
-// Payment Form Component
-function PaymentForm({ onSuccess, onError, isUpdating }: { onSuccess: (paymentMethodId: string) => void, onError: (error: string) => void, isUpdating: boolean }) {
-  const stripe = useStripe()
-  const elements = useElements()
-  const [loading, setLoading] = useState(false)
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    
-    if (!stripe || !elements) {
-      return
-    }
-
-    setLoading(true)
-    try {
-      const cardElement = elements.getElement(CardElement)
-      if (!cardElement) {
-        throw new Error('Card element not found')
-      }
-
-      const { error, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardElement,
-      })
-
-      if (error) {
-        onError(error.message || 'Payment method creation failed')
-      } else if (paymentMethod) {
-        const response = await fetch('/api/user/settings/payment', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            paymentMethodId: paymentMethod.id
-          })
-        })
-
-        if (response.ok) {
-          onSuccess(paymentMethod.id)
-        } else {
-          const errorData = await response.json()
-          onError(errorData.message || 'Failed to save payment method')
-        }
-      }
-    } catch (error) {
-      onError('An unexpected error occurred')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
-        <CardElement
-          options={{
-            style: {
-              base: {
-                fontSize: '16px',
-                color: '#ffffff',
-                '::placeholder': {
-                  color: '#9ca3af',
-                },
-              },
-              invalid: {
-                color: '#ef4444',
-              },
-            },
-          }}
-        />
-      </div>
-      <button
-        type="submit"
-        disabled={!stripe || loading}
-        className="w-full bg-emerald-600 text-white py-2 px-4 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? 'Processing...' : (isUpdating ? 'Add New Payment Method' : 'Add Payment Method')}
-      </button>
-    </form>
   )
 }

@@ -51,16 +51,11 @@ export async function GET() {
           cardExpMonth: true,
           cardExpYear: true,
           stripePaymentMethodId: true,
-          // Payout PayPal (for receiving money)
-          payoutPaypalEmail: true,
-          payoutPaypalUserId: true,
-          payoutPaypalConnected: true,
-          payoutPaypalConnectedAt: true,
-          // Payment PayPal (for paying pledges)
-          paymentPaypalEmail: true,
-          paymentPaypalUserId: true,
-          paymentPaypalConnected: true,
-          paymentPaypalConnectedAt: true,
+          // Stripe payout (for receiving money)
+          stripePayoutAccountId: true,
+          stripePayoutConnected: true,
+          stripePayoutConnectedAt: true,
+          stripePayoutRequirements: true,
           name: true,
           email: true,
           image: true,
