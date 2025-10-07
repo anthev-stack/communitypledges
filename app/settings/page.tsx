@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useNotifications } from '@/contexts/NotificationContext'
+import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { 
   User, 
