@@ -484,6 +484,7 @@ export async function createStripeExpressAccount(userId: string) {
       country: 'AU', // Australia
       email: user.email,
       capabilities: {
+        card_payments: { requested: true },
         transfers: { requested: true }
       },
       business_type: 'individual',
