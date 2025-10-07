@@ -167,8 +167,15 @@ export default function SettingsPage() {
       
       const data = await response.json()
       
-      if (data.success) {
-        window.location.href = data.url
+      if (data.success && data.url) {
+        addNotification({
+          type: 'success',
+          title: 'Redirecting to Stripe',
+          message: 'Please complete the onboarding process in the new window.'
+        })
+        
+        // Open Stripe onboarding in new window
+        window.open(data.url, '_blank')
       } else {
         addNotification({
           type: 'error',
@@ -568,8 +575,19 @@ export default function SettingsPage() {
           {/* Payouts Tab */}
           {activeTab === 'payouts' && (
             <div className="bg-gray-800 rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-white mb-6">Payout Settings</h2>
-              <p className="text-gray-300 mb-6">Set up your Stripe Express account to receive payments from community pledges.</p>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">Payout Settings</h2>
+                  <p className="text-gray-300 mt-1">Set up your Stripe Express account to receive payments from community pledges.</p>
+                </div>
+                <Link
+                  href="/settings/payout"
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Manage Payouts
+                </Link>
+              </div>
 
               {/* Stripe Payout Method */}
               <div className="border border-gray-600 rounded-lg p-4 mb-6">
