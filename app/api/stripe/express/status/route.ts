@@ -4,6 +4,9 @@ import { authOptions } from '@/lib/auth'
 import { checkStripeExpressAccountStatus } from '@/lib/withdrawal'
 import { prisma } from '@/lib/prisma'
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
