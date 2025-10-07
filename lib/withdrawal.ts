@@ -174,14 +174,14 @@ export async function processPendingWithdrawals() {
             select: { 
               stripePaymentMethodId: true, 
               stripeCustomerId: true,
-              payoutPaypalEmail: true,
-              payoutPaypalConnected: true,
+              paymentPaypalEmail: true,
+              paymentPaypalConnected: true,
               name: true,
               email: true
             }
           })
 
-          if (!user?.stripePaymentMethodId && !user?.payoutPaypalConnected) {
+          if (!user?.stripePaymentMethodId && !user?.paymentPaypalConnected) {
             console.log(`User ${pledge.userId} has no payment method, skipping payment`)
             continue
           }
@@ -213,7 +213,7 @@ export async function processPendingWithdrawals() {
                 netAmount: netAmount.toString()
               }
             })
-          } else if (user.payoutPaypalConnected) {
+          } else if (user.paymentPaypalConnected) {
             // User has PayPal - process payment via PayPal API
             try {
               const paypalResult = await processPayPalPayment(user, actualAmount, withdrawal.serverId, server.name, pledge.userId)
@@ -400,7 +400,13 @@ export async function processPendingWithdrawals() {
 
       // Distribute payments to server owner based on their payout method
       if (totalCollected > 0) {
-        await distributeToServerOwner(server, totalCollected, withdrawal.serverId)
+        // Calculate total platform fees collected from all pledges
+        const totalPlatformFees = server.pledges.reduce((total, pledge, index) => {
+          const actualAmount = optimizedCosts.optimizedCosts[index] || pledge.amount
+          return total + calculatePlatformFee(actualAmount)
+        }, 0)
+        
+        await distributeToServerOwner(server, totalCollected, withdrawal.serverId, totalPlatformFees)
       }
 
       // Update withdrawal status
@@ -501,7 +507,7 @@ function calculateOptimizedCosts(pledgeAmounts: number[], serverCost: number, mi
  * Distribute payments to server owner via PayPal
  * All payments are processed through the business Stripe account first, then distributed via PayPal
  */
-async function distributeToServerOwner(server: any, totalAmount: number, serverId: string) {
+async function distributeToServerOwner(server: any, totalAmount: number, serverId: string, totalPlatformFees: number = 0) {
   try {
     // Get server owner's PayPal email
     const owner = await prisma.user.findUnique({
@@ -520,9 +526,8 @@ async function distributeToServerOwner(server: any, totalAmount: number, serverI
       return
     }
 
-    // Calculate platform fee and net amount
-    const platformFee = calculatePlatformFee(totalAmount)
-    const netAmount = totalAmount - platformFee
+    // Calculate net amount (total collected minus platform fees already calculated per pledge)
+    const netAmount = totalAmount - totalPlatformFees
 
     if (owner.payoutPaypalConnected) {
       // Server owner has PayPal - process via PayPal
@@ -702,7 +707,7 @@ async function processPayPalPayment(user: any, amount: number, serverId: string,
       payer: {
         payment_method: 'paypal',
         payer_info: {
-          email: user.payoutPaypalEmail
+          email: user.paymentPaypalEmail
         }
       },
       transactions: [
