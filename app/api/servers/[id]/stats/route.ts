@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { status } from 'minecraft-server-util'
 
 // Real server stats fetching
-async function fetchServerStats(gameType: string, ip?: string, port?: number) {
+async function fetchServerStats(gameType: string, ip?: string, port?: number | null) {
   if (!ip) {
     return {
       online: false,
@@ -11,21 +11,14 @@ async function fetchServerStats(gameType: string, ip?: string, port?: number) {
     }
   }
 
-  // Set default port based on game type if not provided
-  let finalPort = port
-  if (!finalPort) {
-    if (gameType.toLowerCase() === 'minecraft') {
-      finalPort = 25565
-    } else if (gameType.toLowerCase().includes('counter-strike') || gameType.toLowerCase().includes('cs2')) {
-      finalPort = 27015
-    } else if (gameType.toLowerCase() === 'rust') {
-      finalPort = 28015
-    } else if (gameType.toLowerCase() === 'ark') {
-      finalPort = 27015
-    } else {
-      finalPort = 27015 // Default for most games
+  if (!port) {
+    return {
+      online: false,
+      error: 'Server port not configured'
     }
   }
+
+  const finalPort = port
 
   try {
     const timeout = 5000 // 5 second timeout

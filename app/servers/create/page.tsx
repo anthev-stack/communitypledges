@@ -19,7 +19,7 @@ const createServerSchema = z.object({
   region: z.string().min(1, 'Region is required'),
   bannerUrl: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
   serverIp: z.string().min(1, 'Server IP or domain is required'),
-  serverPort: z.number().min(1, 'Port must be between 1-65535').max(65535, 'Port must be between 1-65535').optional(),
+  serverPort: z.number().min(1, 'Port must be between 1-65535').max(65535, 'Port must be between 1-65535'),
   discordChannel: z.string().url('Please enter a valid Discord URL').optional().or(z.literal('')),
   discordWebhook: z.string()
     .url('Please enter a valid Discord webhook URL')
@@ -395,8 +395,8 @@ export default function CreateServerPage() {
         region: data.region,
         tags: selectedTags.join(', '),
         bannerUrl: data.bannerUrl || null,
-        serverIp: data.serverIp || null,
-        serverPort: data.serverPort || null,
+        serverIp: data.serverIp,
+        serverPort: data.serverPort,
         discordChannel: data.discordChannel || null,
         discordWebhook: data.discordWebhook || null
       }
@@ -632,54 +632,56 @@ export default function CreateServerPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor="serverIp" className="block text-sm font-medium text-gray-300 mb-2">
-              Server IP or Domain *
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Server className="h-5 w-5 text-gray-400" />
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Server Address (For Live Stats) *
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <label htmlFor="serverIp" className="block text-xs font-medium text-emerald-400 mb-1.5">
+                IP ADDRESS OR DOMAIN
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Server className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  {...register('serverIp')}
+                  type="text"
+                  placeholder="play.example.com or 192.168.1.100"
+                  className="rounded-lg relative block w-full pl-10 pr-3 py-3 bg-slate-700/50 border-2 border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
+                />
               </div>
-              <input
-                {...register('serverIp')}
-                type="text"
-                placeholder="play.example.com or 192.168.1.100"
-                className="rounded-lg relative block w-full pl-10 pr-3 py-3 bg-slate-700/50 border border-slate-600 text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
-              />
+              {errors.serverIp && (
+                <p className="mt-1 text-sm text-red-400">{errors.serverIp.message}</p>
+              )}
             </div>
-            <p className="mt-1 text-sm text-gray-400">
-              Your server's IP address or domain name for live stats
-            </p>
-            {errors.serverIp && (
-              <p className="mt-1 text-sm text-red-400">{errors.serverIp.message}</p>
-            )}
-          </div>
 
-          <div>
-            <label htmlFor="serverPort" className="block text-sm font-medium text-gray-300 mb-2">
-              Server Port (Optional)
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Users className="h-5 w-5 text-gray-400" />
+            <div>
+              <label htmlFor="serverPort" className="block text-xs font-medium text-emerald-400 mb-1.5">
+                PORT *
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Users className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  {...register('serverPort', { valueAsNumber: true })}
+                  type="number"
+                  placeholder="25565"
+                  min="1"
+                  max="65535"
+                  className="rounded-lg relative block w-full pl-10 pr-3 py-3 bg-slate-700/50 border-2 border-slate-600 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
+                />
               </div>
-              <input
-                {...register('serverPort', { valueAsNumber: true })}
-                type="number"
-                placeholder="25565"
-                min="1"
-                max="65535"
-                className="rounded-lg relative block w-full pl-10 pr-3 py-3 bg-slate-700/50 border border-slate-600 text-white focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
-              />
+              {errors.serverPort && (
+                <p className="mt-1 text-sm text-red-400">{errors.serverPort.message}</p>
+              )}
             </div>
-            <p className="mt-1 text-sm text-gray-400">
-              Leave empty if using a domain (port included in domain) or for default port
-            </p>
-            {errors.serverPort && (
-              <p className="mt-1 text-sm text-red-400">{errors.serverPort.message}</p>
-            )}
           </div>
+          <p className="mt-2 text-sm text-gray-400">
+            Enter your server's IP/domain and port for live player stats and server status. Common ports: Minecraft (25565), CS2 (27015), Rust (28015), ARK (27015)
+          </p>
         </div>
 
         <div>

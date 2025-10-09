@@ -15,7 +15,7 @@ const createServerSchema = z.object({
   tags: z.string().min(1, 'At least 3 tags are required'),
   bannerUrl: z.string().url().optional().nullable(),
   serverIp: z.string().min(1, 'Server IP or domain is required'),
-  serverPort: z.number().min(1).max(65535).optional().nullable(),
+  serverPort: z.number().min(1, 'Port is required').max(65535, 'Port must be between 1-65535'),
   discordChannel: z.string().url().optional().nullable(),
   discordWebhook: z.string()
     .url('Invalid Discord webhook URL')
@@ -185,22 +185,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, description, cost, withdrawalDay, gameType, region, tags, bannerUrl, serverIp, serverPort, discordChannel, discordWebhook } = createServerSchema.parse(body)
 
-    // Set default port based on game type if not provided
-    let finalPort = serverPort
-    if (!finalPort && serverIp) {
-      if (gameType.toLowerCase() === 'minecraft') {
-        finalPort = 25565
-      } else if (gameType.toLowerCase().includes('counter-strike') || gameType.toLowerCase().includes('cs2')) {
-        finalPort = 27015
-      } else if (gameType.toLowerCase() === 'rust') {
-        finalPort = 28015
-      } else if (gameType.toLowerCase() === 'ark') {
-        finalPort = 27015
-      } else {
-        finalPort = 27015 // Default for most games
-      }
-    }
-
     const server = await prisma.server.create({
       data: {
         name,
@@ -212,7 +196,7 @@ export async function POST(request: NextRequest) {
         tags,
         bannerUrl,
         serverIp,
-        serverPort: finalPort,
+        serverPort,
         discordChannel,
         discordWebhook,
         ownerId: session.user.id,
