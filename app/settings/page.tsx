@@ -64,6 +64,8 @@ export default function SettingsPage() {
   const [isCreatingStripeAccount, setIsCreatingStripeAccount] = useState(false)
   const [selectedCountry, setSelectedCountry] = useState<string>('')
   const [isSavingCountry, setIsSavingCountry] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm()
 
@@ -267,16 +269,63 @@ export default function SettingsPage() {
     }
   }
 
+  // Get allowed file types based on user role
+  const getAllowedFileTypes = () => {
+    const userRole = session?.user?.role
+    const isPremiumUser = userRole === 'partner' || userRole === 'moderator' || userRole === 'admin'
+    
+    if (isPremiumUser) {
+      return {
+        accept: '.png,.jpg,.jpeg,.webp,.gif',
+        types: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'],
+        description: 'PNG, JPG, WEBP, or GIF'
+      }
+    }
+    
+    return {
+      accept: '.png,.jpg,.jpeg,.webp',
+      types: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+      description: 'PNG, JPG, or WEBP'
+    }
+  }
+
+  // Validate file type
+  const validateFileType = (file: File): boolean => {
+    const allowed = getAllowedFileTypes()
+    
+    if (!allowed.types.includes(file.type)) {
+      addNotification({
+        type: 'error',
+        title: 'Invalid File Type',
+        message: `Please upload a ${allowed.description} image. ${file.type === 'image/gif' ? 'GIF images are only available for Partners, Moderators, and Admins.' : ''}`
+      })
+      return false
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      addNotification({
+        type: 'error',
+        title: 'File Too Large',
+        message: 'Please upload an image smaller than 5MB'
+      })
+      return false
+    }
+    
+    return true
+  }
+
   // Handle image upload
   const handleImageUpload = async () => {
     if (!newImage) return
 
+    setIsUploadingImage(true)
     const formData = new FormData()
-    formData.append('image', newImage)
+    formData.append('profileImage', newImage)
 
     try {
-      const response = await fetch('/api/user/settings/image', {
-        method: 'POST',
+      const response = await fetch('/api/user/settings/profile-image', {
+        method: 'PUT',
         body: formData
       })
 
@@ -312,6 +361,8 @@ export default function SettingsPage() {
         title: 'Error',
         message: 'Failed to upload image'
       })
+    } finally {
+      setIsUploadingImage(false)
     }
   }
 
@@ -319,6 +370,50 @@ export default function SettingsPage() {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      if (!validateFileType(file)) {
+        return
+      }
+      
+      setNewImage(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // Handle drag and drop
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      
+      if (!validateFileType(file)) {
+        return
+      }
+      
       setNewImage(file)
       const reader = new FileReader()
       reader.onload = (e) => {
@@ -424,24 +519,46 @@ export default function SettingsPage() {
               <h2 className="text-xl font-semibold text-white mb-6">Profile Information</h2>
               
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div className="flex items-center space-x-6">
-                  <div className="relative">
-                    <img
-                      src={userSettings?.image || '/default-avatar.png'}
-                      alt="Profile"
-                      className="w-20 h-20 rounded-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowImageUpload(true)}
-                      className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-1 hover:bg-blue-700 transition-colors"
-                    >
-                      <Camera className="w-3 h-3" />
-                    </button>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-white">{userSettings?.name || 'User'}</h3>
-                    <p className="text-gray-400">{userSettings?.email}</p>
+                {/* Profile Picture Section */}
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-300">
+                    Profile Picture
+                  </label>
+                  <div className="flex items-center space-x-6">
+                    <div className="relative group">
+                      <img
+                        src={userSettings?.image || '/default-avatar.png'}
+                        alt="Profile"
+                        className="w-24 h-24 rounded-full object-cover border-2 border-gray-700"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowImageUpload(true)}
+                        className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Camera className="w-6 h-6 text-white" />
+                      </button>
+                    </div>
+                    <div className="flex-1">
+                      <div className="space-y-2">
+                        <div>
+                          <h3 className="text-lg font-medium text-white">{userSettings?.name || 'User'}</h3>
+                          <p className="text-gray-400 text-sm">{userSettings?.email}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowImageUpload(true)}
+                          className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors text-sm"
+                        >
+                          Change Picture
+                        </button>
+                        <p className="text-xs text-gray-500">
+                          {session?.user?.role === 'partner' || session?.user?.role === 'moderator' || session?.user?.role === 'admin'
+                            ? 'PNG, JPG, WEBP, or GIF • Max 5MB'
+                            : 'PNG, JPG, or WEBP • Max 5MB'}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -681,32 +798,96 @@ export default function SettingsPage() {
 
       {/* Image Upload Modal */}
       {showImageUpload && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-medium text-white mb-4">Update Profile Image</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-lg w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-white">Update Profile Picture</h3>
+              <button
+                onClick={() => {
+                  setShowImageUpload(false)
+                  setNewImage(null)
+                  setImagePreview(null)
+                  setIsDragging(false)
+                }}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Select Image
-                </label>
+              {/* Drag and Drop Zone */}
+              <div
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  isDragging
+                    ? 'border-blue-500 bg-blue-500/10'
+                    : 'border-gray-600 hover:border-gray-500'
+                }`}
+              >
                 <input
                   type="file"
-                  accept="image/*"
+                  id="profile-image-input"
+                  accept={getAllowedFileTypes().accept}
                   onChange={handleImageSelect}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                  className="hidden"
                 />
+                
+                {!imagePreview ? (
+                  <div className="space-y-3">
+                    <Camera className="w-12 h-12 text-gray-400 mx-auto" />
+                    <div>
+                      <p className="text-white font-medium mb-1">
+                        Drag and drop your image here
+                      </p>
+                      <p className="text-gray-400 text-sm mb-3">or</p>
+                      <label
+                        htmlFor="profile-image-input"
+                        className="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer transition-colors"
+                      >
+                        Browse Files
+                      </label>
+                    </div>
+                    <div className="text-xs text-gray-400 space-y-1">
+                      <p>Accepted formats: {getAllowedFileTypes().description}</p>
+                      {session?.user?.role !== 'partner' && 
+                       session?.user?.role !== 'moderator' && 
+                       session?.user?.role !== 'admin' && (
+                        <p className="text-yellow-400">
+                          ✨ GIF images available for Partners, Moderators & Admins
+                        </p>
+                      )}
+                      <p>Max size: 5MB</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-gray-700"
+                    />
+                    <div className="space-y-1">
+                      <p className="text-white font-medium">{newImage?.name}</p>
+                      <p className="text-gray-400 text-sm">
+                        {newImage && (newImage.size / 1024).toFixed(2)} KB
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setNewImage(null)
+                        setImagePreview(null)
+                      }}
+                      className="text-sm text-gray-400 hover:text-white transition-colors"
+                    >
+                      Choose Different Image
+                    </button>
+                  </div>
+                )}
               </div>
-              
-              {imagePreview && (
-                <div className="flex justify-center">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-32 h-32 rounded-full object-cover"
-                  />
-                </div>
-              )}
             </div>
             
             <div className="flex justify-end space-x-3 mt-6">
@@ -715,17 +896,19 @@ export default function SettingsPage() {
                   setShowImageUpload(false)
                   setNewImage(null)
                   setImagePreview(null)
+                  setIsDragging(false)
                 }}
-                className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+                disabled={isUploadingImage}
+                className="px-4 py-2 text-gray-300 hover:text-white transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleImageUpload}
-                disabled={!newImage}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                disabled={!newImage || isUploadingImage}
+                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
               >
-                Upload
+                {isUploadingImage ? 'Uploading...' : 'Upload'}
               </button>
             </div>
           </div>
