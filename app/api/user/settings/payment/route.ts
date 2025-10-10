@@ -4,6 +4,10 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { stripe } from '@/lib/stripe'
 
+/**
+ * Add/Update payment method using Setup Intent
+ * This ensures the payment method can be used for off_session charges
+ */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -25,7 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Invalid payment method' }, { status: 400 })
     }
 
-    // Create or get Stripe customer
+    // Get or create Stripe customer
     let customerId = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { stripeCustomerId: true }
@@ -42,9 +46,18 @@ export async function POST(request: NextRequest) {
       customerId = customer.id
     }
 
-    // Attach payment method to customer
-    await stripe.paymentMethods.attach(paymentMethodId, {
-      customer: customerId,
+    // Attach payment method to customer (if not already attached)
+    if (paymentMethod.customer !== customerId) {
+      await stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customerId,
+      })
+    }
+
+    // Set as default payment method for customer
+    await stripe.customers.update(customerId, {
+      invoice_settings: {
+        default_payment_method: paymentMethodId,
+      },
     })
 
     // Update user with payment method details

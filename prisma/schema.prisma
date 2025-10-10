@@ -59,29 +59,45 @@ model User {
   bannedBy      String?
   banReason     String?
   
-  // Stripe integration
-  stripeAccountId String?
-  stripeCustomerId String?
+  // Stripe Connect fields (for receiving payouts as server owner)
+  stripeAccountId          String?   @unique
+  stripeAccountStatus      String?   // 'pending', 'active', 'restricted'
+  stripeOnboardingComplete Boolean   @default(false)
+  country                  String?   // ISO country code for Stripe Connect
   
-  // Stripe payout integration (for receiving money)
-  stripePayoutAccountId String? // Stripe Express account ID
-  stripePayoutConnected Boolean @default(false)
-  stripePayoutConnectedAt DateTime?
-  stripePayoutRequirements String? // JSON string of requirements status
+  // Stripe Customer fields (for making pledges/donations)
+  stripeCustomerId      String?   @unique
+  stripePaymentMethodId String?   // Default payment method
+  hasPaymentMethod      Boolean   @default(false)
   
-  // Payment details for pledgers
-  hasPaymentMethod     Boolean @default(false)
+  // Payment method display info
   cardLast4            String?
   cardBrand            String?
   cardExpMonth         Int?
   cardExpYear          Int?
-  stripePaymentMethodId String?
   
-  // Failed payment tracking
+  // Payment failure tracking
+  failedPayments       Int       @default(0)
+  lastFailedPayment    DateTime?
+  suspendedAt          DateTime?
+  suspensionReason     String?
+  
+  // Legacy fields (kept for backward compatibility)
+  stripePayoutAccountId String?
+  stripePayoutConnected Boolean @default(false)
+  stripePayoutConnectedAt DateTime?
+  stripePayoutRequirements String?
+  isSuspended          Boolean  @default(false)
+  hasDepositMethod Boolean @default(false)
+  bankAccountLast4 String?
+  bankRoutingLast4 String?
+  bankName         String?
   failedPaymentCount    Int      @default(0)
   lastFailedPaymentAt   DateTime?
-  isSuspended          Boolean  @default(false)
-  suspendedAt          DateTime?
+  paymentFailureCount Int      @default(0)
+  lastPaymentFailure  DateTime?
+  isPaymentSuspended  Boolean  @default(false)
+  paymentSuspendedAt  DateTime?
   
   // Email confirmation
   emailVerificationToken String?
@@ -93,18 +109,6 @@ model User {
   
   // Username change tracking
   lastUsernameChange   DateTime?
-  
-  // Deposit details for server owners
-  hasDepositMethod Boolean @default(false)
-  bankAccountLast4 String?
-  bankRoutingLast4 String?
-  bankName         String?
-  
-  // Payment failure tracking
-  paymentFailureCount Int      @default(0)
-  lastPaymentFailure  DateTime?
-  isPaymentSuspended  Boolean  @default(false)
-  paymentSuspendedAt  DateTime?
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -193,10 +197,12 @@ model Server {
 }
 
 model Pledge {
-  id        String   @id @default(cuid())
-  amount    Float
-  status    String   @default("pending") // pending, completed, failed, cancelled
-  createdAt DateTime @default(now())
+  id              String       @id @default(cuid())
+  amount          Float        // User's pledged amount
+  optimizedAmount Float?       // Actual payment after optimization
+  status          PledgeStatus @default(ACTIVE)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
   
   userId   String
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -204,6 +210,14 @@ model Pledge {
   server   Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
   
   @@unique([userId, serverId])
+  @@index([serverId])
+  @@index([status])
+}
+
+enum PledgeStatus {
+  ACTIVE
+  CANCELLED
+  SUSPENDED
 }
 
 model Withdrawal {

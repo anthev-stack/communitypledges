@@ -2,6 +2,12 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/cron/process-withdrawals",
+      "schedule": "0 12 * * *"
+    }
+  ],
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 30

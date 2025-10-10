@@ -2,6 +2,7 @@ import { prisma } from './prisma'
 import { stripe, calculatePlatformFee, calculateStripeFee, calculateNetAmount } from './stripe'
 import { handlePaymentFailure, resetPaymentFailures } from './payment-failure'
 import { sendPledgePaymentEmail, sendFailedPaymentEmail, sendSuspensionEmail } from './email'
+import { calculateOptimizedCosts } from './optimization'
 
 /**
  * Calculate the next withdrawal date for a server based on its withdrawal day
@@ -75,8 +76,8 @@ export async function scheduleMonthlyWithdrawals() {
       if (!existingWithdrawal && server.pledges.length > 0) {
         // Calculate total amount to withdraw based on optimized costs
         const pledgeAmounts = server.pledges.map(p => p.amount)
-        const optimizedCosts = calculateOptimizedCosts(pledgeAmounts, server.cost, 2.0)
-        const totalWithdrawalAmount = optimizedCosts.optimizedCosts.reduce((sum, cost) => sum + cost, 0)
+        const optimization = calculateOptimizedCosts(pledgeAmounts, server.cost)
+        const totalWithdrawalAmount = optimization.optimizedAmounts.reduce((sum, cost) => sum + cost, 0)
 
         await prisma.withdrawal.create({
           data: {
@@ -157,7 +158,7 @@ export async function processPendingWithdrawals() {
 
       // Calculate optimized costs for each pledger
       const pledgeAmounts = server.pledges.map(p => p.amount)
-      const optimizedCosts = calculateOptimizedCosts(pledgeAmounts, server.cost, 2.0)
+      const optimization = calculateOptimizedCosts(pledgeAmounts, server.cost)
       
       // Process payments for each pledger
       let totalCollected = 0
@@ -165,7 +166,7 @@ export async function processPendingWithdrawals() {
       
       for (let i = 0; i < server.pledges.length; i++) {
         const pledge = server.pledges[i]
-        const actualAmount = optimizedCosts.optimizedCosts[i] || pledge.amount
+        const actualAmount = optimization.optimizedAmounts[i] || pledge.amount
         
         try {
           // Get user's payment methods
@@ -194,10 +195,11 @@ export async function processPendingWithdrawals() {
           // Process payment via Stripe
           paymentIntent = await stripe.paymentIntents.create({
             amount: Math.round(actualAmount * 100), // Convert to cents
-            currency: 'aud',
+            currency: 'usd',
             customer: user.stripeCustomerId,
             payment_method: user.stripePaymentMethodId,
             confirm: true,
+            off_session: true, // CRITICAL: This allows charging without user present
             metadata: {
               serverId: withdrawal.serverId,
               serverOwnerId: withdrawal.server.ownerId,
@@ -216,6 +218,12 @@ export async function processPendingWithdrawals() {
             // Reset payment failures on successful payment
             await resetPaymentFailures(pledge.userId)
             
+            // Update pledge with optimized amount
+            await prisma.pledge.update({
+              where: { id: pledge.id },
+              data: { optimizedAmount: actualAmount },
+            })
+
             // Log successful payment
             await prisma.activityLog.create({
               data: {
@@ -283,7 +291,7 @@ export async function processPendingWithdrawals() {
       if (totalCollected > 0) {
         // Calculate total platform fees collected from all pledges
         const totalPlatformFees = server.pledges.reduce((total, pledge, index) => {
-          const actualAmount = optimizedCosts.optimizedCosts[index] || pledge.amount
+          const actualAmount = optimization.optimizedAmounts[index] || pledge.amount
           return total + calculatePlatformFee(actualAmount)
         }, 0)
         
@@ -321,30 +329,6 @@ export async function processPendingWithdrawals() {
   }
 }
 
-/**
- * Calculate optimized costs for withdrawal amount
- * This is a simplified version of the main algorithm
- */
-function calculateOptimizedCosts(pledgeAmounts: number[], serverCost: number, platformFeeRate: number) {
-  const totalPledged = pledgeAmounts.reduce((sum, amount) => sum + amount, 0)
-  
-  if (totalPledged <= serverCost) {
-    // Not enough pledges to cover server cost
-    return {
-      optimizedCosts: pledgeAmounts,
-      isAcceptingPledges: true
-    }
-  }
-  
-  // Calculate optimized costs (simplified algorithm)
-  const optimizationFactor = serverCost / totalPledged
-  const optimizedCosts = pledgeAmounts.map(amount => amount * optimizationFactor)
-  
-  return {
-    optimizedCosts,
-    isAcceptingPledges: false
-  }
-}
 
 /**
  * Distribute payments to server owner via Stripe
@@ -378,12 +362,21 @@ async function distributeToServerOwner(server: any, totalAmount: number, serverI
       return
     }
 
-    if (owner.stripePayoutAccountId && owner.stripePayoutConnected) {
-      // Server owner has Stripe Express account - process payout
-      await distributeToStripe(owner, netAmount, serverId, server.name)
+    // Check if owner has completed Stripe Connect onboarding
+    const user = await prisma.user.findUnique({
+      where: { id: owner.id },
+      select: {
+        stripeAccountId: true,
+        stripeOnboardingComplete: true,
+      },
+    })
+
+    if (user?.stripeAccountId && user?.stripeOnboardingComplete) {
+      // Server owner has Stripe Connect - process payout
+      await distributeToStripe(owner, netAmount, serverId, server.name, user.stripeAccountId)
     } else {
       // No Stripe payout configured - hold funds for manual processing
-      console.log(`No Stripe payout account configured for server owner ${owner.name} - holding A$${netAmount.toFixed(2)} for manual processing`)
+      console.log(`No Stripe Connect account configured for server owner ${owner.name} - holding A$${netAmount.toFixed(2)} for manual processing`)
       
       // Log pending payout
       await prisma.activityLog.create({
@@ -403,20 +396,20 @@ async function distributeToServerOwner(server: any, totalAmount: number, serverI
 }
 
 /**
- * Distribute payment to server owner via Stripe Express
- * Uses Stripe's transfer API to send money to the server owner's Express account
+ * Distribute payment to server owner via Stripe Connect
+ * Uses Stripe's transfer API to send money to the server owner's Connect account
  */
-async function distributeToStripe(owner: any, amount: number, serverId: string, serverName: string) {
+async function distributeToStripe(owner: any, amount: number, serverId: string, serverName: string, stripeAccountId: string) {
   try {
-    if (!owner.stripePayoutAccountId) {
-      throw new Error('No Stripe payout account ID found')
+    if (!stripeAccountId) {
+      throw new Error('No Stripe Connect account ID found')
     }
 
-    // Create transfer to server owner's Stripe Express account
+    // Create transfer to server owner's Stripe Connect account
     const transfer = await stripe.transfers.create({
       amount: Math.round(amount * 100), // Convert to cents
-      currency: 'aud',
-      destination: owner.stripePayoutAccountId,
+      currency: 'usd', // Changed to USD for consistency
+      destination: stripeAccountId,
       metadata: {
         serverId: serverId,
         serverName: serverName,

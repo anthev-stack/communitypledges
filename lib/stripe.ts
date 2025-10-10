@@ -1,7 +1,11 @@
 import Stripe from 'stripe'
 
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY is not set in environment variables')
+}
+
 // Initialize Stripe with environment variables
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2025-08-27.basil',
   typescript: true,
 })
@@ -9,17 +13,12 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // Stripe publishable key for client-side
 export const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 
-// Debug logging
-console.log('Stripe config loaded:')
-console.log('STRIPE_PUBLISHABLE_KEY:', STRIPE_PUBLISHABLE_KEY)
-console.log('STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'Present' : 'Missing')
-console.log('STRIPE_CONNECT_ACCOUNT_ID:', process.env.STRIPE_CONNECT_ACCOUNT_ID ? 'Present' : 'Missing')
+// Stripe Connect URLs
+export const STRIPE_CONNECT_REFRESH_URL = `${process.env.NEXTAUTH_URL}/settings?stripe_refresh=true`
+export const STRIPE_CONNECT_RETURN_URL = `${process.env.NEXTAUTH_URL}/settings?stripe_success=true`
 
-// Stripe Connect account ID for CommunityPledges
-export const STRIPE_CONNECT_ACCOUNT_ID = process.env.STRIPE_CONNECT_ACCOUNT_ID!
-
-// Platform fee percentage (1%)
-export const PLATFORM_FEE_PERCENTAGE = 0.01
+// Platform fee percentage (2%)
+export const PLATFORM_FEE_PERCENTAGE = parseFloat(process.env.PLATFORM_FEE || '0.02')
 
 // Calculate platform fee amount
 export function calculatePlatformFee(amount: number): number {

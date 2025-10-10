@@ -6,41 +6,58 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic'
 
+/**
+ * Check Stripe Connect account status
+ * Returns onboarding status and account capabilities
+ */
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { stripeAccountId: true }
+      select: {
+        stripeAccountId: true,
+        stripeAccountStatus: true,
+        stripeOnboardingComplete: true,
+      },
     });
 
     if (!user?.stripeAccountId) {
-      return NextResponse.json({ 
-        hasAccount: false,
-        message: 'No Stripe Connect account found'
+      return NextResponse.json({
+        connected: false,
+        onboardingComplete: false,
       });
     }
 
-    // Get account details from Stripe
+    // Check account status with Stripe
     const account = await stripe.accounts.retrieve(user.stripeAccountId);
+    const isComplete = account.details_submitted && account.charges_enabled;
+
+    // Update database if status changed
+    if (isComplete !== user.stripeOnboardingComplete) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: {
+          stripeOnboardingComplete: isComplete,
+          stripeAccountStatus: isComplete ? "active" : "pending",
+        },
+      });
+    }
 
     return NextResponse.json({
-      hasAccount: true,
-      accountId: account.id,
+      connected: true,
+      onboardingComplete: isComplete,
       chargesEnabled: account.charges_enabled,
       payoutsEnabled: account.payouts_enabled,
-      detailsSubmitted: account.details_submitted,
-      requirements: account.requirements,
-      businessProfile: account.business_profile
     });
   } catch (error) {
-    console.error('Error checking Stripe Connect status:', error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    console.error('Error checking Stripe status:', error);
+    return NextResponse.json({ error: 'Failed to check Stripe status' }, { status: 500 });
   }
 }
 
