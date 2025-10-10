@@ -55,18 +55,11 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
 
     const amount = paymentIntent.amount / 100; // Convert cents to dollars
 
-    // Update existing pledge to completed status
+    // In the new system, pledges remain ACTIVE
+    // Payment tracking is done via optimizedAmount field
     if (type === 'pledge_payment') {
-      await prisma.pledge.updateMany({
-        where: {
-          userId: payerId,
-          serverId,
-          status: 'pending'
-        },
-        data: {
-          status: 'completed'
-        }
-      });
+      // No status update needed - pledges stay ACTIVE
+      // The cron job handles payment processing and updates optimizedAmount
 
       // Update server pledge count
       await prisma.server.update({
