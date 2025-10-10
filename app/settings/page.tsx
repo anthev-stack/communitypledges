@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { SUPPORTED_COUNTRIES } from '@/lib/countries'
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
@@ -30,7 +31,12 @@ interface UserSettings {
   cardExpMonth?: number
   cardExpYear?: number
   stripePaymentMethodId?: string
-  // Stripe payout (for receiving money)
+  // Stripe Connect (for receiving payouts)
+  stripeAccountId?: string | null
+  stripeAccountStatus?: string | null
+  stripeOnboardingComplete?: boolean
+  country?: string | null
+  // Legacy fields
   stripePayoutAccountId?: string | null
   stripePayoutConnected?: boolean
   stripePayoutConnectedAt?: string | null
@@ -56,6 +62,8 @@ export default function SettingsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [stripePayoutStatus, setStripePayoutStatus] = useState<any>(null)
   const [isCreatingStripeAccount, setIsCreatingStripeAccount] = useState(false)
+  const [selectedCountry, setSelectedCountry] = useState<string>('')
+  const [isSavingCountry, setIsSavingCountry] = useState(false)
 
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm()
 
@@ -83,138 +91,58 @@ export default function SettingsPage() {
     }
   }, [session?.user?.id])
 
-  // Load Stripe payout status
+  // Set selected country from user settings
   useEffect(() => {
-    const loadStripePayoutStatus = async () => {
-      if (userSettings?.stripePayoutAccountId) {
+    if (userSettings?.country) {
+      setSelectedCountry(userSettings.country)
+    }
+  }, [userSettings?.country])
+
+  // Load Stripe Connect status
+  useEffect(() => {
+    const loadStripeConnectStatus = async () => {
+      if (userSettings?.stripeAccountId) {
         try {
-          const response = await fetch('/api/stripe/express/status')
+          const response = await fetch('/api/stripe/connect/status')
           if (response.ok) {
             const data = await response.json()
             setStripePayoutStatus(data)
           }
         } catch (error) {
-          console.error('Error loading Stripe payout status:', error)
+          console.error('Error loading Stripe Connect status:', error)
         }
       }
     }
 
-    loadStripePayoutStatus()
-  }, [userSettings?.stripePayoutAccountId])
+    loadStripeConnectStatus()
+  }, [userSettings?.stripeAccountId])
 
-  // Handle Stripe Express account creation
-  const handleCreateStripeAccount = async () => {
-    setIsCreatingStripeAccount(true)
-    try {
-      const response = await fetch('/api/stripe/express/create', {
-        method: 'POST'
-      })
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        addNotification({
-          type: 'success',
-          title: 'Stripe Account Created',
-          message: 'Your Stripe Express account has been created. Please complete the onboarding process.'
-        })
-        
-        // Reload user settings
-        const settingsResponse = await fetch('/api/user/settings')
-        if (settingsResponse.ok) {
-          const settingsData = await settingsResponse.json()
-          setUserSettings(settingsData)
-        }
-      } else {
-        addNotification({
-          type: 'error',
-          title: 'Failed to Create Account',
-          message: data.error || 'Failed to create Stripe Express account'
-        })
-      }
-    } catch (error) {
-      console.error('Error creating Stripe account:', error)
+  // Handle country save
+  const handleSaveCountry = async () => {
+    if (!selectedCountry) {
       addNotification({
         type: 'error',
-        title: 'Error',
-        message: 'Failed to create Stripe Express account'
-      })
-    } finally {
-      setIsCreatingStripeAccount(false)
-    }
-  }
-
-  // Handle Stripe Express onboarding
-  const handleStripeOnboarding = async () => {
-    if (!userSettings?.stripePayoutAccountId) {
-      addNotification({
-        type: 'error',
-        title: 'No Account Found',
-        message: 'Please create a Stripe Express account first'
+        title: 'Country Required',
+        message: 'Please select a country'
       })
       return
     }
 
+    setIsSavingCountry(true)
     try {
-      const response = await fetch('/api/stripe/express/link', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          accountId: userSettings.stripePayoutAccountId
-        })
-      })
-      
-      const data = await response.json()
-      
-      if (data.success && data.url) {
-        addNotification({
-          type: 'success',
-          title: 'Redirecting to Stripe',
-          message: 'Please complete the onboarding process in the new window.'
-        })
-        
-        // Open Stripe onboarding in new window
-        window.open(data.url, '_blank')
-      } else {
-        addNotification({
-          type: 'error',
-          title: 'Failed to Start Onboarding',
-          message: data.error || 'Failed to start Stripe onboarding'
-        })
-      }
-    } catch (error) {
-      console.error('Error starting Stripe onboarding:', error)
-      addNotification({
-        type: 'error',
-        title: 'Error',
-        message: 'Failed to start Stripe onboarding'
-      })
-    }
-  }
-
-  // Handle Stripe payout removal
-  const handleStripePayoutRemove = async () => {
-    try {
-      const response = await fetch('/api/user/settings', {
+      const response = await fetch('/api/user/country', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          stripePayoutAccountId: null,
-          stripePayoutConnected: false,
-          stripePayoutConnectedAt: null,
-          stripePayoutRequirements: null
-        })
+        body: JSON.stringify({ country: selectedCountry })
       })
 
       if (response.ok) {
         addNotification({
           type: 'success',
-          title: 'Stripe Payout Removed',
-          message: 'Your Stripe payout account has been removed.'
+          title: 'Country Saved',
+          message: 'Your country has been saved successfully'
         })
         
         // Reload user settings
@@ -227,19 +155,72 @@ export default function SettingsPage() {
         const errorData = await response.json()
         addNotification({
           type: 'error',
-          title: 'Failed to Remove Account',
-          message: errorData.message || 'Failed to remove Stripe payout account'
+          title: 'Failed to Save',
+          message: errorData.error || 'Failed to save country'
         })
       }
     } catch (error) {
-      console.error('Error removing Stripe payout:', error)
+      console.error('Error saving country:', error)
       addNotification({
         type: 'error',
         title: 'Error',
-        message: 'Failed to remove Stripe payout account'
+        message: 'Failed to save country'
       })
+    } finally {
+      setIsSavingCountry(false)
     }
   }
+
+  // Handle Stripe Connect onboarding
+  const handleConnectStripe = async () => {
+    if (!userSettings?.country) {
+      addNotification({
+        type: 'error',
+        title: 'Country Required',
+        message: 'Please select your country first'
+      })
+      return
+    }
+
+    setIsCreatingStripeAccount(true)
+    try {
+      const response = await fetch('/api/stripe/connect/onboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      const data = await response.json()
+      
+      if (data.url) {
+        addNotification({
+          type: 'success',
+          title: 'Redirecting to Stripe',
+          message: 'Please complete the onboarding process'
+        })
+        
+        // Redirect to Stripe onboarding
+        window.location.href = data.url
+      } else {
+        addNotification({
+          type: 'error',
+          title: 'Failed',
+          message: data.error || 'Failed to create Stripe Connect account'
+        })
+      }
+    } catch (error) {
+      console.error('Error connecting Stripe:', error)
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to connect Stripe'
+      })
+    } finally {
+      setIsCreatingStripeAccount(false)
+    }
+  }
+
 
   // Handle profile update
   const onSubmit = async (data: any) => {
@@ -357,19 +338,8 @@ export default function SettingsPage() {
     if (deleteType === 'payment') {
       // Handle payment method removal
       try {
-        const response = await fetch('/api/user/settings', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            hasPaymentMethod: false,
-            cardLast4: null,
-            cardBrand: null,
-            cardExpMonth: null,
-            cardExpYear: null,
-            stripePaymentMethodId: null
-          })
+        const response = await fetch('/api/user/settings/payment', {
+          method: 'DELETE'
         })
 
         if (response.ok) {
@@ -401,8 +371,6 @@ export default function SettingsPage() {
           message: 'Failed to remove payment method'
         })
       }
-    } else if (deleteType === 'payout') {
-      await handleStripePayoutRemove()
     }
     
     setShowDeleteModal(false)
@@ -575,94 +543,125 @@ export default function SettingsPage() {
 
           {/* Payouts Tab */}
           {activeTab === 'payouts' && (
-            <div className="bg-gray-800 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-xl font-semibold text-white">Payout Settings</h2>
-                  <p className="text-gray-300 mt-1">Set up your Stripe Express account to receive payments from community pledges.</p>
-                </div>
-                <Link
-                  href="/settings/payout"
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Manage Payouts
-                </Link>
-              </div>
-
-              {/* Stripe Payout Method */}
-              <div className="border border-gray-600 rounded-lg p-4 mb-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                      <ExternalLink className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-white font-medium">Stripe Express Account</p>
-                      {userSettings?.stripePayoutAccountId ? (
-                        <div className="space-y-1">
-                          <p className="text-gray-400 text-sm">
-                            Account ID: {userSettings.stripePayoutAccountId.slice(0, 20)}...
-                          </p>
-                          {stripePayoutStatus && (
-                            <div className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${
-                                stripePayoutStatus.connected ? 'bg-green-500' : 'bg-yellow-500'
-                              }`} />
-                              <span className="text-sm text-gray-400">
-                                {stripePayoutStatus.connected ? 'Connected' : 'Setup Required'}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-gray-400 text-sm">No payout account configured</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    {userSettings?.stripePayoutAccountId ? (
-                      <>
-                        {!stripePayoutStatus?.connected && (
-                          <button
-                            onClick={handleStripeOnboarding}
-                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                          >
-                            Complete Setup
-                          </button>
-                        )}
-                        <button
-                          onClick={() => {
-                            setDeleteType('payout')
-                            setShowDeleteModal(true)
-                          }}
-                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-md transition-colors"
-                          title="Remove Payout Account"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={handleCreateStripeAccount}
-                        disabled={isCreatingStripeAccount}
-                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {isCreatingStripeAccount ? 'Creating...' : 'Create Account'}
-                      </button>
+            <div className="space-y-6">
+              {/* Country Selection */}
+              <div className="bg-gray-800 rounded-lg p-6">
+                <h2 className="text-xl font-semibold text-white mb-2">Country/Region</h2>
+                <p className="text-gray-400 text-sm mb-4">* Required for payouts</p>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Select Your Country
+                    </label>
+                    <select
+                      value={selectedCountry}
+                      onChange={(e) => setSelectedCountry(e.target.value)}
+                      disabled={userSettings?.stripeOnboardingComplete}
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-white disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select a country</option>
+                      {SUPPORTED_COUNTRIES.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.flag} {country.name}
+                        </option>
+                      ))}
+                    </select>
+                    {userSettings?.stripeOnboardingComplete && (
+                      <p className="mt-2 text-xs text-gray-500">
+                        Country cannot be changed after connecting Stripe
+                      </p>
                     )}
                   </div>
+                  
+                  {selectedCountry && selectedCountry !== userSettings?.country && (
+                    <button
+                      onClick={handleSaveCountry}
+                      disabled={isSavingCountry || userSettings?.stripeOnboardingComplete}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {isSavingCountry ? 'Saving...' : 'Save Country'}
+                    </button>
+                  )}
+                  
+                  {userSettings?.country && (
+                    <div className="flex items-center space-x-2 text-green-400">
+                      <Check className="w-4 h-4" />
+                      <span className="text-sm">Country saved</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Stripe Express Benefits */}
+              {/* Payout Method */}
+              <div className="bg-gray-800 rounded-lg p-6">
+                <h2 className="text-xl font-semibold text-white mb-2">Payout Method</h2>
+                <p className="text-gray-400 text-sm mb-4">* Required to create servers</p>
+                
+                {!userSettings?.stripeAccountId ? (
+                  <div className="space-y-4">
+                    <p className="text-gray-300">Connect your Stripe account to receive payouts from community pledges.</p>
+                    <button
+                      onClick={handleConnectStripe}
+                      disabled={!userSettings?.country || isCreatingStripeAccount}
+                      className="px-6 py-3 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                    >
+                      {isCreatingStripeAccount ? 'Connecting...' : 'Connect Stripe'}
+                    </button>
+                    {!userSettings?.country && (
+                      <p className="text-yellow-400 text-sm">⚠️ Please select your country first</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3 p-4 bg-emerald-900/20 border border-emerald-500/50 rounded-lg">
+                      <Check className="w-5 h-5 text-emerald-400 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-emerald-300 font-medium">Stripe Connected</p>
+                        <p className="text-emerald-400/80 text-sm mt-1">
+                          Your payout method is set up and ready to receive donations!
+                        </p>
+                        
+                        {stripePayoutStatus && (
+                          <div className="mt-3 space-y-1 text-sm">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-gray-400">Status:</span>
+                              <span className={stripePayoutStatus.onboardingComplete ? 'text-emerald-400' : 'text-yellow-400'}>
+                                {stripePayoutStatus.onboardingComplete ? 'Active' : 'Pending'}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-gray-400">Charges:</span>
+                              <span className={stripePayoutStatus.chargesEnabled ? 'text-emerald-400' : 'text-gray-500'}>
+                                {stripePayoutStatus.chargesEnabled ? 'Enabled' : 'Disabled'}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-gray-400">Payouts:</span>
+                              <span className={stripePayoutStatus.payoutsEnabled ? 'text-emerald-400' : 'text-gray-500'}>
+                                {stripePayoutStatus.payoutsEnabled ? 'Enabled' : 'Disabled'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <p className="text-gray-400 text-sm">
+                      Powered by Stripe Connect. Stripe is a secure payment platform trusted by millions. Your financial information is safe and protected.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Stripe Connect Benefits */}
               <div className="bg-blue-900/20 border border-blue-500/50 rounded-lg p-4">
-                <h3 className="text-lg font-medium text-blue-400 mb-2">Why Stripe Express?</h3>
+                <h3 className="text-lg font-medium text-blue-400 mb-2">Why Stripe Connect?</h3>
                 <ul className="text-blue-300 text-sm space-y-1">
-                  <li>• Simple setup for individuals (no business requirements)</li>
-                  <li>• Direct bank account transfers</li>
-                  <li>• Lower fees than traditional business accounts</li>
+                  <li>• Simple setup for individuals (no business required)</li>
+                  <li>• Direct bank account transfers (automatic daily payouts)</li>
                   <li>• Secure and reliable payment processing</li>
+                  <li>• Trusted by millions of businesses worldwide</li>
                 </ul>
               </div>
             </div>
