@@ -217,7 +217,7 @@ export async function POST(
         amount,
         userId: session.user.id,
         serverId: serverId,
-        status: 'active' // Pledge is active but not yet charged
+        status: 'ACTIVE' // Pledge is active but not yet charged
       },
       include: {
         user: {

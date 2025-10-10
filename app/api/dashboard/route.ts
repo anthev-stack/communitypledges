@@ -115,7 +115,7 @@ export async function GET() {
     const userPledges = await prisma.pledge.findMany({
       where: {
         userId: session.user.id,
-        status: 'active' // Only active pledges
+        status: 'ACTIVE' // Only active pledges
       },
       include: {
         server: {
@@ -187,7 +187,7 @@ export async function GET() {
       const serverPledges = await prisma.pledge.findMany({
         where: {
           serverId: pledge.server.id,
-          status: 'active'
+          status: 'ACTIVE'
         },
         select: {
           amount: true,

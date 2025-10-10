@@ -88,7 +88,7 @@ async function removeUserFromAllPledges(userId: string) {
     const userPledges = await prisma.pledge.findMany({
       where: {
         userId: userId,
-        status: 'active'
+        status: 'ACTIVE'
       },
       include: {
         server: {
