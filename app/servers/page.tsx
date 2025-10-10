@@ -730,6 +730,12 @@ export default function ServersPage() {
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
                       <h3 className="text-xl font-semibold text-white group-hover:text-emerald-400 transition-colors">{server.name}</h3>
+                      {server.hasActiveBoost && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 animate-pulse">
+                          <Zap className="w-3 h-3 mr-1" />
+                          BOOSTED
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center space-x-2 mt-1">
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">
@@ -848,6 +854,40 @@ export default function ServersPage() {
                       {server._count.pledges} people
                     </span>
                   </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-400">WITHDRAWAL DAY</span>
+                    <span className="font-semibold text-white">
+                      Day {server.withdrawalDay}
+                    </span>
+                  </div>
+                  
+                  {server.hasActiveBoost && server.boostExpiresAt && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-yellow-400 flex items-center">
+                        <Zap className="w-4 h-4 mr-1" />
+                        BOOST EXPIRES
+                      </span>
+                      <span className="font-semibold text-yellow-400">
+                        {(() => {
+                          const now = new Date()
+                          const expires = new Date(server.boostExpiresAt)
+                          const hoursLeft = Math.max(0, Math.floor((expires.getTime() - now.getTime()) / (1000 * 60 * 60)))
+                          const minutesLeft = Math.max(0, Math.floor(((expires.getTime() - now.getTime()) % (1000 * 60 * 60)) / (1000 * 60)))
+                          
+                          if (hoursLeft > 24) {
+                            return `${Math.floor(hoursLeft / 24)}d ${hoursLeft % 24}h`
+                          } else if (hoursLeft > 0) {
+                            return `${hoursLeft}h ${minutesLeft}m`
+                          } else if (minutesLeft > 0) {
+                            return `${minutesLeft}m`
+                          } else {
+                            return 'Expiring soon'
+                          }
+                        })()}
+                      </span>
+                    </div>
+                  )}
                   
                   <div className="flex justify-between items-center text-sm text-gray-400">
                     <span className="inline-flex items-center">

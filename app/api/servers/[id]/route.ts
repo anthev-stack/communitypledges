@@ -125,6 +125,18 @@ export async function GET(
             createdAt: 'desc'
           }
         },
+        serverBoosts: {
+          where: {
+            isActive: true,
+            expiresAt: {
+              gt: new Date()
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 1
+        },
         _count: {
           select: {
             pledges: true
@@ -164,6 +176,10 @@ export async function GET(
       savings: Math.max(0, pledge.amount - (optimizedCosts[index] || pledge.amount))
     }))
 
+    // Check for active boost
+    const hasActiveBoost = server.serverBoosts && server.serverBoosts.length > 0
+    const boostExpiresAt = hasActiveBoost ? server.serverBoosts[0].expiresAt : null
+
     const serverWithPricing = {
       ...server,
       costPerPerson: Math.round(averageCost * 100) / 100,
@@ -174,7 +190,9 @@ export async function GET(
       isFullyFunded: !isAcceptingPledges,
       optimizedCosts,
       personalizedCosts,
-      maxPeople
+      maxPeople,
+      hasActiveBoost,
+      boostExpiresAt
     }
 
     return NextResponse.json(serverWithPricing)

@@ -27,6 +27,8 @@ interface ServerDetail {
   discordChannel?: string
   serverIp?: string
   serverPort?: number
+  hasActiveBoost: boolean
+  boostExpiresAt?: string
   owner: {
     name: string
     image?: string
@@ -64,6 +66,7 @@ export default function ServerDetailPage() {
   const [pledgeAmount, setPledgeAmount] = useState(0)
   const [pledging, setPledging] = useState(false)
   const [showHowItWorks, setShowHowItWorks] = useState(false)
+  const [isBoosting, setIsBoosting] = useState(false)
 
   useEffect(() => {
     if (serverId) {
@@ -187,6 +190,57 @@ export default function ServerDetailPage() {
     return server.personalizedCosts.find(cost => cost.userName === userName)
   }
 
+  const handleBoostServer = async () => {
+    if (!session) {
+      addNotification({
+        type: 'error',
+        title: 'Login Required',
+        message: 'You must be logged in to boost a server'
+      })
+      return
+    }
+
+    if (server?.hasActiveBoost) {
+      addNotification({
+        type: 'info',
+        title: 'Already Boosted',
+        message: 'This server already has an active boost'
+      })
+      return
+    }
+
+    setIsBoosting(true)
+    try {
+      const response = await fetch(`/api/servers/${serverId}/boost`, {
+        method: 'POST'
+      })
+
+      if (response.ok) {
+        await fetchServer()
+        addNotification({
+          type: 'success',
+          title: 'Server Boosted!',
+          message: `${server?.name} has been boosted for 30 days! 🚀`
+        })
+      } else {
+        const errorData = await response.json()
+        addNotification({
+          type: 'error',
+          title: 'Boost Failed',
+          message: errorData.error || 'Failed to boost server'
+        })
+      }
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to boost server'
+      })
+    } finally {
+      setIsBoosting(false)
+    }
+  }
+
   const copyServerIP = async (serverIp: string, serverPort?: number) => {
     const ipToCopy = serverPort ? `${serverIp}:${serverPort}` : serverIp
     try {
@@ -263,8 +317,16 @@ export default function ServerDetailPage() {
       <div className="bg-slate-800/50 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden border border-slate-700/50">
         <div className="p-8">
           <div className="flex items-start justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-white">{server.name}</h1>
+            <div className="flex-1">
+              <div className="flex items-center space-x-3 mb-2">
+                <h1 className="text-3xl font-bold text-white">{server.name}</h1>
+                {server.hasActiveBoost && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-500/20 text-yellow-400 animate-pulse">
+                    <Zap className="w-4 h-4 mr-1" />
+                    BOOSTED
+                  </span>
+                )}
+              </div>
               <p className="text-gray-300 mt-2">{server.description}</p>
               <div className="flex items-center space-x-3 mt-3">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-500/20 text-emerald-400">
@@ -278,13 +340,24 @@ export default function ServerDetailPage() {
               </div>
             </div>
             <div className="flex flex-col items-end space-y-2">
-              <span className={`text-sm font-medium px-3 py-1 rounded-full ${
-                server.isAcceptingPledges 
-                  ? 'bg-green-500/20 text-green-400' 
-                  : 'bg-yellow-500/20 text-yellow-400'
-              }`}>
-                {server.isAcceptingPledges ? 'Accepting Pledges' : 'Goal Reached'}
-              </span>
+              <div className="flex items-center space-x-2">
+                <span className={`text-sm font-medium px-3 py-1 rounded-full ${
+                  server.isAcceptingPledges 
+                    ? 'bg-green-500/20 text-green-400' 
+                    : 'bg-yellow-500/20 text-yellow-400'
+                }`}>
+                  {server.isAcceptingPledges ? 'Accepting Pledges' : 'Goal Reached'}
+                </span>
+                <button
+                  onClick={handleBoostServer}
+                  disabled={isBoosting || server.hasActiveBoost}
+                  className="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  title={server.hasActiveBoost ? 'Server is already boosted' : 'Boost this server for 30 days ($3)'}
+                >
+                  <Zap className="w-4 h-4 mr-1" />
+                  {isBoosting ? 'Boosting...' : server.hasActiveBoost ? 'Boosted' : 'Boost $3'}
+                </button>
+              </div>
               {userPledge && (
                 <span className="text-sm text-emerald-400 font-medium">
                   You pledged ${userPledge.amount}
@@ -313,12 +386,49 @@ export default function ServerDetailPage() {
                 <span className="text-2xl font-bold text-emerald-400">${server.remainingCost?.toFixed(2) || '0.00'}</span>
               </div>
               
+              {server.hasActiveBoost && server.boostExpiresAt && (
+                <div className="flex justify-between items-center bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+                  <span className="text-yellow-400 flex items-center font-medium">
+                    <Zap className="w-5 h-5 mr-2" />
+                    BOOST EXPIRES IN
+                  </span>
+                  <span className="text-lg font-bold text-yellow-400">
+                    {(() => {
+                      const now = new Date()
+                      const expires = new Date(server.boostExpiresAt)
+                      const hoursLeft = Math.max(0, Math.floor((expires.getTime() - now.getTime()) / (1000 * 60 * 60)))
+                      const minutesLeft = Math.max(0, Math.floor(((expires.getTime() - now.getTime()) % (1000 * 60 * 60)) / (1000 * 60)))
+                      
+                      if (hoursLeft > 24) {
+                        return `${Math.floor(hoursLeft / 24)} days ${hoursLeft % 24}h`
+                      } else if (hoursLeft > 0) {
+                        return `${hoursLeft}h ${minutesLeft}m`
+                      } else if (minutesLeft > 0) {
+                        return `${minutesLeft} minutes`
+                      } else {
+                        return 'Expiring soon'
+                      }
+                    })()}
+                  </span>
+                </div>
+              )}
+              
               <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3">
                 <div className="flex items-start space-x-2">
                   <div className="w-5 h-5 text-blue-400 mt-0.5">💡</div>
                   <div>
                     <p className="text-blue-300 text-sm font-medium mb-1">SMART COST DISTRIBUTION</p>
                     <p className="text-blue-200 text-xs">Higher pledgers help reduce overall costs. You'll never pay more than you pledged, but often pay less!</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3">
+                <div className="flex items-start space-x-2">
+                  <Zap className="w-5 h-5 text-yellow-400 mt-0.5" />
+                  <div>
+                    <p className="text-yellow-300 text-sm font-medium mb-1">SERVER BOOST</p>
+                    <p className="text-yellow-200 text-xs">Boost this server for $3 to get featured at the top of the server list for 30 days!</p>
                   </div>
                 </div>
               </div>
