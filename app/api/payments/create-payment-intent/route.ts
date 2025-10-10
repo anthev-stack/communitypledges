@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { stripe, calculatePlatformFee, calculateStripeFee, calculateNetAmount, STRIPE_CONNECT_ACCOUNT_ID } from '@/lib/stripe';
+import { stripe, calculatePlatformFee, calculateStripeFee, calculateNetAmount } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
