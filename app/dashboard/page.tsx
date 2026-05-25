@@ -8,6 +8,7 @@ import Image from "next/image"
 import { Eye, Edit3, Zap, Trash2, Copy, Check } from "lucide-react"
 import { Price } from "@/components/Price"
 import { useCurrency } from "@/components/CurrencyProvider"
+import MarketingDashboardLayout from "@/components/marketing/MarketingDashboardLayout"
 
 interface Server {
   id: string
@@ -229,12 +230,12 @@ export default function DashboardPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <MarketingDashboardLayout>
+        <div className="listing-loading text-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400 mx-auto"></div>
+          <p className="mt-4">Loading...</p>
         </div>
-      </div>
+      </MarketingDashboardLayout>
     )
   }
 
@@ -406,13 +407,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
-
+    <MarketingDashboardLayout>
         {/* Stats Overview */}
         <div className="grid gap-6 md:grid-cols-3 mb-8">
-          <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6">
+          <div className="listing-card p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Pledged</p>
@@ -428,7 +426,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6">
+          <div className="listing-card p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Active Pledges</p>
@@ -444,7 +442,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6">
+          <div className="listing-card p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Servers Created</p>
@@ -464,7 +462,7 @@ export default function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-3 mb-12">
           {/* Create Server Card */}
           <Link href="/dashboard/server/create">
-            <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 p-6 rounded-lg shadow-lg hover:shadow-lg transition cursor-pointer">
+            <div className="listing-card p-6 transition cursor-pointer h-full">
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Create Server</h2>
               <p className="text-gray-600">Set up a new game server and start receiving pledges</p>
             </div>
@@ -472,7 +470,7 @@ export default function DashboardPage() {
 
           {/* Create Community Card */}
           <Link href="/dashboard/community/create">
-            <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 p-6 rounded-lg shadow-lg hover:shadow-lg transition cursor-pointer">
+            <div className="listing-card p-6 transition cursor-pointer h-full">
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Create Community</h2>
               <p className="text-gray-600">Share your community to attract new members</p>
             </div>
@@ -480,7 +478,7 @@ export default function DashboardPage() {
 
           {/* Settings Card */}
           <Link href="/settings">
-            <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 p-6 rounded-lg shadow-lg hover:shadow-lg transition cursor-pointer">
+            <div className="listing-card p-6 transition cursor-pointer h-full">
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Settings</h2>
               <p className="text-gray-600">Manage your profile and payment settings</p>
             </div>
@@ -490,11 +488,11 @@ export default function DashboardPage() {
         {/* My Servers Section - Only show if user has servers */}
         {!loading && servers.length > 0 && (
           <div className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">My Servers</h2>
+            <h2 className="dashboard-section-title">My Servers</h2>
           
           <div className="space-y-4">
               {servers.map((server) => (
-                <div key={server.id} className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6 hover:shadow-lg transition">
+                <div key={server.id} className="listing-card p-6 transition">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start space-x-4 flex-1">
                       {server.imageUrl ? (
@@ -636,11 +634,11 @@ export default function DashboardPage() {
         {/* My Communities Section - Only show if user has communities */}
         {!loading && communities.length > 0 && (
           <div className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">My Communities</h2>
+            <h2 className="dashboard-section-title">My Communities</h2>
           
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {communities.map((community) => (
-                <div key={community.id} className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg hover:shadow-lg transition overflow-hidden">
+                <div key={community.id} className="listing-card overflow-hidden transition">
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-start space-x-4 flex-1">
@@ -722,28 +720,24 @@ export default function DashboardPage() {
 
         {/* Activity Section */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Activity</h2>
+          <h2 className="dashboard-section-title">Activity</h2>
           
-          <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg">
+          <div className="listing-card overflow-hidden">
             {/* Tabs */}
-            <div className="border-b border-gray-200">
+            <div className="border-b dashboard-tabs">
               <div className="flex">
                 <button
                   onClick={() => setActivityTab("user")}
-                  className={`flex-1 px-6 py-4 text-sm font-medium transition ${
-                    activityTab === "user"
-                      ? "text-indigo-600 border-b-2 border-indigo-600"
-                      : "text-gray-600 hover:text-gray-900"
+                  className={`dashboard-tab flex-1 px-6 py-4 text-sm font-medium transition border-b-2 border-transparent ${
+                    activityTab === "user" ? "dashboard-tab--active" : ""
                   }`}
                 >
                   Your Activity
                 </button>
                 <button
                   onClick={() => setActivityTab("server")}
-                  className={`flex-1 px-6 py-4 text-sm font-medium transition ${
-                    activityTab === "server"
-                      ? "text-indigo-600 border-b-2 border-indigo-600"
-                      : "text-gray-600 hover:text-gray-900"
+                  className={`dashboard-tab flex-1 px-6 py-4 text-sm font-medium transition border-b-2 border-transparent ${
+                    activityTab === "server" ? "dashboard-tab--active" : ""
                   }`}
                 >
                   Server Activity
@@ -752,7 +746,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Activity List */}
-            <div className="p-6">
+            <div className="p-6 dashboard-tab-panel">
               {loadingActivity ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
@@ -809,7 +803,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </MarketingDashboardLayout>
   )
 }

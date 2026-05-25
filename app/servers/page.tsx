@@ -8,6 +8,7 @@ import { SUPPORTED_GAMES } from "@/lib/supported-games"
 import { getTagsForGame } from "@/lib/game-tags"
 import { Price } from "@/components/Price"
 import ServerLiveStats from "@/components/ServerLiveStats"
+import MarketingListingLayout from "@/components/marketing/MarketingListingLayout"
 
 interface Server {
   id: string
@@ -211,17 +212,11 @@ export default function ServersPage() {
   const currentGameTags = selectedGame ? getTagsForGame(selectedGame) : availableTags
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Servers</h1>
-          <p className="text-gray-600">
-            Find a new server to play or simply search the one you are looking for and start pledging!
-          </p>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl shadow-lg p-6 mb-6">
+    <MarketingListingLayout
+      title="Servers"
+      subtitle="Find a new server to play or simply search the one you are looking for and start pledging!"
+    >
+        <div className="marketing-filters">
           {/* Search Bar and Filters Button */}
           <div className="flex gap-3 mb-4">
             <div className="flex-1 relative">
@@ -332,8 +327,8 @@ export default function ServersPage() {
                         onClick={() => toggleTag(tag)}
                         className={`px-3 py-1 rounded-full text-sm font-medium transition ${
                           selectedTags.includes(tag)
-                            ? "bg-indigo-600 text-white"
-                            : "bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600"
+                            ? "tag-pill--active"
+                            : "tag-pill--idle"
                         }`}
                       >
                         {tag}
@@ -374,12 +369,12 @@ export default function ServersPage() {
 
         {/* Server List */}
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading servers...</p>
+          <div className="listing-loading text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400 mx-auto mb-4"></div>
+            <p>Loading servers...</p>
           </div>
         ) : filteredServers.length === 0 ? (
-          <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-12 text-center">
+          <div className="listing-empty p-12 text-center">
             <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -404,7 +399,7 @@ export default function ServersPage() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredServers.map((server) => (
               <Link key={server.id} href={`/servers/${server.id}`}>
-                <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg overflow-hidden hover:shadow-lg transition cursor-pointer h-full flex flex-col">
+                <div className="listing-card overflow-hidden transition cursor-pointer h-full flex flex-col">
                   {/* Server Banner */}
                   {server.imageUrl ? (
                     <div className="relative w-full" style={{ aspectRatio: '500/100' }}>
@@ -585,7 +580,6 @@ export default function ServersPage() {
             ))}
           </div>
         )}
-      </div>
-    </div>
+    </MarketingListingLayout>
   )
 }

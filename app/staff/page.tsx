@@ -74,11 +74,7 @@ export default function StaffDashboardPage() {
     category: "all",
     priority: "all"
   })
-  const [currentTheme, setCurrentTheme] = useState("default")
-  const [savingTheme, setSavingTheme] = useState(false)
   const [userRole, setUserRole] = useState<string | null>(null)
-  const [batGifUrl, setBatGifUrl] = useState<string>('/images/bat.gif')
-  const [snowflakeGifUrl, setSnowflakeGifUrl] = useState<string>('/images/snowflake.gif')
   const [faviconUrl, setFaviconUrl] = useState<string>('/favicon.ico')
   const [uploadingFavicon, setUploadingFavicon] = useState(false)
   const [defaultBannerUrl, setDefaultBannerUrl] = useState<string>('')
@@ -134,8 +130,7 @@ export default function StaffDashboardPage() {
       } else if (tab === "tickets") {
         fetchTickets()
       } else if (tab === "web") {
-        fetchCurrentTheme()
-        fetchGifUrls()
+        fetchFaviconUrl()
         fetchGameBanners()
       }
     }
@@ -191,74 +186,15 @@ export default function StaffDashboardPage() {
     }
   }
 
-  const fetchCurrentTheme = async () => {
+  const fetchFaviconUrl = async () => {
     try {
-      const response = await fetch("/api/settings/theme")
-      if (response.ok) {
-        const data = await response.json()
-        setCurrentTheme(data.theme)
-      }
-    } catch (error) {
-      console.error("Failed to fetch theme:", error)
-    }
-  }
-
-  const handleThemeChange = async (newTheme: string) => {
-    if (!confirm(`Change site theme to ${newTheme}? This will affect all users.`)) {
-      return
-    }
-
-    setSavingTheme(true)
-    try {
-      const response = await fetch("/api/settings/theme", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ theme: newTheme })
-      })
-
-      if (response.ok) {
-        setCurrentTheme(newTheme)
-        alert("Theme updated successfully! Users will see the new theme on their next page load.")
-        // Reload to apply theme
-        if (typeof window !== 'undefined') {
-          window.location.reload()
-        }
-      } else {
-        const data = await response.json()
-        alert(data.error || "Failed to update theme")
-      }
-    } catch (error) {
-      console.error("Failed to update theme:", error)
-      alert("Failed to update theme")
-    } finally {
-      setSavingTheme(false)
-    }
-  }
-
-  const fetchGifUrls = async () => {
-    try {
-      const [batRes, snowflakeRes, faviconRes] = await Promise.all([
-        fetch('/api/admin/upload-gif?type=bat').catch(() => null),
-        fetch('/api/admin/upload-gif?type=snowflake').catch(() => null),
-        fetch('/api/admin/upload-gif?type=favicon').catch(() => null)
-      ])
-
-      if (batRes?.ok) {
-        const batData = await batRes.json()
-        if (batData.dataUrl) setBatGifUrl(batData.dataUrl)
-      }
-
-      if (snowflakeRes?.ok) {
-        const snowflakeData = await snowflakeRes.json()
-        if (snowflakeData.dataUrl) setSnowflakeGifUrl(snowflakeData.dataUrl)
-      }
-
+      const faviconRes = await fetch('/api/admin/upload-gif?type=favicon').catch(() => null)
       if (faviconRes?.ok) {
         const faviconData = await faviconRes.json()
         if (faviconData.dataUrl) setFaviconUrl(faviconData.dataUrl)
       }
     } catch (error) {
-      console.error('Failed to fetch GIF URLs:', error)
+      console.error('Failed to fetch favicon:', error)
     }
   }
 
@@ -344,59 +280,9 @@ export default function StaffDashboardPage() {
     }
   }
 
-  const handleImageUpload = async (file: File, type: 'bat' | 'snowflake') => {
-    // Validate file type
-    if (!file.type.startsWith('image/gif') && !file.type.startsWith('image/png') && !file.type.startsWith('image/webp')) {
-      alert('Please upload a GIF, PNG, or WebP file')
-      return
-    }
-
-    // Validate file size (max 200KB)
-    if (file.size > 200000) {
-      alert('File size must be under 200KB for optimal performance')
-      return
-    }
-
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('type', type)
-
-    try {
-      const response = await fetch('/api/admin/upload-gif', {
-        method: 'POST',
-        body: formData
-      })
-
-      if (response.ok) {
-        alert(`${type === 'bat' ? 'Bat' : 'Snowflake'} image uploaded successfully!`)
-        // Refresh image URLs
-        fetchGifUrls()
-      } else {
-        const data = await response.json()
-        alert(data.error || 'Failed to upload image')
-      }
-    } catch (error) {
-      console.error('Failed to upload image:', error)
-      alert('Failed to upload image')
-    }
-  }
-
-  const handleFileInput = (event: React.ChangeEvent<HTMLInputElement>, type: 'bat' | 'snowflake') => {
-    const file = event.target.files?.[0]
-    if (!file) return
-    handleImageUpload(file, type)
-  }
-
   const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault()
     event.dataTransfer.dropEffect = 'copy'
-  }
-
-  const handleDrop = (event: React.DragEvent, type: 'bat' | 'snowflake') => {
-    event.preventDefault()
-    const file = event.dataTransfer.files[0]
-    if (!file) return
-    handleImageUpload(file, type)
   }
 
   const handleBannerUpload = async (file: File, gameType: string | null, type: 'game-banner' | 'default-banner') => {
@@ -919,145 +805,15 @@ export default function StaffDashboardPage() {
                 )}
               </div>
             ) : tab === "web" ? (
-              /* Web Management */
               <div className="max-w-4xl mx-auto">
                 <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-white mb-2">Theme Management</h2>
-                  <p className="text-gray-300">Change the global theme for all users. This will affect the entire website.</p>
+                  <h2 className="text-2xl font-semibold text-white mb-2">Web Management</h2>
+                  <p className="text-gray-300">
+                    Site appearance uses a fixed dark theme. Manage branding assets below.
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {/* Default Theme */}
-                  <div
-                    onClick={() => handleThemeChange("default")}
-                    className={`relative bg-slate-800/70 backdrop-blur-sm border-2 rounded-lg p-6 cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${
-                      currentTheme === "default"
-                        ? "border-indigo-500 ring-2 ring-indigo-500/30"
-                        : "border-slate-700/50 hover:border-indigo-500/50"
-                    }`}
-                  >
-                    {currentTheme === "default" && (
-                      <div className="absolute top-3 right-3 bg-indigo-600 text-white rounded-full p-1">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-                    <div className="text-5xl mb-4">🎨</div>
-                    <h3 className="text-xl font-bold text-white mb-2">Default</h3>
-                    <p className="text-sm text-gray-300">Clean and professional design</p>
-                  </div>
-
-                  {/* Halloween Theme */}
-                  <div
-                    onClick={() => handleThemeChange("halloween")}
-                    className={`relative bg-slate-800/70 backdrop-blur-sm border-2 rounded-lg p-6 cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${
-                      currentTheme === "halloween"
-                        ? "border-orange-500 ring-2 ring-orange-500/30"
-                        : "border-slate-700/50 hover:border-orange-500/50"
-                    }`}
-                  >
-                    {currentTheme === "halloween" && (
-                      <div className="absolute top-3 right-3 bg-orange-600 text-white rounded-full p-1">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-                    <div className="text-5xl mb-4">🎃</div>
-                    <h3 className="text-xl font-bold text-white mb-2">Halloween</h3>
-                    <p className="text-sm text-gray-300">Spooky and festive orange and black theme</p>
-                  </div>
-
-                  {/* Christmas Theme */}
-                  <div
-                    onClick={() => handleThemeChange("christmas")}
-                    className={`relative bg-slate-800/70 backdrop-blur-sm border-2 rounded-lg p-6 cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${
-                      currentTheme === "christmas"
-                        ? "border-red-500 ring-2 ring-red-500/30"
-                        : "border-slate-700/50 hover:border-red-500/50"
-                    }`}
-                  >
-                    {currentTheme === "christmas" && (
-                      <div className="absolute top-3 right-3 bg-red-600 text-white rounded-full p-1">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-                    <div className="text-5xl mb-4">🎄</div>
-                    <h3 className="text-xl font-bold text-white mb-2">Christmas</h3>
-                    <p className="text-sm text-gray-300">Festive red and green holiday theme</p>
-                  </div>
-
-                  {/* Birthday Theme */}
-                  <div
-                    onClick={() => handleThemeChange("birthday")}
-                    className={`relative bg-slate-800/70 backdrop-blur-sm border-2 rounded-lg p-6 cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${
-                      currentTheme === "birthday"
-                        ? "border-pink-500 ring-2 ring-pink-500/30"
-                        : "border-slate-700/50 hover:border-pink-500/50"
-                    }`}
-                  >
-                    {currentTheme === "birthday" && (
-                      <div className="absolute top-3 right-3 bg-pink-500 text-white rounded-full p-1">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-                    <div className="text-5xl mb-4">🎂</div>
-                    <h3 className="text-xl font-bold text-white mb-2">Birthday</h3>
-                    <p className="text-sm text-gray-300">Colorful and celebratory theme</p>
-                  </div>
-
-                  {/* New Year Theme */}
-                  <div
-                    onClick={() => handleThemeChange("newyear")}
-                    className={`relative bg-slate-800/70 backdrop-blur-sm border-2 rounded-lg p-6 cursor-pointer transition-all hover:shadow-lg hover:scale-105 ${
-                      currentTheme === "newyear"
-                        ? "border-blue-500 ring-2 ring-blue-500/30"
-                        : "border-slate-700/50 hover:border-blue-500/50"
-                    }`}
-                  >
-                    {currentTheme === "newyear" && (
-                      <div className="absolute top-3 right-3 bg-blue-600 text-white rounded-full p-1">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-                    <div className="text-5xl mb-4">🎆</div>
-                    <h3 className="text-xl font-bold text-white mb-2">New Year</h3>
-                    <p className="text-sm text-gray-300">Elegant gold and blue celebration theme</p>
-                  </div>
-                </div>
-
-                {savingTheme && (
-                  <div className="mt-6 text-center">
-                    <div className="inline-flex items-center space-x-2 text-indigo-600">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
-                      <span>Updating theme...</span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-start">
-                    <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                    <div>
-                      <h4 className="text-sm font-semibold text-blue-900 mb-1">Theme Change Notice</h4>
-                      <p className="text-sm text-blue-800">
-                        Changing the theme will affect all users immediately. Users will see the new theme on their next page load or refresh.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Favicon Uploader */}
-                <div className="mt-12">
+                <div>
                   <h2 className="text-2xl font-bold text-white mb-6">Website Favicon</h2>
                   <p className="text-gray-300 mb-6">Upload a custom favicon for your website. This will appear in browser tabs and bookmarks.</p>
                   
@@ -1102,133 +858,6 @@ export default function StaffDashboardPage() {
                         >
                           View
                         </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Theme Animation Image Uploader */}
-                <div className="mt-12">
-                  <h2 className="text-2xl font-bold text-white mb-6">Theme Animation Images</h2>
-                  <p className="text-gray-300 mb-6">Upload custom animated GIFs, PNG, or WebP images for Halloween and Christmas themes. These will appear as flying animations across the screen.</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Halloween Bat Image */}
-                    <div 
-                      className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6 hover:border-orange-500/50 transition-colors"
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, 'bat')}
-                    >
-                      <div className="flex items-center mb-4">
-                        <span className="text-2xl mr-3">🎃</span>
-                        <h3 className="text-lg font-semibold text-white">Halloween Bat Animation</h3>
-                      </div>
-                      <p className="text-gray-300 text-sm mb-4">
-                        Upload a small animated GIF, PNG, or WebP of a flying bat (recommended: 25x25px, transparent background)
-                      </p>
-                      <div className="space-y-4">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center">
-                            <Image src={batGifUrl} alt="Current bat" width={32} height={32} className="w-8 h-8" unoptimized />
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-300">Current: bat image</p>
-                            <p className="text-xs text-gray-400">15 bats flying at 2x speed</p>
-                          </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <input
-                            type="file"
-                            accept=".gif,.png,.webp"
-                            className="hidden"
-                            id="bat-upload"
-                            onChange={(e) => handleFileInput(e, 'bat')}
-                          />
-                          <label
-                            htmlFor="bat-upload"
-                            className="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg cursor-pointer text-center text-sm font-medium transition"
-                          >
-                            Upload New Bat Image
-                          </label>
-                          <button
-                            onClick={() => window.open(batGifUrl, '_blank')}
-                            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition"
-                          >
-                            View Current
-                          </button>
-                        </div>
-                        <div className="text-xs text-gray-400 text-center">
-                          Or drag and drop an image here
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Christmas Snowflake Image */}
-                    <div 
-                      className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6 hover:border-blue-500/50 transition-colors"
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, 'snowflake')}
-                    >
-                      <div className="flex items-center mb-4">
-                        <span className="text-2xl mr-3">❄️</span>
-                        <h3 className="text-lg font-semibold text-white">Christmas Snowflake Animation</h3>
-                      </div>
-                      <p className="text-gray-300 text-sm mb-4">
-                        Upload a small animated GIF, PNG, or WebP of a falling snowflake (recommended: 20x20px, transparent background)
-                      </p>
-                      <div className="space-y-4">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
-                            <Image src={snowflakeGifUrl} alt="Current snowflake" width={32} height={32} className="w-8 h-8" unoptimized />
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-300">Current: snowflake image</p>
-                            <p className="text-xs text-gray-400">25 snowflakes falling at 1.5x speed</p>
-                          </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <input
-                            type="file"
-                            accept=".gif,.png,.webp"
-                            className="hidden"
-                            id="snowflake-upload"
-                            onChange={(e) => handleFileInput(e, 'snowflake')}
-                          />
-                          <label
-                            htmlFor="snowflake-upload"
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer text-center text-sm font-medium transition"
-                          >
-                            Upload New Snowflake Image
-                          </label>
-                          <button
-                            onClick={() => window.open(snowflakeGifUrl, '_blank')}
-                            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition"
-                          >
-                            View Current
-                          </button>
-                        </div>
-                        <div className="text-xs text-gray-400 text-center">
-                          Or drag and drop an image here
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="flex items-start">
-                      <svg className="w-5 h-5 text-yellow-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      <div>
-                        <h4 className="text-sm font-semibold text-yellow-900 mb-1">Image Upload Guidelines</h4>
-                        <ul className="text-sm text-yellow-800 space-y-1">
-                          <li>• Keep images small (under 200KB) for better performance</li>
-                          <li>• Use transparent backgrounds for best visual effect</li>
-                          <li>• Recommended sizes: 20-30px for optimal performance</li>
-                          <li>• Supports GIF, PNG, and WebP formats</li>
-                          <li>• Drag and drop images directly onto the upload areas</li>
-                          <li>• Consider creating new images each year for variety</li>
-                        </ul>
                       </div>
                     </div>
                   </div>

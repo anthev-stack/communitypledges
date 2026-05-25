@@ -30,7 +30,7 @@ A modern web application for community commitments and pledges built with Next.j
 - **Framework:** Next.js 15 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
-- **Database:** SQLite (via Prisma ORM)
+- **Database:** PostgreSQL (via Prisma ORM)
 - **Authentication:** NextAuth.js
 - **OAuth Provider:** Discord
 - **Bot Prevention:** hCaptcha
@@ -59,7 +59,7 @@ A modern web application for community commitments and pledges built with Next.j
    Create a `.env` file in the root directory:
    ```env
    # Database
-   DATABASE_URL="file:./dev.db"
+   DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require"
 
    # NextAuth
    NEXTAUTH_SECRET="your-secret-key-change-this-in-production"
@@ -144,7 +144,7 @@ community-pledges/
 
 ## Database Schema
 
-The application uses SQLite with Prisma ORM. Key models:
+The application uses PostgreSQL with Prisma ORM. Key models:
 
 - **User** - User accounts with email, password, profile info
 - **Account** - OAuth account connections

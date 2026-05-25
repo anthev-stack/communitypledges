@@ -23,7 +23,7 @@
     "gamedig": "^5.3.2",
     "lucide-react": "^0.468.0",
     "minecraft-server-util": "^5.4.4",
-    "next": "15.5.4",
+    "next": "15.5.18",
     "next-auth": "^4.24.11",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -37,7 +37,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9.37.0",
-    "eslint-config-next": "^15.5.4",
+    "eslint-config-next": "^15.5.18",
     "prisma": "^6.17.0",
     "tailwindcss": "^4",
     "typescript": "^5"

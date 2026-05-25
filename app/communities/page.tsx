@@ -6,6 +6,7 @@ import Image from "next/image"
 import { REGIONS } from "@/lib/game-tags"
 import { COMMUNITY_TAGS } from "@/lib/community-tags"
 import { SUPPORTED_GAMES } from "@/lib/supported-games"
+import MarketingListingLayout from "@/components/marketing/MarketingListingLayout"
 
 interface Community {
   id: string
@@ -151,28 +152,24 @@ export default function CommunitiesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading communities...</p>
+      <MarketingListingLayout
+        title="Communities"
+        subtitle="Discover new communities, make new friends and find your haven!"
+      >
+        <div className="listing-loading text-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400 mx-auto mb-4"></div>
+          <p>Loading communities...</p>
         </div>
-      </div>
+      </MarketingListingLayout>
     )
   }
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Communities</h1>
-          <p className="text-gray-600">
-            Discover new communities, make new friends and find your haven!
-          </p>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-xl shadow-lg p-6 mb-6">
+    <MarketingListingLayout
+      title="Communities"
+      subtitle="Discover new communities, make new friends and find your haven!"
+    >
+        <div className="marketing-filters">
           {/* Search Bar and Filters Button */}
           <div className="flex gap-3 mb-4">
             <div className="flex-1 relative">
@@ -281,8 +278,8 @@ export default function CommunitiesPage() {
                         onClick={() => toggleTag(tag)}
                         className={`px-3 py-1 rounded-full text-sm font-medium transition ${
                           selectedTags.includes(tag)
-                            ? "bg-indigo-600 text-white"
-                            : "bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-600"
+                            ? "tag-pill--active"
+                            : "tag-pill--idle"
                         }`}
                       >
                         {tag}
@@ -323,9 +320,9 @@ export default function CommunitiesPage() {
 
         {/* Communities Grid */}
         {filteredCommunities.length === 0 ? (
-          <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-12 text-center">
-            <p className="text-gray-500 text-lg mb-4">No communities found</p>
-            <p className="text-gray-400">Try adjusting your filters</p>
+          <div className="listing-empty p-12 text-center">
+            <p className="text-lg mb-4">No communities found</p>
+            <p>Try adjusting your filters</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -333,7 +330,7 @@ export default function CommunitiesPage() {
               <Link
                 key={community.id}
                 href={`/communities/${community.id}`}
-                className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                className="listing-card overflow-hidden transition-shadow block"
               >
                 {/* Banner or Image */}
                 <div className="relative w-full bg-gradient-to-r from-indigo-500 to-purple-600" style={{ aspectRatio: '500/100' }}>
@@ -450,8 +447,7 @@ export default function CommunitiesPage() {
             ))}
           </div>
         )}
-      </div>
-    </div>
+    </MarketingListingLayout>
   )
 }
 

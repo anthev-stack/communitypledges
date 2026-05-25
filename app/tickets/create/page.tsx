@@ -3,56 +3,41 @@
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import MarketingTicketsLayout from "@/components/marketing/MarketingTicketsLayout"
 
 const CATEGORIES = [
   {
     value: "bug_report",
     label: "Bug Report",
-    description: "Report a bug or technical issue"
+    description: "Report a bug or technical issue",
   },
   {
     value: "feature_request",
     label: "Feature Request",
-    description: "Suggest a new feature or improvement"
+    description: "Suggest a new feature or improvement",
   },
   {
     value: "support",
     label: "Support",
-    description: "Get help with using the platform"
+    description: "Get help with using the platform",
   },
   {
     value: "report_user_server",
     label: "Report User/Server",
-    description: "Report inappropriate content or behavior"
+    description: "Report inappropriate content or behavior",
   },
   {
     value: "other",
     label: "Other",
-    description: "Something else not covered above"
-  }
+    description: "Something else not covered above",
+  },
 ]
 
 const PRIORITIES = [
-  {
-    value: "low",
-    label: "Low",
-    description: "Not urgent, can wait"
-  },
-  {
-    value: "medium",
-    label: "Medium",
-    description: "Normal priority"
-  },
-  {
-    value: "high",
-    label: "High",
-    description: "Important, needs attention soon"
-  },
-  {
-    value: "urgent",
-    label: "Urgent",
-    description: "Critical issue, needs immediate attention"
-  }
+  { value: "low", label: "Low", description: "Not urgent, can wait" },
+  { value: "medium", label: "Medium", description: "Normal priority" },
+  { value: "high", label: "High", description: "Important, needs attention soon" },
+  { value: "urgent", label: "Urgent", description: "Critical issue, needs immediate attention" },
 ]
 
 export default function CreateTicketPage() {
@@ -63,17 +48,21 @@ export default function CreateTicketPage() {
     title: "",
     category: "",
     priority: "",
-    description: ""
+    description: "",
   })
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <MarketingTicketsLayout
+        title="Create Support Ticket"
+        subtitle="Need help? Report a bug? Have a suggestion? We're here to help."
+        backHref="/tickets"
+      >
+        <div className="listing-loading text-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400 mx-auto"></div>
+          <p className="mt-4">Loading...</p>
         </div>
-      </div>
+      </MarketingTicketsLayout>
     )
   }
 
@@ -84,10 +73,7 @@ export default function CreateTicketPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,9 +83,7 @@ export default function CreateTicketPage() {
     try {
       const response = await fetch("/api/tickets", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       })
 
@@ -119,138 +103,122 @@ export default function CreateTicketPage() {
   }
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-3xl mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Support Ticket</h1>
-          <p className="text-gray-600">
-            Need help? Report a bug? Have a suggestion? We&apos;re here to help!
-          </p>
+    <MarketingTicketsLayout
+      title="Create Support Ticket"
+      subtitle="Need help? Report a bug? Have a suggestion? We're here to help."
+      backHref="/tickets"
+    >
+      <form onSubmit={handleSubmit} className="listing-card p-6 md:p-8 max-w-3xl mx-auto space-y-6">
+        <div>
+          <label htmlFor="title" className="block text-sm font-medium mb-2">
+            Title *
+          </label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            required
+            placeholder="Brief description of your issue or request"
+            className="w-full px-4 py-3 rounded-lg"
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-8">
-          {/* Title */}
-          <div className="mb-6">
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-              Title *
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-              placeholder="Brief description of your issue or request"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            />
-          </div>
+        <div>
+          <label htmlFor="category" className="block text-sm font-medium mb-2">
+            Category *
+          </label>
+          <select
+            id="category"
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-3 rounded-lg"
+          >
+            <option value="">Select a category</option>
+            {CATEGORIES.map((category) => (
+              <option key={category.value} value={category.value}>
+                {category.label} — {category.description}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          {/* Category */}
-          <div className="mb-6">
-            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-              Category *
-            </label>
-            <select
-              id="category"
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            >
-              <option value="">Select a category</option>
-              {CATEGORIES.map((category) => (
-                <option key={category.value} value={category.value}>
-                  {category.label} - {category.description}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label htmlFor="priority" className="block text-sm font-medium mb-2">
+            Priority *
+          </label>
+          <select
+            id="priority"
+            name="priority"
+            value={formData.priority}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-3 rounded-lg"
+          >
+            <option value="">Select priority</option>
+            {PRIORITIES.map((priority) => (
+              <option key={priority.value} value={priority.value}>
+                {priority.label} — {priority.description}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          {/* Priority */}
-          <div className="mb-6">
-            <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-2">
-              Priority *
-            </label>
-            <select
-              id="priority"
-              name="priority"
-              value={formData.priority}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            >
-              <option value="">Select priority</option>
-              {PRIORITIES.map((priority) => (
-                <option key={priority.value} value={priority.value}>
-                  {priority.label} - {priority.description}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium mb-2">
+            Description *
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            required
+            rows={8}
+            maxLength={1000}
+            placeholder="Please provide as much detail as possible about your issue or request..."
+            className="w-full px-4 py-3 rounded-lg resize-none"
+          />
+          <p className="text-sm text-gray-400 mt-2">{formData.description.length}/1000 characters</p>
+        </div>
 
-          {/* Description */}
-          <div className="mb-8">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-              Description *
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              required
-              rows={8}
-              maxLength={1000}
-              placeholder="Please provide as much detail as possible about your issue or request..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-            />
-            <div className="flex justify-between items-center mt-2">
-              <p className="text-sm text-gray-500">
-                {formData.description.length}/1000 characters
-              </p>
-            </div>
-          </div>
+        <div className="rounded-lg border border-white/10 p-4 text-sm text-gray-400">
+          <p className="font-medium text-gray-300 mb-2">Tips for getting help faster</p>
+          <ul className="space-y-1 list-disc list-inside">
+            <li>Be specific about what you&apos;re experiencing</li>
+            <li>Include steps to reproduce the issue (for bugs)</li>
+            <li>Mention your browser and device if relevant</li>
+            <li>Attach screenshots if helpful</li>
+          </ul>
+        </div>
 
-          {/* Tips */}
-          <div className="mb-8 p-4 bg-blue-50 rounded-lg">
-            <h3 className="text-sm font-medium text-blue-900 mb-2">Tips for getting help faster:</h3>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Be specific about what you&apos;re experiencing</li>
-              <li>• Include steps to reproduce the issue (for bugs)</li>
-              <li>• Mention your browser and device if relevant</li>
-              <li>• Attach screenshots if helpful</li>
-            </ul>
-          </div>
-
-          {/* Buttons */}
-          <div className="flex justify-end space-x-4">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Creating...
-                </>
-              ) : (
-                "Create Ticket"
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex flex-wrap justify-end gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-6 py-2.5 rounded-lg border border-white/15 text-gray-300 hover:bg-white/5 transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary px-6 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+          >
+            {loading ? (
+              <>
+                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" aria-hidden />
+                Creating...
+              </>
+            ) : (
+              "Create Ticket"
+            )}
+          </button>
+        </div>
+      </form>
+    </MarketingTicketsLayout>
   )
 }
-

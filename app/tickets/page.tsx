@@ -4,6 +4,8 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import MarketingTicketsLayout from "@/components/marketing/MarketingTicketsLayout"
+import { getTicketPriorityClass, getTicketStatusClass } from "@/lib/ticket-styles"
 
 interface Ticket {
   id: string
@@ -92,26 +94,6 @@ export default function TicketsPage() {
     return STATUSES.find(s => s.value === status)?.label || status
   }
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "urgent": return "bg-red-100 text-red-800"
-      case "high": return "bg-orange-100 text-orange-800"
-      case "medium": return "bg-yellow-100 text-yellow-800"
-      case "low": return "bg-green-100 text-green-800"
-      default: return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "open": return "bg-blue-100 text-blue-800"
-      case "in_progress": return "bg-purple-100 text-purple-800"
-      case "resolved": return "bg-green-100 text-green-800"
-      case "closed": return "bg-gray-100 text-gray-800"
-      default: return "bg-gray-100 text-gray-800"
-    }
-  }
-
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          ticket.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -128,164 +110,138 @@ export default function TicketsPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <MarketingTicketsLayout title="Support Tickets" subtitle="Manage your support requests and get help from our team">
+        <div className="listing-loading text-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400 mx-auto"></div>
+          <p className="mt-4">Loading...</p>
         </div>
-      </div>
+      </MarketingTicketsLayout>
     )
   }
 
+  const newTicketButton = (
+    <Link href="/tickets/create" className="btn-primary px-5 py-2.5 text-sm inline-flex items-center">
+      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+      </svg>
+      New Ticket
+    </Link>
+  )
+
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Support Tickets</h1>
-          <Link
-            href="/tickets/create"
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition flex items-center"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            New Ticket
-          </Link>
-        </div>
-
-        <div className="mb-6">
-          <p className="text-gray-600">Manage your support requests and get help from our team</p>
-        </div>
-
-        {/* Filters */}
-        <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <svg className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search tickets..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                />
-              </div>
+    <MarketingTicketsLayout
+      title="Support Tickets"
+      subtitle="Manage your support requests and get help from our team"
+      action={newTicketButton}
+    >
+      <div className="listing-card p-6 md:p-8 space-y-6">
+        <div className="marketing-filters">
+          <div className="flex flex-col lg:flex-row gap-3">
+            <div className="flex-1 relative">
+              <svg className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search tickets..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg"
+              />
             </div>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-2">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="px-4 py-2.5 rounded-lg min-w-[140px]"
               >
                 <option value="all">All Status</option>
-                {STATUSES.map(status => (
-                  <option key={status.value} value={status.value}>
-                    {status.label}
+                {STATUSES.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
                   </option>
                 ))}
               </select>
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="px-4 py-2.5 rounded-lg min-w-[140px]"
               >
                 <option value="all">All Priorities</option>
-                {PRIORITIES.map(priority => (
-                  <option key={priority.value} value={priority.value}>
-                    {priority.label}
+                {PRIORITIES.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
                   </option>
                 ))}
               </select>
               <button
+                type="button"
                 onClick={clearFilters}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 flex items-center"
+                className="px-4 py-2.5 text-sm text-gray-400 hover:text-white transition"
               >
-                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
-                </svg>
-                Clear Filters
+                Clear filters
               </button>
             </div>
           </div>
         </div>
 
-        {/* Tickets List */}
-        <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg">
-          {loading ? (
-            <div className="p-12 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading tickets...</p>
-            </div>
-          ) : filteredTickets.length === 0 ? (
-            <div className="p-12 text-center">
-              <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No tickets found</h3>
-              <p className="text-gray-600 mb-6">You haven&apos;t created any support tickets yet.</p>
-              <Link
-                href="/tickets/create"
-                className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition inline-flex items-center"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Create Your First Ticket
-              </Link>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-200">
-              {filteredTickets.map((ticket) => (
-                <div key={ticket.id} className="p-6 hover:bg-gray-50 transition">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <Link
-                          href={`/tickets/${ticket.id}`}
-                          className="text-lg font-semibold text-gray-900 hover:text-indigo-600 transition"
-                        >
-                          {ticket.title}
-                        </Link>
-                        <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(ticket.status)}`}>
-                          {getStatusLabel(ticket.status)}
-                        </span>
-                        <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(ticket.priority)}`}>
-                          {getPriorityLabel(ticket.priority)}
-                        </span>
-                      </div>
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                        {ticket.description}
-                      </p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>Category: {getCategoryLabel(ticket.category)}</span>
-                        <span>Created: {new Date(ticket.createdAt).toLocaleDateString()}</span>
-                        <span>Updated: {new Date(ticket.updatedAt).toLocaleDateString()}</span>
-                        {ticket.responses.length > 0 && (
-                          <span className="text-indigo-600">
-                            {ticket.responses.length} response{ticket.responses.length !== 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="ml-4">
+        {loading ? (
+          <div className="listing-loading text-center py-12">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-400 mx-auto mb-4"></div>
+            <p>Loading tickets...</p>
+          </div>
+        ) : filteredTickets.length === 0 ? (
+          <div className="listing-empty text-center py-12">
+            <h3 className="text-lg font-semibold mb-2">No tickets found</h3>
+            <p className="mb-6">You haven&apos;t created any support tickets yet.</p>
+            <Link href="/tickets/create" className="btn-primary px-6 py-2.5 text-sm inline-flex items-center">
+              Create your first ticket
+            </Link>
+          </div>
+        ) : (
+          <div className="divide-y divide-white/10">
+            {filteredTickets.map((ticket) => (
+              <div key={ticket.id} className="py-4 first:pt-0 last:pb-0 hover:bg-white/5 -mx-2 px-2 rounded-lg transition">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
                       <Link
                         href={`/tickets/${ticket.id}`}
-                        className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+                        className="text-base font-semibold text-white hover:text-[#949cf7] transition"
                       >
-                        View →
+                        {ticket.title}
                       </Link>
+                      <span className={getTicketStatusClass(ticket.status)}>
+                        {getStatusLabel(ticket.status)}
+                      </span>
+                      <span className={getTicketPriorityClass(ticket.priority)}>
+                        {getPriorityLabel(ticket.priority)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-400 mb-2 line-clamp-2">{ticket.description}</p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                      <span>{getCategoryLabel(ticket.category)}</span>
+                      <span>Created {new Date(ticket.createdAt).toLocaleDateString()}</span>
+                      {ticket.responses.length > 0 && (
+                        <span className="text-[#949cf7]">
+                          {ticket.responses.length} response{ticket.responses.length !== 1 ? "s" : ""}
+                        </span>
+                      )}
                     </div>
                   </div>
+                  <Link
+                    href={`/tickets/${ticket.id}`}
+                    className="text-sm text-[#949cf7] hover:text-[#c9cdfb] shrink-0"
+                  >
+                    View →
+                  </Link>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-    </div>
+    </MarketingTicketsLayout>
   )
 }
 

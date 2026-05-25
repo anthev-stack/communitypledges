@@ -8,6 +8,7 @@ import Link from "next/link"
 import { SUPPORTED_COUNTRIES } from "@/lib/countries"
 import AddPaymentMethodModal from "@/components/AddPaymentMethodModal"
 import { User, MapPin, CreditCard, Mail, Shield, Upload, Eye, EyeOff } from 'lucide-react'
+import MarketingSettingsLayout from "@/components/marketing/MarketingSettingsLayout"
 
 export default function SettingsPage() {
   const { data: session, update } = useSession()
@@ -494,36 +495,24 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg">
-          <div className="px-6 py-4 border-b border-slate-700/50">
-            <h1 className="text-2xl font-bold text-white">Profile Settings</h1>
-            <p className="text-sm text-gray-400 mt-1">
-              Manage your account settings and profile information
-            </p>
-          </div>
-
-          <div className="p-6">
+    <MarketingSettingsLayout>
             {/* Success/Error Messages */}
             {message && (
-              <div className="mb-6 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg">
+              <div className="mb-6 settings-alert--success px-4 py-3 rounded-lg">
                 {message}
               </div>
             )}
 
             {error && (
-              <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+              <div className="mb-6 settings-alert--error px-4 py-3 rounded-lg">
                 {error}
               </div>
             )}
 
-            {/* Two Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {/* Left Column */}
-              <div className="space-y-6">
-                {/* Profile Picture Section */}
-                <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700/50">
+            <div className="listing-card p-6 md:p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-8">
+                <section>
                   <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
                     <User className="w-5 h-5 mr-2 text-indigo-400" />
                     Profile Picture
@@ -588,10 +577,9 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </section>
 
-                {/* Account Information */}
-                <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700/50">
+                <section>
                   <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
                     <User className="w-5 h-5 mr-2 text-indigo-400" />
                     Account Information
@@ -638,13 +626,11 @@ export default function SettingsPage() {
                       </button>
                     </div>
                   </form>
-                </div>
+                </section>
               </div>
 
-              {/* Right Column */}
-              <div className="space-y-6">
-                {/* Country Selection */}
-                <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700/50">
+              <div className="space-y-8">
+                <section>
                   <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
                     <MapPin className="w-5 h-5 mr-2 text-indigo-400" />
                     Country/Region
@@ -698,10 +684,9 @@ export default function SettingsPage() {
                       </div>
                     )}
                   </div>
-                </div>
+                </section>
 
-                {/* Account Details */}
-                <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700/50">
+                <section>
                   <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
                     <Shield className="w-5 h-5 mr-2 text-indigo-400" />
                     Account Details
@@ -727,13 +712,76 @@ export default function SettingsPage() {
                       </dd>
                     </div>
                   </dl>
-                </div>
+                </section>
               </div>
             </div>
 
-            {/* Full Width Sections */}
-            {/* Payout Method (Stripe Connect) */}
-            <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700/50 mb-6">
+            <section className="settings-panel-divider">
+              <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <CreditCard className="w-5 h-5 mr-2 text-indigo-400" />
+                Payment Method
+              </h2>
+
+              {loadingPaymentMethods ? (
+                <div className="flex items-center space-x-2 text-gray-400">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500"></div>
+                  <span className="text-sm">Loading payment method...</span>
+                </div>
+              ) : paymentMethods.length === 0 ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-400">
+                    <strong className="text-white">No payment method saved.</strong> Add a card for quick donations and monthly pledges to servers.
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Card details are stored securely by Stripe — we never see or store your card information.
+                  </p>
+                  <button
+                    onClick={() => setShowAddPaymentModal(true)}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition inline-flex items-center"
+                  >
+                    Add Payment Method
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs text-gray-500">
+                    Saved for quick donations and monthly pledges. Stored securely by Stripe.
+                  </p>
+                  <div className="divide-y divide-white/10 rounded-lg border border-white/10">
+                    {paymentMethods.map((pm) => (
+                      <div
+                        key={pm.id}
+                        className="flex items-center justify-between gap-3 px-3 py-2.5"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm text-white capitalize truncate">
+                            {pm.brand} •••• {pm.last4}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Expires {pm.expMonth}/{pm.expYear}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleDeletePaymentMethod(pm.id)}
+                          disabled={deletingPaymentMethod === pm.id}
+                          className="text-red-400 hover:text-red-300 text-xs font-medium shrink-0 disabled:opacity-50"
+                        >
+                          {deletingPaymentMethod === pm.id ? "Removing..." : "Remove"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setShowAddPaymentModal(true)}
+                    className="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition"
+                  >
+                    + Add another card
+                  </button>
+                </div>
+              )}
+            </section>
+
+            <section className="settings-panel-divider">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
                   <div className="flex items-center">
                     <CreditCard className="w-5 h-5 mr-2 text-indigo-400" />
@@ -788,87 +836,61 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 ) : stripeStatus?.connected && !stripeStatus?.onboardingComplete ? (
-                  <div className="bg-orange-900/30 border border-orange-700/50 rounded-lg p-4">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0">
-                        <svg className="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div className="ml-3 flex-1">
-                        <h3 className="text-sm font-medium text-orange-300">Payout Setup Incomplete</h3>
-                        <div className="mt-2 text-sm text-gray-300">
-                          <p className="mb-3">
-                            Your Stripe account is connected but the setup is not complete. This might happen if you didn&apos;t follow the setup guide correctly or closed the setup window early.
-                          </p>
-                          <p className="text-gray-400 text-xs mb-3">
-                            You can either continue the setup or remove this connection and start fresh.
-                          </p>
-                        </div>
-                        <div className="flex gap-3">
-                          <button
-                            onClick={handleConnectStripeClick}
-                            disabled={connectingStripe || removingStripe}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {connectingStripe ? "Loading..." : "Continue Setup"}
-                          </button>
-                          <button
-                            onClick={handleRemoveStripe}
-                            disabled={removingStripe || connectingStripe}
-                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {removingStripe ? "Removing..." : "Remove & Start Over"}
-                          </button>
-                        </div>
-                      </div>
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-white">Payout Setup Incomplete</h3>
+                    <div className="text-sm text-gray-400 space-y-2">
+                      <p>
+                        Your Stripe account is connected but the setup is not complete. This might happen if you didn&apos;t follow the setup guide correctly or closed the setup window early.
+                      </p>
+                      <p className="text-xs">
+                        You can either continue the setup or remove this connection and start fresh.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={handleConnectStripeClick}
+                        disabled={connectingStripe || removingStripe}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {connectingStripe ? "Loading..." : "Continue Setup"}
+                      </button>
+                      <button
+                        onClick={handleRemoveStripe}
+                        disabled={removingStripe || connectingStripe}
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {removingStripe ? "Removing..." : "Remove & Start Over"}
+                      </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-4">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0">
-                        <svg className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                      </div>
-                      <div className="ml-3 flex-1">
-                        <h3 className="text-sm font-medium text-yellow-300">Payout Method Required</h3>
-                        <div className="mt-2 text-sm text-gray-300">
-                          <p className="mb-3">
-                            You need to connect a payout method before you can create a server and receive donations.
-                          </p>
-                          <p className="mb-2 font-medium text-gray-200">What you&apos;ll need:</p>
-                          <ul className="list-disc list-inside space-y-1 mb-4 text-gray-400">
-                            <li>Bank account information</li>
-                            <li>Personal identification (for verification)</li>
-                            <li>Tax information (for compliance)</li>
-                          </ul>
-                          <p className="text-xs text-gray-400">
-                            <strong>Note:</strong> You don&apos;t need a business account! Stripe Connect Express allows you to receive donations as an individual.
-                          </p>
-                        </div>
-                        <button
-                          onClick={handleConnectStripeClick}
-                          disabled={connectingStripe}
-                          className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                        >
-                          {connectingStripe ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                              Connecting...
-                            </>
-                          ) : (
-                            <>
-                              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.594-7.305h.003z"/>
-                              </svg>
-                              Connect Stripe Account
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-400">
+                      <strong className="text-white">Payout method required.</strong> Connect Stripe before you can create a server and receive donations.
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      You&apos;ll need bank account details, ID verification, and tax info.{" "}
+                      <strong className="text-gray-400">No business account required</strong> — individuals can use Stripe Connect Express.
+                    </p>
+                    <button
+                      onClick={handleConnectStripeClick}
+                      disabled={connectingStripe}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                    >
+                      {connectingStripe ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Connecting...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                            <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.594-7.305h.003z"/>
+                          </svg>
+                          Connect Stripe Account
+                        </>
+                      )}
+                    </button>
                   </div>
                 )}
 
@@ -877,92 +899,9 @@ export default function SettingsPage() {
                     <strong>Powered by Stripe Connect.</strong> Stripe is a secure payment platform trusted by millions. Your financial information is safe and protected.
                   </p>
                 </div>
-              </div>
+            </section>
 
-            {/* Payment Methods */}
-            <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700/50 mb-6">
-              <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <CreditCard className="w-5 h-5 mr-2 text-indigo-400" />
-                Payment Methods
-              </h2>
-              <p className="text-sm text-gray-400 mb-4">
-                Save a payment method for quick and easy donations. Perfect for monthly pledges to your favorite servers.
-              </p>
-
-              {loadingPaymentMethods ? (
-                <div className="flex items-center space-x-2 text-gray-400">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500"></div>
-                  <span className="text-sm">Loading payment methods...</span>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {paymentMethods.length === 0 ? (
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 text-center">
-                      <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                      </svg>
-                      <p className="text-sm text-gray-400 mb-3">No payment methods saved</p>
-                      <button
-                        onClick={() => setShowAddPaymentModal(true)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition"
-                      >
-                        Add Payment Method
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="space-y-3">
-                        {paymentMethods.map((pm) => (
-                          <div
-                            key={pm.id}
-                            className="flex items-center justify-between border border-slate-700 rounded-lg p-4 bg-slate-800/50"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-indigo-600/20 rounded flex items-center justify-center">
-                                <svg className="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                </svg>
-                              </div>
-                              <div>
-                                <p className="font-semibold text-white capitalize">
-                                  {pm.brand} •••• {pm.last4}
-                                </p>
-                                <p className="text-sm text-gray-400">
-                                  Expires {pm.expMonth}/{pm.expYear}
-                                </p>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => handleDeletePaymentMethod(pm.id)}
-                              disabled={deletingPaymentMethod === pm.id}
-                              className="text-red-400 hover:text-red-300 text-sm font-medium disabled:opacity-50"
-                            >
-                              {deletingPaymentMethod === pm.id ? "Removing..." : "Remove"}
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-
-                      <button
-                        onClick={() => setShowAddPaymentModal(true)}
-                        className="w-full border-2 border-dashed border-slate-600 rounded-lg p-4 text-gray-400 hover:border-indigo-500 hover:text-indigo-400 transition"
-                      >
-                        + Add Another Card
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-
-              <div className="mt-4 bg-blue-900/30 border border-blue-700/50 rounded-lg p-3">
-                <p className="text-xs text-blue-300">
-                  <strong>💳 Secure Storage:</strong> Your card details are securely stored by Stripe. We never see or store your card information. You can use saved cards for quick donations and future monthly pledges.
-                </p>
-              </div>
-            </div>
-
-            {/* Email Preferences */}
-            <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700/50 mb-6">
+            <section className="settings-panel-divider">
               <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
                 <Mail className="w-5 h-5 mr-2 text-indigo-400" />
                 Email Notifications
@@ -978,7 +917,7 @@ export default function SettingsPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {[
                       {
                         key: 'paymentReminders',
@@ -1016,7 +955,7 @@ export default function SettingsPage() {
                         description: 'Notifications when pledges are removed or modified'
                       }
                     ].map((preference) => (
-                      <div key={preference.key} className="flex items-start space-x-3 p-4 border border-slate-700 rounded-lg hover:bg-slate-800/50 transition">
+                      <div key={preference.key} className="flex items-start space-x-3 p-3 border border-slate-700 rounded-lg hover:bg-slate-800/30 transition">
                         <div className="flex items-center h-5">
                           <input
                             id={preference.key}
@@ -1052,18 +991,10 @@ export default function SettingsPage() {
                   </div>
                 </div>
               )}
+            </section>
 
-              <div className="mt-4 bg-blue-900/30 border border-blue-700/50 rounded-lg p-3">
-                <p className="text-xs text-blue-300">
-                  <strong>📧 Email Delivery:</strong> All emails are sent from noreply@communitypledges.com. 
-                  If you&apos;re not receiving emails, check your spam folder and add our email to your contacts.
-                </p>
-              </div>
-            </div>
-
-            {/* Password Change - Only for Email/Password accounts */}
             {hasPassword && !isDiscordAccount && (
-              <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700/50">
+              <section className="settings-panel-divider">
                 <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
                   <Shield className="w-5 h-5 mr-2 text-indigo-400" />
                   Change Password
@@ -1146,18 +1077,10 @@ export default function SettingsPage() {
                     </button>
                   </div>
                 </form>
-
-                <div className="mt-4 bg-blue-900/30 border border-blue-700/50 rounded-lg p-3">
-                  <p className="text-xs text-blue-300">
-                    <strong>🔒 Security Tip:</strong> Use a strong, unique password that you don&apos;t use elsewhere. 
-                    Consider using a password manager to keep track of your passwords securely.
-                  </p>
-                </div>
-              </div>
+              </section>
             )}
-          </div>
-        </div>
-      </div>
+
+            </div>
 
       {/* Add Payment Method Modal */}
       <AddPaymentMethodModal
@@ -1305,7 +1228,7 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
-    </div>
+    </MarketingSettingsLayout>
   )
 }
 

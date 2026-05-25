@@ -1,1048 +1,1238 @@
 @import "tailwindcss";
 
-:root {
-  /* Dark theme as default */
-  --background: #1a1a2e;
-  --foreground: #ffffff;
-  
-  /* Theme colors - dark theme defaults */
-  --color-primary: #10b981;
-  --color-secondary: #059669;
-  --color-accent: #34d399;
-  --color-background: #1a1a2e;
-  --color-surface: #16213e;
-  --color-text: #ffffff;
-  --color-text-secondary: #cccccc;
-  
-  /* Parallax effects */
-  --stars-parallax: 0px;
+/* Discord client UI — dark default */
+:root,
+[data-theme="dark"] {
+  --color-primary: #5865f2;
+  --color-secondary: #4752c4;
+  --color-accent: #00a8fc;
+  --color-background: #313338;
+  --color-surface: #2b2d31;
+  --color-surface-elevated: #1e1f22;
+  --color-text: #f2f3f5;
+  --color-text-secondary: #b5bac1;
+  --color-border: #3f4147;
+  --color-nav: #2b2d31;
+  --color-focus: rgba(88, 101, 242, 0.25);
+  --color-hover: rgba(79, 84, 92, 0.4);
+  --background: #313338;
+  --foreground: #f2f3f5;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-noto-sans), var(--font-geist-sans), "Segoe UI", system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Dark Theme as Default */
-html, body {
-  background: linear-gradient(to bottom, #16213e 0%, #1a2342 30%, #1d2a47 60%, #1f3348 85%, #1a3d35 100%) !important;
-  color: #ffffff !important;
-  min-height: 100vh !important;
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: linear-gradient(to bottom, #16213e 0%, #1a2342 30%, #1d2a47 60%, #1f3348 85%, #1a3d35 100%) !important;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-noto-sans), var(--font-geist-sans), "Segoe UI", system-ui, sans-serif;
+  min-height: 100vh;
+  line-height: 1.375;
+  font-size: 16px;
+}
+
+main {
+  position: relative;
+}
+
+/* ——— Navigation ——— */
+.site-nav {
+  position: sticky;
+  top: 0;
+  background: rgba(30, 31, 34, 0.75) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ——— Buttons (Discord blurple) ——— */
+.btn-primary {
+  background: var(--color-primary) !important;
   color: #ffffff !important;
-  min-height: 100vh !important;
+  border: none !important;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background-color 0.17s ease;
 }
 
-body .bg-white {
-  background-color: #16213e !important;
+.btn-primary:hover {
+  background: var(--color-secondary) !important;
 }
 
-body .bg-gray-50,
-body .bg-gray-100 {
-  background-color: #16213e !important;
+.btn-secondary {
+  background: var(--color-surface-elevated) !important;
+  color: var(--color-text) !important;
+  border: none !important;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background-color 0.17s ease;
 }
 
-body .bg-gray-200 {
-  background-color: #1e2749 !important;
+.btn-secondary:hover {
+  background: var(--color-hover) !important;
 }
 
-body .text-gray-900,
-body .text-gray-800,
-body .text-gray-700 {
-  color: #ffffff !important;
+.label-badge {
+  background: rgba(88, 101, 242, 0.15) !important;
+  color: var(--color-primary) !important;
+  border: none !important;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
-body .text-gray-600 {
-  color: #cccccc !important;
+.page-hero {
+  background: var(--color-surface) !important;
+  border-bottom: none !important;
+  box-shadow: inset 0 -1px 0 var(--color-border);
 }
 
-body .text-gray-500,
-body .text-gray-400 {
-  color: #a0a0a0 !important;
+.surface-card {
+  background: var(--color-surface) !important;
+  border: none !important;
+  border-radius: 8px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 
-body .bg-indigo-600 {
-  background-color: #10b981 !important;
+/* ——— Nav links ——— */
+.nav-link {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 4px;
+  transition: background-color 0.17s ease, color 0.17s ease;
 }
 
-body .hover\:bg-indigo-700:hover {
-  background-color: #059669 !important;
+.nav-link:hover {
+  color: var(--color-text);
+  background: var(--color-hover);
+  text-shadow: none;
 }
 
-body .text-indigo-600 {
-  color: #10b981 !important;
-}
-
-body .border-indigo-600 {
-  border-color: #10b981 !important;
-}
-
-body .border-gray-200,
-body .border-gray-300 {
-  border-color: #1e2749 !important;
-}
-
-body .border-gray-400 {
-  border-color: #374151 !important;
-}
-
-/* Input styling for dark theme */
-body input[type="text"],
-body input[type="email"],
-body input[type="password"],
-body input[type="url"],
-body textarea,
-body select {
-  background-color: #16213e !important;
-  border-color: #1e2749 !important;
-  color: #ffffff !important;
-}
-
-body input::placeholder,
-body textarea::placeholder {
-  color: #a0a0a0 !important;
-}
-
-body input:focus,
-body textarea:focus,
-body select:focus {
-  border-color: #10b981 !important;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
-}
-
-/* Card styling */
-body .bg-white,
-body .shadow-sm,
-body .shadow {
-  background-color: #16213e !important;
-  border: 1px solid #1e2749 !important;
-}
-
-/* Navigation styling */
-body nav {
-  background-color: #1a1a2e !important;
-  border-bottom: 1px solid #1e2749 !important;
-}
-
-/* ===== HALLOWEEN THEME ===== */
-body.theme-halloween {
-  background: linear-gradient(to bottom, #16213e 0%, #1a1f3a 30%, #1f1e45 60%, #2a1f4a 85%, #4c1d95 100%) !important;
-  color: #ffffff !important;
-}
-
-body.theme-halloween .bg-white,
-body.theme-halloween .bg-gray-50,
-body.theme-halloween .bg-gray-100 {
-  background-color: #16213e !important;
-}
-
-body.theme-halloween .bg-gray-200 {
-  background-color: #1e2749 !important;
-}
-
-body.theme-halloween .text-gray-900,
-body.theme-halloween .text-gray-800,
-body.theme-halloween .text-gray-700 {
-  color: #ffffff !important;
-}
-
-body.theme-halloween .text-gray-600 {
-  color: #cccccc !important;
-}
-
-body.theme-halloween .text-gray-500,
-body.theme-halloween .text-gray-400 {
-  color: #a0a0a0 !important;
-}
-
-/* Halloween - Emerald to Purple */
-body.theme-halloween .bg-emerald-500,
-body.theme-halloween .bg-emerald-600,
-body.theme-halloween .bg-emerald-400,
-body.theme-halloween .bg-indigo-600 {
-  background-color: #a855f7 !important;
-}
-
-body.theme-halloween .bg-emerald-700,
-body.theme-halloween .bg-emerald-800,
-body.theme-halloween .bg-emerald-900,
-body.theme-halloween .hover\:bg-emerald-700:hover,
-body.theme-halloween .hover\:bg-indigo-700:hover {
-  background-color: #9333ea !important;
-}
-
-body.theme-halloween .text-emerald-600,
-body.theme-halloween .text-emerald-500,
-body.theme-halloween .text-emerald-400,
-body.theme-halloween .text-indigo-600 {
-  color: #a855f7 !important;
-}
-
-body.theme-halloween .text-emerald-100,
-body.theme-halloween .text-emerald-200 {
-  color: #e9d5ff !important;
-}
-
-body.theme-halloween .border-emerald-600,
-body.theme-halloween .border-emerald-500,
-body.theme-halloween .border-indigo-600 {
-  border-color: #a855f7 !important;
-}
-
-body.theme-halloween .border-emerald-500\/20 {
-  border-color: rgba(168, 85, 247, 0.2) !important;
-}
-
-body.theme-halloween .bg-emerald-500\/20 {
-  background-color: rgba(168, 85, 247, 0.2) !important;
-}
-
-body.theme-halloween .hover\:border-emerald-500:hover {
-  border-color: #a855f7 !important;
-}
-
-body.theme-halloween .hover\:text-emerald-400:hover {
-  color: #c084fc !important;
-}
-
-/* Ensure Lucide icons properly inherit currentColor in Halloween theme */
-body.theme-halloween .text-emerald-400 svg,
-body.theme-halloween .text-emerald-500 svg,
-body.theme-halloween .text-emerald-600 svg {
-  color: inherit !important;
-}
-
-body.theme-halloween .text-emerald-400 svg *,
-body.theme-halloween .text-emerald-500 svg *,
-body.theme-halloween .text-emerald-600 svg * {
-  stroke: currentColor !important;
-  fill: currentColor !important;
-}
-
-
-body.theme-halloween input:focus,
-body.theme-halloween textarea:focus,
-body.theme-halloween select:focus {
-  border-color: #a855f7 !important;
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1) !important;
-}
-
-body.theme-halloween .bg-slate-800\/50 {
-  background-color: rgba(22, 33, 62, 0.5) !important;
-}
-
-body.theme-halloween .border-slate-700\/50 {
-  border-color: rgba(30, 39, 73, 0.5) !important;
-}
-
-body.theme-halloween .border-gray-200,
-body.theme-halloween .border-gray-300 {
-  border-color: #1e2749 !important;
-}
-
-body.theme-halloween .border-gray-400 {
-  border-color: #374151 !important;
-}
-
-body.theme-halloween input[type="text"],
-body.theme-halloween input[type="email"],
-body.theme-halloween input[type="password"],
-body.theme-halloween input[type="url"],
-body.theme-halloween textarea,
-body.theme-halloween select {
-  background-color: #16213e !important;
-  border-color: #1e2749 !important;
-  color: #ffffff !important;
-}
-
-body.theme-halloween input::placeholder,
-body.theme-halloween textarea::placeholder {
-  color: #a0a0a0 !important;
-}
-
-body.theme-halloween .shadow-sm,
-body.theme-halloween .shadow {
-  border: 1px solid #1e2749 !important;
-}
-
-body.theme-halloween nav {
-  background-color: #1a1a2e !important;
-  border-bottom: 1px solid #1e2749 !important;
-}
-
-/* Halloween hero section - change emerald gradient to purple */
-body.theme-halloween .bg-gradient-to-br.from-emerald-600 {
-  background: linear-gradient(to bottom right, #a855f7, #9333ea, #7c3aed) !important;
-}
-
-body.theme-halloween .bg-emerald-400 {
-  background-color: #c084fc !important;
-}
-
-body.theme-halloween .text-emerald-900 {
-  color: #4c1d95 !important;
-}
-
-body.theme-halloween .text-emerald-100 {
-  color: #e9d5ff !important;
-}
-
-body.theme-halloween .text-emerald-600 {
-  color: #a855f7 !important;
-}
-
-body.theme-halloween .hover\:bg-emerald-50:hover {
-  background-color: #faf5ff !important;
-}
-
-body.theme-halloween .bg-emerald-900 {
-  background-color: #581c87 !important;
-}
-
-body.theme-halloween .hover\:bg-emerald-800:hover {
-  background-color: #6b21a8 !important;
-}
-
-/* Wave styling for all themes - add dark blue border and make it overlay */
-body svg path[fill="#191f3a"] {
-  stroke: #191f3a !important;
-  stroke-width: 3px !important;
-  stroke-linejoin: round !important;
-}
-
-/* New Year wave color - darker blue for better contrast */
-body.theme-newyear svg path[fill="#191f3a"] {
-  fill: #121d36 !important;
-  stroke: #121d36 !important;
-}
-
-/* Ensure New Year wave stroke matches fill color - only for wave elements */
-body.theme-newyear svg path[fill="#191f3a"] {
-  stroke: #121d36 !important;
-  stroke-width: 3px !important;
-  stroke-linejoin: round !important;
-}
-
-/* Halloween wave color - darker purple for better contrast */
-body.theme-halloween svg path[fill="#191f3a"] {
-  fill: #191f3a !important;
-  stroke: #191f3a !important;
-}
-
-/* Ensure Halloween wave stroke matches fill color - only for wave elements */
-body.theme-halloween svg path[fill="#191f3a"] {
-  stroke: #191f3a !important;
-  stroke-width: 3px !important;
-  stroke-linejoin: round !important;
-}
-
-/* Make the wave container slightly overlay the next section for all themes */
-body .absolute.bottom-0 {
-  margin-bottom: -3px !important;
-}
-
-/* Hero section button styling - Browse Servers uses theme accent color */
-body .bg-emerald-600 {
+/* ——— Legacy emerald → Discord ——— */
+.bg-emerald-600,
+.bg-emerald-500,
+.bg-emerald-700,
+.bg-indigo-600 {
   background-color: var(--color-primary) !important;
 }
 
-body .hover\:bg-emerald-700:hover {
+.hover\:bg-emerald-700:hover,
+.hover\:bg-emerald-600:hover,
+.hover\:bg-indigo-700:hover {
   background-color: var(--color-secondary) !important;
 }
 
-/* ===== CHRISTMAS THEME ===== */
-/* Christmas theme - Blue accents for cold winter feeling */
-body.theme-christmas .bg-emerald-500,
-body.theme-christmas .bg-emerald-600,
-body.theme-christmas .bg-emerald-400,
-body.theme-christmas .bg-indigo-600 {
-  background-color: #2563eb !important;
+.text-emerald-600,
+.text-emerald-500,
+.text-emerald-400,
+.text-indigo-600 {
+  color: var(--color-accent) !important;
 }
 
-body.theme-christmas .bg-emerald-700,
-body.theme-christmas .bg-emerald-800,
-body.theme-christmas .bg-emerald-900,
-body.theme-christmas .hover\:bg-emerald-700:hover,
-body.theme-christmas .hover\:bg-indigo-700:hover {
-  background-color: #1d4ed8 !important;
+.text-emerald-100,
+.text-emerald-200 {
+  color: var(--color-text-secondary) !important;
 }
 
-body.theme-christmas .text-emerald-600,
-body.theme-christmas .text-emerald-500,
-body.theme-christmas .text-emerald-400,
-body.theme-christmas .text-indigo-600 {
-  color: #2563eb !important;
-}
-
-body.theme-christmas .text-emerald-100,
-body.theme-christmas .text-emerald-200 {
-  color: #dbeafe !important;
-}
-
-body.theme-christmas .border-emerald-600,
-body.theme-christmas .border-emerald-500,
-body.theme-christmas .border-indigo-600 {
-  border-color: #2563eb !important;
-}
-
-body.theme-christmas .border-emerald-500\/20 {
-  border-color: rgba(37, 99, 235, 0.2) !important;
-}
-
-body.theme-christmas .bg-emerald-500\/20 {
-  background-color: rgba(37, 99, 235, 0.2) !important;
-}
-
-body.theme-christmas .hover\:border-emerald-500:hover {
-  border-color: #2563eb !important;
-}
-
-body.theme-christmas .hover\:text-emerald-400:hover {
-  color: #3b82f6 !important;
-}
-
-body.theme-christmas input:focus,
-body.theme-christmas textarea:focus,
-body.theme-christmas select:focus {
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
-}
-
-/* Christmas hero section - blue gradient */
-body.theme-christmas .bg-gradient-to-br.from-emerald-600 {
-  background: linear-gradient(to bottom right, #2563eb, #1d4ed8, #1e40af) !important;
-}
-
-/* New Year hero section - purple gradient for night feeling */
-body.theme-newyear .bg-gradient-to-br.from-emerald-600 {
-  background: linear-gradient(to bottom right, #8b5cf6, #7c3aed, #6d28d9) !important;
-}
-
-/* Christmas body gradient - dark blue to blue theme */
-body.theme-christmas {
-  background: linear-gradient(to bottom, #16213e 0%, #1a1f3a 30%, #1d2649 60%, #1e3a5c 85%, #1e3a8a 100%) !important;
+.text-emerald-900 {
   color: #ffffff !important;
 }
 
-body.theme-christmas .bg-white,
-body.theme-christmas .bg-gray-50,
-body.theme-christmas .bg-gray-100 {
-  background-color: #16213e !important;
+.border-emerald-600,
+.border-emerald-500,
+.border-indigo-600 {
+  border-color: var(--color-border) !important;
 }
 
-body.theme-christmas .bg-gray-200 {
-  background-color: #1e2749 !important;
-}
-
-body.theme-christmas .text-gray-900,
-body.theme-christmas .text-gray-800,
-body.theme-christmas .text-gray-700 {
-  color: #ffffff !important;
-}
-
-body.theme-christmas .text-gray-600 {
-  color: #cccccc !important;
-}
-
-body.theme-christmas .text-gray-500,
-body.theme-christmas .text-gray-400 {
-  color: #a0a0a0 !important;
-}
-
-body.theme-christmas .bg-emerald-400 {
-  background-color: #3b82f6 !important;
-}
-
-body.theme-christmas .text-emerald-900 {
-  color: #1e3a8a !important;
-}
-
-body.theme-christmas .text-emerald-100 {
-  color: #dbeafe !important;
-}
-
-body.theme-christmas .text-emerald-600 {
-  color: #2563eb !important;
-}
-
-body.theme-christmas .hover\:bg-emerald-50:hover {
-  background-color: #eff6ff !important;
-}
-
-body.theme-christmas .bg-emerald-900 {
-  background-color: #1e3a8a !important;
-}
-
-body.theme-christmas .hover\:bg-emerald-800:hover {
-  background-color: #1d4ed8 !important;
-}
-
-body.theme-christmas .bg-slate-800\/50 {
-  background-color: rgba(22, 33, 62, 0.5) !important;
-}
-
-/* Christmas lights - hidden by default, shown only for Christmas theme */
-.theme-christmas-only {
-  display: none;
-}
-
-body.theme-christmas .theme-christmas-only {
-  display: block;
-}
-
-/* New Year countdown only for New Year theme */
-.theme-newyear-only {
-  display: none;
-}
-
-body.theme-newyear .theme-newyear-only {
-  display: block;
-}
-
-/* Add gradient overlay to countdown section to fade stars into distance */
-body.theme-newyear .theme-newyear-only {
-  position: relative;
-}
-
-/* Ensure countdown content appears above the gradient */
-body.theme-newyear .theme-newyear-only > * {
-  position: relative;
-  z-index: 2;
-}
-
-body.theme-newyear .theme-newyear-only::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 250px;
-  background: linear-gradient(to bottom, #121d36 0%, transparent 100%);
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* ===== BIRTHDAY THEME ===== */
-body.theme-birthday {
-  background: linear-gradient(to bottom, #fdf4ff 0%, #fdf4ff 50%, #fae8ff 80%, #f3e8ff 100%) !important;
-  color: #701a75 !important;
-}
-
-body.theme-birthday .bg-white,
-body.theme-birthday .bg-gray-50,
-body.theme-birthday .bg-gray-100 {
-  background-color: #ffffff !important;
-}
-
-body.theme-birthday .bg-gray-200 {
-  background-color: #f3f4f6 !important;
-}
-
-body.theme-birthday .text-gray-900,
-body.theme-birthday .text-gray-800,
-body.theme-birthday .text-gray-700 {
-  color: #701a75 !important;
-}
-
-body.theme-birthday .text-gray-600 {
-  color: #a21caf !important;
-}
-
-body.theme-birthday .text-gray-500,
-body.theme-birthday .text-gray-400 {
-  color: #c084fc !important;
-}
-
-/* Birthday - Emerald to Pink */
-body.theme-birthday .bg-emerald-500,
-body.theme-birthday .bg-emerald-600,
-body.theme-birthday .bg-emerald-400,
-body.theme-birthday .bg-indigo-600 {
-  background-color: #ec4899 !important;
-}
-
-body.theme-birthday .bg-emerald-700,
-body.theme-birthday .bg-emerald-800,
-body.theme-birthday .bg-emerald-900,
-body.theme-birthday .hover\:bg-emerald-700:hover,
-body.theme-birthday .hover\:bg-indigo-700:hover {
-  background-color: #db2777 !important;
-}
-
-body.theme-birthday .text-emerald-600,
-body.theme-birthday .text-emerald-500,
-body.theme-birthday .text-emerald-400,
-body.theme-birthday .text-indigo-600 {
-  color: #ec4899 !important;
-}
-
-body.theme-birthday .text-emerald-100,
-body.theme-birthday .text-emerald-200 {
-  color: #fce7f3 !important;
-}
-
-body.theme-birthday .border-emerald-600,
-body.theme-birthday .border-emerald-500,
-body.theme-birthday .border-indigo-600 {
-  border-color: #ec4899 !important;
-}
-
-body.theme-birthday .border-emerald-500\/20 {
-  border-color: rgba(236, 72, 153, 0.2) !important;
-}
-
-body.theme-birthday .bg-emerald-500\/20 {
-  background-color: rgba(236, 72, 153, 0.2) !important;
-}
-
-body.theme-birthday .hover\:border-emerald-500:hover {
-  border-color: #ec4899 !important;
-}
-
-body.theme-birthday .hover\:text-emerald-400:hover {
-  color: #f472b6 !important;
-}
-
-body.theme-birthday input:focus,
-body.theme-birthday textarea:focus,
-body.theme-birthday select:focus {
-  border-color: #ec4899 !important;
-  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1) !important;
-}
-
-body.theme-birthday .bg-slate-800\/50 {
-  background-color: rgba(255, 255, 255, 0.8) !important;
-}
-
-body.theme-birthday .border-slate-700\/50 {
-  border-color: rgba(236, 72, 153, 0.3) !important;
-}
-
-/* ===== NEW YEAR THEME ===== */
-/* New Year theme - dark night sky with stars */
-body.theme-newyear {
-  background: linear-gradient(to bottom, #0f1419 0%, #16213e 30%, #0a1128 80%, #05080f 100%) !important;
-  color: #ffffff !important;
-}
-
-/* Stars background - using simple box-shadow approach for maximum compatibility */
-body.theme-newyear::before {
-  content: '';
-  position: fixed;
-  top: -100px;
-  left: 0;
-  width: 2px;
-  height: 2px;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.9;
-  background: white;
+.bg-emerald-500\/20 {
+  background-color: var(--color-surface-elevated) !important;
+  border: none !important;
   border-radius: 50%;
-  transform: translateY(var(--stars-parallax, 0px));
-  transition: transform 0.1s ease-out;
-  /* Create stars using box-shadow for maximum browser compatibility */
-  box-shadow:
-    /* Stars extending into wave area for seamless flow */
-    50px 50px 0 0 white,
-    150px 80px 0 0 white,
-    300px 60px 0 0 white,
-    450px 70px 0 0 white,
-    600px 90px 0 0 white,
-    750px 55px 0 0 white,
-    900px 75px 0 0 white,
-    1100px 65px 0 0 white,
-    1300px 85px 0 0 white,
-    /* Test star - very visible at top left */
-    10px 10px 0 0 white,
-    /* Big Dipper (top left) */
-    80px 150px 0 0 white,
-    120px 120px 0 0 white,
-    160px 100px 0 0 white,
-    200px 110px 0 0 white,
-    180px 180px 0 0 white,
-    140px 200px 0 0 white,
-    100px 220px 0 0 white,
-    /* Orion's Belt (center) */
-    480px 400px 0 0 white,
-    500px 420px 0 0 white,
-    520px 440px 0 0 white,
-    /* Orion constellation (around belt) */
-    460px 300px 0 0 white,
-    540px 320px 0 0 white,
-    450px 520px 0 0 white,
-    550px 540px 0 0 white,
-    /* Cassiopeia (W shape - top right) */
-    750px 180px 0 0 white,
-    780px 140px 0 0 white,
-    810px 160px 0 0 white,
-    840px 120px 0 0 white,
-    870px 150px 0 0 white,
-    /* Little Dipper (right side) */
-    850px 350px 0 0 white,
-    880px 380px 0 0 white,
-    900px 420px 0 0 white,
-    880px 460px 0 0 white,
-    850px 480px 0 0 white,
-    820px 460px 0 0 white,
-    800px 440px 0 0 white,
-    /* Scattered stars across entire page */
-    50px 350px 0 0 white,
-    150px 450px 0 0 white,
-    220px 280px 0 0 white,
-    280px 500px 0 0 white,
-    320px 250px 0 0 white,
-    350px 600px 0 0 white,
-    380px 150px 0 0 white,
-    420px 700px 0 0 white,
-    550px 200px 0 0 white,
-    580px 650px 0 0 white,
-    620px 280px 0 0 white,
-    650px 550px 0 0 white,
-    680px 750px 0 0 white,
-    720px 350px 0 0 white,
-    250px 650px 0 0 white,
-    180px 720px 0 0 white,
-    120px 550px 0 0 white,
-    80px 800px 0 0 white,
-    300px 820px 0 0 white,
-    400px 880px 0 0 white,
-    520px 780px 0 0 white,
-    600px 850px 0 0 white,
-    700px 900px 0 0 white,
-    780px 820px 0 0 white,
-    880px 700px 0 0 white,
-    920px 600px 0 0 white,
-    950px 500px 0 0 white,
-    930px 250px 0 0 white,
-    30px 500px 0 0 white,
-    250px 380px 0 0 white,
-    450px 80px 0 0 white,
-    620px 120px 0 0 white,
-    700px 50px 0 0 white,
-    500px 920px 0 0 white,
-    150px 880px 0 0 white,
-    820px 920px 0 0 white,
-    350px 30px 0 0 white,
-    880px 80px 0 0 white,
-    50px 80px 0 0 white,
-    980px 450px 0 0 white,
-    20px 650px 0 0 white,
-    480px 580px 0 0 white,
-    320px 480px 0 0 white,
-    670px 420px 0 0 white,
-    220px 780px 0 0 white,
-    770px 680px 0 0 white,
-    580px 320px 0 0 white,
-    380px 680px 0 0 white,
-    120px 380px 0 0 white,
-    850px 550px 0 0 white,
-    280px 920px 0 0 white,
-    730px 220px 0 0 white,
-    420px 950px 0 0 white,
-    950px 780px 0 0 white,
-    /* Additional stars for fullness */
-    70px 250px 0 0 white,
-    230px 420px 0 0 white,
-    370px 180px 0 0 white,
-    510px 680px 0 0 white,
-    630px 150px 0 0 white,
-    770px 450px 0 0 white,
-    130px 580px 0 0 white,
-    270px 720px 0 0 white,
-    410px 850px 0 0 white,
-    570px 320px 0 0 white,
-    710px 780px 0 0 white,
-    870px 220px 0 0 white,
-    90px 680px 0 0 white,
-    330px 350px 0 0 white,
-    470px 880px 0 0 white,
-    610px 620px 0 0 white,
-    750px 520px 0 0 white,
-    890px 380px 0 0 white,
-    170px 480px 0 0 white,
-    310px 820px 0 0 white,
-    490px 250px 0 0 white,
-    670px 750px 0 0 white,
-    830px 120px 0 0 white,
-    110px 750px 0 0 white,
-    290px 580px 0 0 white,
-    430px 420px 0 0 white,
-    590px 880px 0 0 white,
-    730px 280px 0 0 white,
-    910px 650px 0 0 white;
-  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.6));
 }
 
-body.theme-newyear .bg-white,
-body.theme-newyear .bg-gray-50,
-body.theme-newyear .bg-gray-100 {
-  background-color: #16213e !important;
+.bg-emerald-400 {
+  background-color: var(--color-primary) !important;
 }
 
-body.theme-newyear .bg-gray-200 {
-  background-color: #1a2847 !important;
+.hover\:text-emerald-400:hover {
+  color: var(--color-accent) !important;
 }
 
-body.theme-newyear .text-gray-900,
-body.theme-newyear .text-gray-800,
-body.theme-newyear .text-gray-700 {
-  color: #ffffff !important;
+/* ——— Dark mode overrides ——— */
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .bg-gray-50,
+[data-theme="dark"] .bg-gray-100 {
+  background-color: var(--color-surface) !important;
 }
 
-body.theme-newyear .text-gray-600 {
-  color: #cccccc !important;
+[data-theme="dark"] .bg-gray-200 {
+  background-color: var(--color-surface-elevated) !important;
 }
 
-body.theme-newyear .text-gray-500,
-body.theme-newyear .text-gray-400 {
-  color: #a0a0a0 !important;
+[data-theme="dark"] .text-gray-900,
+[data-theme="dark"] .text-gray-800,
+[data-theme="dark"] .text-gray-700,
+[data-theme="dark"] .text-white {
+  color: var(--color-text) !important;
 }
 
-/* New Year theme - emerald to purple color overrides */
-body.theme-newyear .text-emerald-600,
-body.theme-newyear .text-emerald-500,
-body.theme-newyear .text-emerald-400,
-body.theme-newyear .text-indigo-600 {
-  color: #a78bfa !important;
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-gray-400,
+[data-theme="dark"] .text-gray-300 {
+  color: var(--color-text-secondary) !important;
 }
 
-body.theme-newyear .text-emerald-100,
-body.theme-newyear .text-emerald-200 {
-  color: #e9d5ff !important;
+[data-theme="dark"] .border-gray-200,
+[data-theme="dark"] .border-gray-300,
+[data-theme="dark"] .border-slate-700\/50 {
+  border-color: var(--color-border) !important;
 }
 
-/* Ensure icon containers use purple background for New Year theme */
-body.theme-newyear .bg-emerald-500\/20 {
-  background-color: rgba(167, 139, 250, 0.2) !important;
+[data-theme="dark"] .bg-slate-800\/50,
+[data-theme="dark"] .bg-slate-800\/70 {
+  background-color: var(--color-surface) !important;
+  border: none !important;
+  border-radius: 8px;
 }
 
-/* Ensure Lucide icons properly inherit currentColor in New Year theme */
-body.theme-newyear .text-emerald-400 svg,
-body.theme-newyear .text-emerald-500 svg,
-body.theme-newyear .text-emerald-600 svg {
-  color: inherit !important;
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="url"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: var(--color-surface-elevated) !important;
+  border: none !important;
+  color: var(--color-text) !important;
+  border-radius: 4px;
 }
 
-body.theme-newyear .text-emerald-400 svg *,
-body.theme-newyear .text-emerald-500 svg *,
-body.theme-newyear .text-emerald-600 svg * {
-  stroke: currentColor !important;
-  fill: currentColor !important;
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: var(--color-text-secondary) !important;
 }
 
-
-body.theme-newyear .bg-emerald-600 {
-  background-color: #8b5cf6 !important;
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--color-focus) !important;
 }
 
-body.theme-newyear .hover\:bg-emerald-700:hover {
-  background-color: #7c3aed !important;
+[data-theme="dark"] .shadow-sm,
+[data-theme="dark"] .shadow,
+[data-theme="dark"] .shadow-lg {
+  box-shadow: none !important;
 }
 
-body.theme-newyear .bg-emerald-700 {
-  background-color: #7c3aed !important;
+/* Marketing backdrop (fixed, visible through transparent nav) */
+body:has(.marketing-page-backdrop) main {
+  background: transparent;
 }
 
-body.theme-newyear .bg-emerald-800 {
-  background-color: #6d28d9 !important;
-}
-
-body.theme-newyear .hover\:bg-emerald-800:hover {
-  background-color: #5b21b6 !important;
-}
-
-body.theme-newyear .bg-slate-800\/50 {
-  background-color: rgba(26, 40, 71, 0.8) !important;
-}
-
-/* Default and Dark theme overrides for consistency */
-body.theme-dark .bg-slate-800\/50,
-body.theme-default .bg-slate-800\/50 {
-  background-color: rgba(22, 33, 62, 0.5) !important;
-}
-
-/* Ensure proper layering for New Year theme */
-body.theme-newyear nav {
-  position: relative;
-  z-index: 50;
-}
-
-body.theme-newyear .relative.bg-gradient-to-br {
-  position: relative;
-  z-index: 40;
-}
-
-body.theme-newyear .absolute.inset-0 {
-  z-index: 45;
-}
-
-/* Ensure New Year wave is above hero overlays */
-body.theme-newyear .absolute.bottom-0 {
-  z-index: 50;
-}
-
-/* Remove border from hero section for New Year theme */
-body.theme-newyear .border-b-4 {
-  border-bottom: none !important;
-}
-
-/* Bring features section above the gradient overlay */
-body.theme-newyear section.max-w-7xl {
+body:has(.marketing-page-backdrop) footer {
   position: relative;
   z-index: 10;
+  background: rgba(30, 31, 34, 0.85) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-body.theme-newyear .border-slate-700\/50 {
-  border-color: rgba(26, 40, 71, 0.5) !important;
-}
-
-/* CSS-based Firework Animation (inspired by https://alvaromontoro.com/blog/68002/creating-a-firework-effect-with-css) */
-.firework-css {
-  --firework-color: #ff0000;
+.marketing-page-backdrop {
   position: fixed;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 0.5vmin;
-  aspect-ratio: 1;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* ——— Homepage marketing (discord.com — full page) ——— */
+.marketing-page {
+  position: relative;
+  color: #ffffff;
+  overflow-x: hidden;
+  z-index: 1;
+}
+
+.marketing-page-backdrop .marketing-page__gradient {
+  position: absolute;
+  inset: 0;
+  min-height: 100vh;
+  background: linear-gradient(
+    160deg,
+    #12061f 0%,
+    #1a0b2e 15%,
+    #1e1b4b 35%,
+    #1e3a8a 55%,
+    #2563eb 75%,
+    #3b82f6 100%
+  );
+  z-index: 0;
+}
+
+.marketing-page-backdrop .marketing-page__glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
   pointer-events: none;
   z-index: 1;
-  background:
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 50% 0%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 100% 50%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 50% 100%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 0% 50%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 80% 90%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 95% 90%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 10% 60%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 31% 80%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 80% 10%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 90% 23%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 45% 20%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 13% 24%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 70% 75%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 60% 95%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 25% 95%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 12% 80%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 15% 34%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 85% 45%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 65% 30%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 90% 70%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 28% 7%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 43% 93%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 73% 60%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 36% 42%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 58% 12%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 42% 65%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 19% 47%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 77% 32%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 52% 85%,
-    radial-gradient(circle, var(--firework-color) 0.5vmin, #0000 0) 95% 15%;
-  background-size: 0.5vmin 0.5vmin;
-  background-repeat: no-repeat;
-  animation: firework-css 2.5s infinite;
 }
 
-.firework-css::before,
-.firework-css::after {
-  content: "";
+.marketing-page__glow--purple {
+  width: min(60vw, 560px);
+  height: min(60vw, 560px);
+  top: 2%;
+  right: -5%;
+  background: rgba(124, 58, 237, 0.5);
+}
+
+.marketing-page__glow--blue {
+  width: min(50vw, 480px);
+  height: min(50vw, 480px);
+  top: 42%;
+  left: -8%;
+  background: rgba(37, 99, 235, 0.4);
+}
+
+.marketing-page__glow--pink {
+  width: min(40vw, 380px);
+  height: min(40vw, 380px);
+  top: 68%;
+  right: 10%;
+  background: rgba(192, 38, 211, 0.3);
+}
+
+.marketing-page__glow--mid {
+  width: min(45vw, 400px);
+  height: min(45vw, 400px);
+  top: 22%;
+  left: 30%;
+  background: rgba(88, 101, 242, 0.22);
+}
+
+.marketing-page-backdrop .marketing-page__sparkles {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: inherit;
-  background-size: inherit;
-  background-repeat: inherit;
+  inset: 0;
+  min-height: 100vh;
+  z-index: 2;
+  pointer-events: none;
 }
 
-.firework-css::before {
-  transform: rotate(25deg) !important;
+.marketing-page__sparkle-item {
+  position: absolute;
+  transform: translate(-50%, -50%);
 }
 
-.firework-css::after {
-  transform: rotate(-37deg) !important;
+.marketing-page__content {
+  position: relative;
+  z-index: 10;
+  padding-bottom: 3.5rem;
 }
 
-@keyframes firework-css {
-  0% {
-    transform: translate(-50%, 60vh);
-    width: 0.5vmin;
-    opacity: 1;
-  }
-  50% {
-    width: 0.5vmin;
-    opacity: 1;
-  }
-  100% {
-    width: 45vmin;
-    opacity: 0;
-  }
+.marketing-hero {
+  position: relative;
 }
 
-/* New Year countdown styling */
-.newyear-countdown {
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: white;
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.countdown-item {
-  display: inline-block;
-  margin: 0 1rem;
-  text-align: center;
-}
-
-.countdown-number {
-  font-size: 3rem;
-  font-weight: 900;
+.marketing-sparkle {
+  display: block;
+  color: #ffffff;
   line-height: 1;
-  display: block;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  font-weight: 300;
 }
 
-.countdown-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  opacity: 0.9;
-  margin-top: 0.5rem;
-  display: block;
+.marketing-sparkle--plus {
+  font-size: inherit;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
-/* Happy New Years message with flashing animation */
-.newyear-message {
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: 900;
+.marketing-sparkle--square {
+  background: #ffffff;
+  border-radius: 1px;
+}
+
+.marketing-sparkle--dot {
+  background: #ffffff;
+  border-radius: 50%;
+}
+
+.marketing-hero__eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: white;
-  text-align: center;
-  font-size: 4rem;
-  text-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 60px rgba(255, 255, 255, 0.6);
-  animation: flash-text 1s ease-in-out infinite;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 1rem;
 }
 
-@keyframes flash-text {
-  0%, 100% {
-    opacity: 1;
-    text-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 60px rgba(255, 255, 255, 0.6);
+.marketing-hero__title {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: #ffffff !important;
+  margin-bottom: 1.25rem;
+}
+
+.marketing-hero__lead {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88) !important;
+  max-width: 36rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+.marketing-hero__footnote {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.marketing-hero__link {
+  color: #ffffff !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.marketing-hero__link:hover {
+  color: #dbeafe !important;
+}
+
+.btn-marketing-white,
+.btn-marketing-blurple {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.35rem;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 9999px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-marketing-white {
+  background: #ffffff !important;
+  color: #1e1b4b !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+.btn-marketing-white:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+}
+
+.btn-marketing-blurple {
+  background: #5865f2 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(88, 101, 242, 0.45);
+}
+
+.btn-marketing-blurple:hover {
+  background: #4752c4 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(88, 101, 242, 0.55);
+}
+
+/* Glass panels */
+.marketing-section {
+  padding: 0 1rem 2.5rem;
+}
+
+.marketing-section--tight-bottom {
+  padding-bottom: 0.75rem;
+}
+
+.marketing-section--tight-top {
+  padding-top: 0;
+}
+
+@media (min-width: 640px) {
+  .marketing-section {
+    padding: 0 1.5rem 3rem;
   }
-  50% {
-    opacity: 0.3;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3), 0 0 20px rgba(255, 255, 255, 0.2);
+
+  .marketing-section--tight-bottom {
+    padding-bottom: 1rem;
   }
 }
+
+.marketing-section--listing {
+  padding-top: 0;
+}
+
+.marketing-glass {
+  max-width: 72rem;
+  margin: 0 auto;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.marketing-glass--split {
+  display: grid;
+  gap: 0;
+}
+
+@media (min-width: 1024px) {
+  .marketing-glass--split {
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+  }
+
+  .marketing-glass--reverse .marketing-glass__visual {
+    order: 2;
+  }
+
+  .marketing-glass--reverse .marketing-glass__body {
+    order: 1;
+  }
+}
+
+.marketing-glass__visual {
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  background: rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (min-width: 1024px) {
+  .marketing-glass__visual {
+    min-height: 360px;
+    border-bottom: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .marketing-glass--reverse .marketing-glass__visual {
+    border-right: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+  }
+}
+
+.marketing-glass__body {
+  padding: 2rem 2rem 2.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.marketing-glass__body--full {
+  width: 100%;
+}
+
+.marketing-glass__title {
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #ffffff !important;
+  margin-bottom: 1rem;
+  line-height: 1.15;
+}
+
+.marketing-glass__text {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.82) !important;
+  margin-bottom: 1.5rem;
+}
+
+.marketing-glass--stream {
+  padding: 1.5rem;
+}
+
+.marketing-glass--stream .bg-slate-800\/50 {
+  background: rgba(30, 31, 34, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Feature tiles inside glass */
+.marketing-features-grid {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .marketing-features-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+.marketing-feature-tile {
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+}
+
+@media (min-width: 768px) {
+  .marketing-feature-tile:not(:first-child) {
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+.marketing-feature-tile__icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(88, 101, 242, 0.35);
+  color: #ffffff;
+}
+
+.marketing-feature-tile__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff !important;
+  margin-bottom: 0.5rem;
+}
+
+.marketing-feature-tile__text {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* Steps grid */
+.marketing-steps-grid {
+  display: grid;
+  gap: 1.25rem;
+  margin-top: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .marketing-steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+.marketing-step {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.marketing-step__num {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: #5865f2;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marketing-step__title {
+  font-weight: 600;
+  color: #ffffff !important;
+  margin-bottom: 0.35rem;
+  font-size: 0.95rem;
+}
+
+.marketing-step__text {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+/* Abstract visuals (not browser chrome) */
+.marketing-visual {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marketing-visual__blob {
+  position: absolute;
+  width: 85%;
+  height: 75%;
+  border-radius: 40% 60% 50% 50% / 50% 40% 60% 50%;
+  background: linear-gradient(135deg, #ec4899, #8b5cf6, #6366f1);
+  opacity: 0.85;
+  filter: blur(2px);
+  transform: rotate(-8deg);
+}
+
+.marketing-visual__blob--blue {
+  background: linear-gradient(135deg, #3b82f6, #5865f2, #818cf8);
+}
+
+.marketing-visual__blob--green {
+  background: linear-gradient(135deg, #23a559, #5865f2, #3b82f6);
+}
+
+.marketing-visual__card {
+  position: relative;
+  z-index: 1;
+  width: 88%;
+  padding: 1.25rem;
+  border-radius: 16px;
+  background: rgba(30, 31, 34, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.marketing-visual__card--center {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.marketing-visual__card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #f2f3f5;
+  margin-bottom: 1rem;
+}
+
+.marketing-visual__bar {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+
+.marketing-visual__bar span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #5865f2, #23a559);
+}
+
+.marketing-visual__stat {
+  font-size: 0.8rem;
+  color: #b5bac1;
+  margin-bottom: 0.85rem;
+}
+
+.marketing-visual__chips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.marketing-visual__chips span {
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(88, 101, 242, 0.35);
+  color: #e0e7ff;
+}
+
+.marketing-visual__big {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.marketing-visual__sub {
+  font-size: 0.85rem;
+  color: #b5bac1;
+  margin-bottom: 1rem;
+}
+
+.marketing-visual__avatars {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.marketing-visual__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5865f2, #ec4899);
+  border: 2px solid rgba(30, 31, 34, 0.9);
+}
+
+.marketing-visual__avatar:not(:first-child) {
+  margin-left: -10px;
+}
+
+.marketing-visual__meter {
+  width: 100%;
+  height: 10px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.marketing-visual__meter span {
+  display: block;
+  height: 100%;
+  width: 68%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #23a559, #5865f2);
+}
+
+/* Listing pages (servers, communities) */
+.marketing-listing-header__title {
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #ffffff !important;
+  margin-bottom: 0.5rem;
+}
+
+.marketing-listing-header__subtitle {
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.82) !important;
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .marketing-listing-header__subtitle {
+    margin: 0;
+  }
+}
+
+.marketing-glass--listing {
+  padding: 1.5rem;
+  background: rgba(30, 31, 34, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+@media (min-width: 640px) {
+  .marketing-glass--listing {
+    padding: 2rem;
+  }
+}
+
+.marketing-filters {
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.marketing-page .marketing-filters label,
+.marketing-page .marketing-filters h3 {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.marketing-page .marketing-filters input,
+.marketing-page .marketing-filters select,
+.marketing-page .marketing-filters button {
+  background-color: var(--marketing-listing-surface) !important;
+  border: 1px solid var(--marketing-listing-surface-border) !important;
+  color: #f2f3f5 !important;
+}
+
+.marketing-page {
+  --marketing-listing-surface: #1e1f22;
+  --marketing-listing-surface-border: rgba(255, 255, 255, 0.12);
+}
+
+.marketing-page .marketing-filters input::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.marketing-page .marketing-filters .border-gray-700,
+.marketing-page .marketing-filters .border-t {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.marketing-page .listing-card {
+  background: var(--marketing-listing-surface) !important;
+  border: 1px solid var(--marketing-listing-surface-border) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+.marketing-page .listing-card:hover {
+  border-color: rgba(88, 101, 242, 0.5) !important;
+  background: #2b2d31 !important;
+}
+
+.marketing-page .listing-empty,
+.marketing-page .listing-loading {
+  background: var(--marketing-listing-surface);
+  border: 1px solid var(--marketing-listing-surface-border);
+  border-radius: 12px;
+}
+
+.marketing-page .listing-card h3,
+.marketing-page .listing-card h4 {
+  color: #ffffff !important;
+}
+
+.marketing-page .listing-card p,
+.marketing-page .listing-card .text-gray-600,
+.marketing-page .listing-card .text-gray-500 {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.marketing-page .listing-card .text-gray-300,
+.marketing-page .listing-card .text-gray-400 {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.marketing-page .listing-card .border-gray-200,
+.marketing-page .listing-card .border-t {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.marketing-page .listing-empty,
+.marketing-page .listing-loading {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.marketing-page .listing-card .bg-slate-700\/50,
+.marketing-page .listing-card .bg-slate-800\/80 {
+  background-color: #2b2d31 !important;
+}
+
+.marketing-page .listing-empty h3 {
+  color: #ffffff !important;
+}
+
+.marketing-page .tag-pill--active {
+  background: #5865f2 !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.marketing-page .tag-pill--idle {
+  background: rgba(30, 31, 34, 0.8) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.marketing-page .tag-pill--idle:hover {
+  background: rgba(79, 84, 92, 0.5) !important;
+}
+
+.marketing-page .listing-card .bg-indigo-100 {
+  background: rgba(88, 101, 242, 0.25) !important;
+  color: #c9cdfb !important;
+}
+
+.marketing-page .listing-card .text-indigo-600,
+.marketing-page .listing-card .text-indigo-700 {
+  color: #949cf7 !important;
+}
+
+.marketing-page .listing-card .text-green-600 {
+  color: #3ba55d !important;
+}
+
+/* Dashboard on marketing pages */
+.marketing-page .dashboard-section-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff !important;
+  margin-bottom: 1rem;
+}
+
+.marketing-page .dashboard-tabs {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.marketing-page .dashboard-tab {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.marketing-page .dashboard-tab:hover {
+  color: #ffffff !important;
+}
+
+.marketing-page .dashboard-tab--active {
+  color: #949cf7 !important;
+  border-bottom-color: #5865f2 !important;
+}
+
+.marketing-page .dashboard-tab-panel .text-gray-900 {
+  color: #f2f3f5 !important;
+}
+
+.marketing-page .dashboard-tab-panel .text-gray-600 {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.marketing-page .listing-card .bg-green-100,
+.marketing-page .listing-card .bg-indigo-100,
+.marketing-page .listing-card .bg-purple-100,
+.marketing-page .listing-card .bg-yellow-100,
+.marketing-page .listing-card .bg-red-100 {
+  background: rgba(88, 101, 242, 0.2) !important;
+}
+
+.marketing-page .listing-card .text-green-600,
+.marketing-page .listing-card .text-purple-600,
+.marketing-page .listing-card .text-yellow-600,
+.marketing-page .listing-card .text-yellow-700 {
+  color: #b5bac1 !important;
+}
+
+/* Settings on marketing pages */
+.marketing-page .settings-alert--success {
+  background: rgba(35, 165, 89, 0.15) !important;
+  border: 1px solid rgba(35, 165, 89, 0.4) !important;
+  color: #57f287 !important;
+}
+
+.marketing-page .settings-alert--error {
+  background: rgba(237, 66, 69, 0.15) !important;
+  border: 1px solid rgba(237, 66, 69, 0.4) !important;
+  color: #f47b7b !important;
+}
+
+.marketing-page .listing-card input[type="text"],
+.marketing-page .listing-card input[type="email"],
+.marketing-page .listing-card input[type="password"],
+.marketing-page .listing-card input[type="url"],
+.marketing-page .listing-card input[type="number"],
+.marketing-page .listing-card input[type="checkbox"],
+.marketing-page .listing-card select,
+.marketing-page .listing-card textarea {
+  background-color: var(--marketing-listing-surface) !important;
+  border: 1px solid var(--marketing-listing-surface-border) !important;
+  color: #f2f3f5 !important;
+}
+
+.marketing-page .listing-card input:disabled,
+.marketing-page .listing-card select:disabled {
+  opacity: 0.65;
+}
+
+.marketing-page .listing-card label,
+.marketing-page .listing-card h2 {
+  color: #f2f3f5 !important;
+}
+
+.marketing-page .listing-card .text-gray-300,
+.marketing-page .listing-card .text-gray-400,
+.marketing-page .listing-card .text-gray-500 {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.marketing-page .listing-card .border-slate-700\/50,
+.marketing-page .listing-card .border-slate-600,
+.marketing-page .listing-card .border-slate-700 {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Help articles (marketing pages) */
+.marketing-page .help-article-back {
+  color: #949cf7 !important;
+}
+
+.marketing-page .help-article-back:hover {
+  color: #c9cdfb !important;
+}
+
+.marketing-page .help-article__heading {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff !important;
+  margin-bottom: 1rem;
+}
+
+.marketing-page .help-article__subheading {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff !important;
+  margin-bottom: 0.75rem;
+}
+
+.marketing-page .help-article__text,
+.marketing-page .help-article p,
+.marketing-page .help-article li,
+.marketing-page .help-article td,
+.marketing-page .help-article summary {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.marketing-page .help-article strong {
+  color: #f2f3f5 !important;
+}
+
+.marketing-page .help-article a {
+  color: #949cf7 !important;
+}
+
+.marketing-page .help-article a:hover {
+  color: #c9cdfb !important;
+}
+
+.marketing-page .help-article code {
+  background: rgba(30, 31, 34, 0.9) !important;
+  color: #e3e5e8 !important;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.marketing-page .help-article__list {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.marketing-page .help-article table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.marketing-page .help-article th {
+  background: rgba(30, 31, 34, 0.9) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.marketing-page .help-article td {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(30, 31, 34, 0.5) !important;
+}
+
+.marketing-page .help-article details {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 1rem;
+  background: rgba(30, 31, 34, 0.5);
+}
+
+/* Ticket pills on marketing pages */
+.marketing-page .ticket-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+}
+
+.marketing-page .ticket-pill--urgent {
+  background: rgba(237, 66, 69, 0.25);
+  color: #f47b7b !important;
+}
+
+.marketing-page .ticket-pill--high {
+  background: rgba(250, 166, 26, 0.2);
+  color: #faa81a !important;
+}
+
+.marketing-page .ticket-pill--medium {
+  background: rgba(250, 166, 26, 0.15);
+  color: #e3c06b !important;
+}
+
+.marketing-page .ticket-pill--low {
+  background: rgba(35, 165, 89, 0.2);
+  color: #57f287 !important;
+}
+
+.marketing-page .ticket-pill--open {
+  background: rgba(88, 101, 242, 0.25);
+  color: #949cf7 !important;
+}
+
+.marketing-page .ticket-pill--in_progress {
+  background: rgba(155, 89, 182, 0.25);
+  color: #c9a0dc !important;
+}
+
+.marketing-page .ticket-pill--resolved {
+  background: rgba(35, 165, 89, 0.2);
+  color: #57f287 !important;
+}
+
+.marketing-page .ticket-pill--closed {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.marketing-page .ticket-pill--staff {
+  background: rgba(88, 101, 242, 0.25);
+  color: #949cf7 !important;
+}
+
+.marketing-page .ticket-response--staff {
+  border-left: 3px solid #5865f2;
+  background: rgba(88, 101, 242, 0.08);
+}
+
+.marketing-page .ticket-response--user {
+  border-left: 3px solid rgba(255, 255, 255, 0.15);
+  background: rgba(30, 31, 34, 0.5);
+}
+
+.settings-panel-divider {
+  margin-top: 2.5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (min-width: 640px) {
+  .settings-panel-divider {
+    margin-top: 3rem;
+    padding-top: 3rem;
+  }
+}
+
+.marketing-page .help-article .help-cta {
+  text-align: center;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(30, 31, 34, 0.75);
+}
+
