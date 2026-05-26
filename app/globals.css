@@ -885,11 +885,9 @@ body:has(.server-detail-page-backdrop) main {
 .server-detail-est-pays {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.55);
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  display: block;
+  line-height: 1.4;
+  text-align: left;
 }
 
 .server-detail-est-pays--savings {

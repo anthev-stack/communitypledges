@@ -321,7 +321,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                           <span className="font-semibold text-white">
                             {pledge.user.name || "Anonymous"}
                           </span>
-                          <div className="flex flex-col items-end gap-1">
+                          <div className="flex flex-col items-start gap-1">
                             <PledgeAmountBadge size="lg">
                               <Price amountUSD={pledge.amount} showCode={false} />
                               /mo
@@ -329,7 +329,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                             <span
                               className={`server-detail-est-pays ${hasSavings ? "server-detail-est-pays--savings" : ""}`}
                             >
-                              Est. pays{" "}
+                              Estimated to pay{" "}
                               <span className="server-detail-est-pays__amount">
                                 <Price amountUSD={estimatedPayment} showCode={false} />
                                 /mo
@@ -422,14 +422,12 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                     Checking pledge status...
                   </div>
                 ) : userPledge ? (
-                  <div className="space-y-3">
-                    <div className="rounded-lg border border-white/10 server-detail-inner-panel p-4">
-                      <p className="text-sm font-medium text-gray-400 mb-2">Your pledge</p>
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <PledgeAmountBadge size="lg">
-                          {formatPrice(userPledge.amount)}/month
-                        </PledgeAmountBadge>
-                      </div>
+                  <div className="space-y-3 pt-4 border-t border-white/10">
+                    <p className="text-sm font-medium text-gray-400">Your pledge</p>
+                    <div className="flex flex-col items-start gap-1.5">
+                      <PledgeAmountBadge size="lg">
+                        {formatPrice(userPledge.amount)}/month
+                      </PledgeAmountBadge>
                       {(() => {
                         const userIdx = server.pledges.findIndex((p) => p.id === userPledge.id)
                         const est =
@@ -441,7 +439,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                           <p
                             className={`server-detail-est-pays ${saves ? "server-detail-est-pays--savings" : ""}`}
                           >
-                            Est. pays{" "}
+                            Estimated to pay{" "}
                             <span className="server-detail-est-pays__amount">{formatPrice(est)}/month</span>
                           </p>
                         )
