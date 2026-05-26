@@ -423,7 +423,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                   </div>
                 ) : userPledge ? (
                   <div className="space-y-3 pt-4 border-t border-white/10">
-                    <p className="text-sm font-medium text-gray-400">Your pledge</p>
+                    <p className="text-sm font-medium text-gray-400">You&apos;ve pledged</p>
                     <div className="flex flex-col items-start gap-1.5">
                       <PledgeAmountBadge size="lg">
                         {formatPrice(userPledge.amount)}/month
