@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { isMinecraftGameType, resolveQueryHostPort } from "@/lib/server-address"
 const minecraftUtil = require("minecraft-server-util")
 const GamedigLib = require("gamedig")
 // Gamedig v5+ exports GameDig object with query method
@@ -43,44 +44,29 @@ export async function GET(
       })
     }
 
-    // Parse IP and port
-    // First check if serverPort is explicitly set in database
-    let ip: string
-    let port: number
-    
-    if (server.serverPort) {
-      // Use serverPort field if available
-      ip = server.serverIp.includes(":") ? server.serverIp.split(":")[0] : server.serverIp
-      port = server.serverPort
-    } else {
-      // Fall back to parsing from serverIp
-      const [ipPart, portStr] = server.serverIp.split(":")
-      
-      if (!portStr) {
-        return NextResponse.json({
-          serverId: server.id,
-          serverName: server.name,
-          gameType: server.gameType,
-          stats: {
-            online: false,
-            error: "Server port not configured",
-          },
-        })
-      }
-      
-      ip = ipPart
-      port = parseInt(portStr)
+    const defaultPort = isMinecraftGameType(server.gameType) ? 25565 : undefined
+    const resolved = resolveQueryHostPort(server.serverIp, server.serverPort, defaultPort)
+
+    if (!resolved) {
+      return NextResponse.json({
+        serverId: server.id,
+        serverName: server.name,
+        gameType: server.gameType,
+        stats: {
+          online: false,
+          error: "Server port not configured",
+        },
+      })
     }
+
+    const { host: ip, port } = resolved
 
     console.log(`Checking server stats for ${server.name} (${server.gameType}): ${ip}:${port}`)
 
     // Handle Minecraft servers
-    if (server.gameType.toLowerCase().includes("minecraft")) {
+    if (isMinecraftGameType(server.gameType)) {
       try {
-        const response = await minecraftUtil.status(ip, port, {
-          timeout: 5000,
-          enableSRV: true,
-        })
+        const response = await queryMinecraftStatus(ip, port)
 
         // Update player count in database
         await prisma.server.update({
@@ -103,8 +89,9 @@ export async function GET(
             serverType: "Minecraft",
           },
         })
-      } catch (error: any) {
-        console.error(`Minecraft query failed for ${ip}:${port}:`, error.message)
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
+        console.error(`Minecraft query failed for ${ip}:${port}:`, message)
         return NextResponse.json({
           serverId: server.id,
           serverName: server.name,
@@ -112,6 +99,7 @@ export async function GET(
           stats: {
             online: false,
             error: "Server offline or unreachable",
+            detail: process.env.NODE_ENV === "development" ? message : undefined,
           },
         })
       }
@@ -266,6 +254,21 @@ export async function GET(
       { error: "Failed to fetch server stats" },
       { status: 500 }
     )
+  }
+}
+
+async function queryMinecraftStatus(host: string, port: number) {
+  const options = { timeout: 10000, enableSRV: false as const }
+
+  try {
+    return await minecraftUtil.status(host, port, options)
+  } catch (firstError) {
+    // SRV only when direct query fails (e.g. some hosted servers use _minecraft._tcp records)
+    try {
+      return await minecraftUtil.status(host, port, { timeout: 10000, enableSRV: true })
+    } catch {
+      throw firstError
+    }
   }
 }
 

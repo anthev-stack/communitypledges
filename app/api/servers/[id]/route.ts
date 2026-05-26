@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { deleteModrinthInstance } from "@/lib/modrinth-storage"
+import { normalizeServerAddress } from "@/lib/server-address"
 
 export async function GET(
   request: Request,
@@ -139,13 +140,19 @@ export async function PATCH(
       pledgesRemoved = result.count
     }
 
+    const address =
+      body.serverIp !== undefined || body.serverPort !== undefined
+        ? normalizeServerAddress(body.serverIp, body.serverPort)
+        : null
+
     const server = await prisma.server.update({
       where: { id },
       data: {
         name: body.name,
         description: body.description,
         gameType: body.gameType,
-        serverIp: body.serverIp,
+        serverIp: address ? address.serverIp : undefined,
+        serverPort: address ? address.serverPort : undefined,
         cost: body.cost ? parseFloat(body.cost) : undefined,
         withdrawalDay: body.withdrawalDay ? parseInt(body.withdrawalDay) : undefined,
         imageUrl: body.imageUrl,

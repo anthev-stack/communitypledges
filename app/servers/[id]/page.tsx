@@ -16,6 +16,7 @@ import { calculateOptimizedCosts } from "@/lib/optimization"
 import ServerDetailScrollBack from "@/components/server/ServerDetailScrollBack"
 import ServerMinecraftMeta from "@/components/server/ServerMinecraftMeta"
 import ModrinthDownloadCard from "@/components/server/ModrinthDownloadCard"
+import { formatServerAddress } from "@/lib/server-address"
 
 export const dynamic = "force-dynamic"
 
@@ -25,6 +26,7 @@ interface Server {
   description: string
   gameType: string
   serverIp: string
+  serverPort?: number | null
   playerCount: number
   cost: number
   withdrawalDay: number
@@ -241,6 +243,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   }
 
   const bannerImageUrl = server.imageUrl || gameBannerUrl
+  const displayAddress = formatServerAddress(server.serverIp, server.serverPort ?? null)
 
   return (
     <ServerDetailPageShell>
@@ -284,16 +287,16 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 {server.description || "No description provided."}
               </p>
 
-              {server.serverIp && (
+              {displayAddress && (
                 <div className="mt-6 rounded-lg border border-white/10 server-detail-inner-panel p-4">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
                     Server IP
                   </p>
                   <div className="flex items-center justify-between gap-3">
-                    <code className="text-sm text-emerald-400 font-mono break-all">{server.serverIp}</code>
+                    <code className="text-sm text-emerald-400 font-mono break-all">{displayAddress}</code>
                     <button
                       type="button"
-                      onClick={() => copyToClipboard(server.serverIp)}
+                      onClick={() => copyToClipboard(displayAddress)}
                       className="shrink-0 p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition"
                       title="Copy IP address"
                     >
@@ -377,7 +380,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 </div>
               </div>
             ) : (
-              server.serverIp && <ServerStats serverId={server.id} gameType={server.gameType} />
+              displayAddress && <ServerStats serverId={server.id} gameType={server.gameType} />
             )}
 
             <div className="listing-card p-6 md:p-8 sticky top-6">

@@ -9,6 +9,7 @@ import { REGIONS, getTagsForGame } from "@/lib/game-tags"
 import ImageUpload from "@/components/ImageUpload"
 import MinecraftJavaFields from "@/components/server/MinecraftJavaFields"
 import { isMinecraftJavaEdition } from "@/lib/minecraft-java"
+import { normalizeServerAddress, splitHostAndPort } from "@/lib/server-address"
 
 export default function EditServerPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
@@ -63,15 +64,14 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
         })
         setPledgeCount(data.pledgerCount || 0)
         
-        // Split serverIp into IP and port
-        const [ip, port] = (data.serverIp || "").split(":")
+        const { host, port } = splitHostAndPort(data.serverIp || "")
         
         setFormData({
           name: data.name || "",
           description: data.description || "",
           gameType: data.gameType || "",
-          serverIp: ip || "",
-          serverPort: port || "",
+          serverIp: host || "",
+          serverPort: port?.toString() || data.serverPort?.toString() || "",
           cost: data.cost?.toString() || "",
           withdrawalDay: data.withdrawalDay?.toString() || "",
           imageUrl: data.imageUrl || "",
@@ -131,10 +131,10 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
     setLoading(true)
 
     try {
-      // Combine IP and port for server IP field
-      const combinedServerIp = formData.serverIp && formData.serverPort
-        ? `${formData.serverIp}:${formData.serverPort}`
-        : formData.serverIp || ""
+      const { serverIp, serverPort } = normalizeServerAddress(
+        formData.serverIp,
+        formData.serverPort
+      )
 
       const response = await fetch(`/api/servers/${serverId}`, {
         method: "PATCH",
@@ -143,7 +143,8 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
         },
         body: JSON.stringify({
           ...formData,
-          serverIp: combinedServerIp,
+          serverIp,
+          serverPort,
         }),
       })
 

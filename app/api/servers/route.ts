@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { emailService } from "@/lib/email"
+import { normalizeServerAddress } from "@/lib/server-address"
 
 // Get all servers
 export async function GET() {
@@ -100,7 +101,8 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, description, gameType, serverIp, serverPort, playerCount, cost, withdrawalDay, imageUrl, isPrivate } = body
+    const { name, description, gameType, cost, withdrawalDay, imageUrl, isPrivate } = body
+    const { serverIp, serverPort } = normalizeServerAddress(body.serverIp, body.serverPort)
 
     const isMinecraftJava = gameType === "Minecraft: Java Edition"
     if (isMinecraftJava) {
@@ -157,7 +159,7 @@ export async function POST(request: Request) {
         description,
         gameType,
         serverIp,
-        serverPort: serverPort ? parseInt(serverPort) : null,
+        serverPort,
         playerCount: null, // Will be updated by live stats
         cost: monthlyCost,
         withdrawalDay: withdrawalDayNum,
