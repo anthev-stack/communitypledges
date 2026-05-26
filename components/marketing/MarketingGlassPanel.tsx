@@ -2,6 +2,7 @@ import { ReactNode } from "react"
 import { DollarSign, Users, Server, Heart } from "lucide-react"
 import PledgeProgressBar from "@/components/pledge/PledgeProgressBar"
 import PledgeAmountBadge from "@/components/pledge/PledgeAmountBadge"
+import MarketingCommunityAvatars from "@/components/marketing/MarketingCommunityAvatars"
 
 type VisualVariant = "pledge" | "community" | "owners" | "features"
 
@@ -74,11 +75,7 @@ function MarketingVisual({ variant }: { variant: VisualVariant }) {
           <Users className="w-12 h-12 text-white/90 mb-3" />
           <p className="marketing-visual__big">12 members</p>
           <p className="marketing-visual__sub">pledged this month</p>
-          <div className="marketing-visual__avatars">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <span key={i} className="marketing-visual__avatar" />
-            ))}
-          </div>
+          <MarketingCommunityAvatars />
         </div>
       </div>
     )

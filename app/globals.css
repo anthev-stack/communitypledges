@@ -1110,9 +1110,15 @@ body:has(.server-detail-page-backdrop) main {
   margin-bottom: 1rem;
 }
 
-.marketing-visual__avatars {
+.marketing-visual__avatars,
+.marketing-visual__avatars-stack {
   display: flex;
-  gap: 0.35rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.marketing-visual__avatars--loading {
+  gap: 0;
 }
 
 .marketing-visual__avatar {
@@ -1121,10 +1127,164 @@ body:has(.server-detail-page-backdrop) main {
   border-radius: 50%;
   background: linear-gradient(135deg, #5865f2, #ec4899);
   border: 2px solid rgba(30, 31, 34, 0.9);
+  flex-shrink: 0;
 }
 
 .marketing-visual__avatar:not(:first-child) {
   margin-left: -10px;
+}
+
+/* Overlapping member / pledger avatars (homepage + server detail) */
+.overlapping-avatar-stack {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  padding: 0.25rem 0;
+}
+
+.overlapping-avatar-stack__item {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.overlapping-avatar-stack__item:not(:first-child) {
+  margin-left: -10px;
+}
+
+.overlapping-avatar-stack--lg .overlapping-avatar-stack__item:not(:first-child) {
+  margin-left: -14px;
+}
+
+.overlapping-avatar-stack__avatar-wrap {
+  position: relative;
+  border-radius: 50%;
+  border: 2px solid rgba(30, 31, 34, 0.95);
+  background: #2b2d31;
+  line-height: 0;
+}
+
+.overlapping-avatar-stack--sm .overlapping-avatar-stack__avatar-wrap {
+  width: 28px;
+  height: 28px;
+}
+
+.overlapping-avatar-stack--lg .overlapping-avatar-stack__avatar-wrap {
+  width: 48px;
+  height: 48px;
+}
+
+.overlapping-avatar-stack__image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.overlapping-avatar-stack__fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #5865f2, #7c3aed);
+  font-size: 0.65rem;
+}
+
+.overlapping-avatar-stack--lg .overlapping-avatar-stack__fallback {
+  font-size: 1rem;
+}
+
+.overlapping-avatar-stack__badge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: #fff;
+  background: linear-gradient(135deg, #5865f2, #7c3aed);
+  border: 1.5px solid rgba(30, 31, 34, 0.95);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.overlapping-avatar-stack--lg .overlapping-avatar-stack__badge {
+  right: -6px;
+  bottom: -6px;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.625rem;
+}
+
+.overlapping-avatar-stack__badge-suffix {
+  font-size: 0.5em;
+  opacity: 0.9;
+  margin-left: 1px;
+}
+
+.overlapping-avatar-stack__tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%) translateY(4px);
+  padding: 0.35rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: #fff;
+  background: rgba(17, 18, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0.15s ease;
+  z-index: 20;
+}
+
+.overlapping-avatar-stack__item:hover .overlapping-avatar-stack__tooltip,
+.overlapping-avatar-stack__item:focus-within .overlapping-avatar-stack__tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.overlapping-avatar-stack__overflow {
+  margin-left: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #b5bac1;
+  background: rgba(43, 45, 49, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.overlapping-avatar-stack--lg .overlapping-avatar-stack__overflow {
+  font-size: 0.75rem;
+}
+
+.server-detail-active-pledgers {
+  padding: 0.5rem 0 1.5rem;
+}
+
+.server-detail-active-pledgers__stack {
+  margin: 0 auto;
 }
 
 .marketing-visual__meter {

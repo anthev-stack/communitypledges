@@ -16,6 +16,7 @@ import { calculateOptimizedCosts } from "@/lib/optimization"
 import ServerDetailScrollBack from "@/components/server/ServerDetailScrollBack"
 import ServerMinecraftMeta from "@/components/server/ServerMinecraftMeta"
 import ModrinthDownloadCard from "@/components/server/ModrinthDownloadCard"
+import ServerActivePledgers from "@/components/server/ServerActivePledgers"
 import { formatServerAddress } from "@/lib/server-address"
 
 export const dynamic = "force-dynamic"
@@ -317,61 +318,10 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
               )}
             </div>
 
-            <div className="listing-card p-6 md:p-8">
-              <h2 className="text-xl font-bold text-white mb-4">Active pledgers</h2>
-              {server.pledges.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No pledges yet. Be the first!</p>
-              ) : (
-                <div className="space-y-4">
-                  {server.pledges.map((pledge, index) => {
-                    const estimatedPayment = getEstimatedPayment(index, pledge.amount)
-                    const hasSavings = estimatedPayment < pledge.amount - 0.005
-
-                    return (
-                    <div key={pledge.id} className="server-detail-pledger-row">
-                      {pledge.user.image ? (
-                        <Image
-                          src={pledge.user.image}
-                          alt={pledge.user.name}
-                          width={40}
-                          height={40}
-                          className="rounded-full object-cover shrink-0"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 bg-[#5865f2] rounded-full flex items-center justify-center text-white font-semibold shrink-0">
-                          {pledge.user.name?.[0]?.toUpperCase() || "?"}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <span className="font-semibold text-white">
-                            {pledge.user.name || "Anonymous"}
-                          </span>
-                          <div className="flex flex-col items-start gap-1">
-                            <PledgeAmountBadge size="lg">
-                              <Price amountUSD={pledge.amount} showCode={false} />
-                              /mo
-                            </PledgeAmountBadge>
-                            <span
-                              className={`server-detail-est-pays ${hasSavings ? "server-detail-est-pays--savings" : ""}`}
-                            >
-                              Estimated to pay{" "}
-                              <span className="server-detail-est-pays__amount">
-                                <Price amountUSD={estimatedPayment} showCode={false} />
-                                /mo
-                              </span>
-                            </span>
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Pledged {new Date(pledge.updatedAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  )})}
-                </div>
-              )}
-            </div>
+            <section className="server-detail-active-pledgers">
+              <h2 className="text-xl font-bold text-white mb-5 text-center">Active pledgers</h2>
+              <ServerActivePledgers pledges={server.pledges} />
+            </section>
           </div>
 
           {/* Sidebar */}
