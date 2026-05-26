@@ -135,6 +135,14 @@ model Server {
   discordWebhook String?  // Optional Discord webhook URL for pledge notifications
   isPrivate      Boolean  @default(false) // Private servers don't appear in public browser
   isRealm        Boolean  @default(false) // Minecraft Realms don't use public IPs
+
+  // Minecraft: Java Edition
+  minecraftVersion           String?
+  minecraftEditionType       String?  // vanilla | modded
+  minecraftModLoader         String?  // Forge, Fabric, etc.
+  hasModrinthInstance        Boolean  @default(false)
+  modrinthInstanceFileName   String?  // Original filename for download prompt
+  modrinthInstanceExtension  String?  // .mrpack | .zip on disk
   
   ownerId        String
   owner          User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)

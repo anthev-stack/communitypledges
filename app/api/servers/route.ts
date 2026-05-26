@@ -102,6 +102,19 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { name, description, gameType, serverIp, serverPort, playerCount, cost, withdrawalDay, imageUrl, isPrivate } = body
 
+    const isMinecraftJava = gameType === "Minecraft: Java Edition"
+    if (isMinecraftJava) {
+      if (!body.minecraftVersion) {
+        return NextResponse.json({ error: "Minecraft version is required" }, { status: 400 })
+      }
+      if (!body.minecraftEditionType) {
+        return NextResponse.json({ error: "Select vanilla or modded" }, { status: 400 })
+      }
+      if (body.minecraftEditionType === "modded" && !body.minecraftModLoader) {
+        return NextResponse.json({ error: "Mod loader is required for modded servers" }, { status: 400 })
+      }
+    }
+
     if (!name || !gameType || !cost) {
       return NextResponse.json(
         { error: "Name, game type, and monthly cost are required" },
@@ -155,6 +168,11 @@ export async function POST(request: Request) {
         discordWebhook: body.discordWebhook || null,
         isPrivate: isPrivate || false,
         isRealm: body.isRealm || false,
+        minecraftVersion: isMinecraftJava ? body.minecraftVersion : null,
+        minecraftEditionType: isMinecraftJava ? body.minecraftEditionType : null,
+        minecraftModLoader:
+          isMinecraftJava && body.minecraftEditionType === "modded" ? body.minecraftModLoader : null,
+        hasModrinthInstance: false,
         ownerId: session.user.id,
       },
       include: {

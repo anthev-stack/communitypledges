@@ -9,6 +9,8 @@ import { REGIONS, getTagsForGame } from "@/lib/game-tags"
 import { useCurrency } from "@/components/CurrencyProvider"
 import { getCurrencyName } from "@/lib/currency"
 import ImageUpload from "@/components/ImageUpload"
+import MinecraftJavaFields from "@/components/server/MinecraftJavaFields"
+import { isMinecraftJavaEdition } from "@/lib/minecraft-java"
 
 interface Community {
   id: string
@@ -40,7 +42,12 @@ export default function CreateServerPage() {
     discordWebhook: "",
     isPrivate: false,
     isRealm: false,
+    minecraftVersion: "",
+    minecraftEditionType: "",
+    minecraftModLoader: "",
+    hasModrinthInstance: false,
   })
+  const [modrinthFile, setModrinthFile] = useState<File | null>(null)
 
   useEffect(() => {
     checkStripeConnection()
@@ -87,6 +94,14 @@ export default function CreateServerPage() {
     setError("")
 
     try {
+      if (isMinecraftJavaEdition(formData.gameType)) {
+        if (formData.hasModrinthInstance && !modrinthFile) {
+          setError("Please upload your Modrinth instance file")
+          setLoading(false)
+          return
+        }
+      }
+
       // Convert cost from user's local currency to USD
       const costInLocalCurrency = parseFloat(formData.cost)
       const costInUSD = currency !== 'USD' ? convertToUSD(costInLocalCurrency) : costInLocalCurrency
@@ -109,6 +124,24 @@ export default function CreateServerPage() {
         return
       }
 
+      if (isMinecraftJavaEdition(formData.gameType) && formData.hasModrinthInstance && modrinthFile) {
+        const uploadData = new FormData()
+        uploadData.append("file", modrinthFile)
+        const uploadRes = await fetch(`/api/servers/${data.id}/modrinth-instance`, {
+          method: "POST",
+          body: uploadData,
+        })
+        if (!uploadRes.ok) {
+          const uploadErr = await uploadRes.json()
+          setError(
+            uploadErr.error ||
+              "Server created but Modrinth upload failed. Edit your server to upload the instance."
+          )
+          router.push(`/dashboard/server/${data.id}/edit`)
+          return
+        }
+      }
+
       // Redirect to the new server page
       router.push(`/servers/${data.id}`)
     } catch (error) {
@@ -127,7 +160,12 @@ export default function CreateServerPage() {
         ...formData,
         [name]: value,
         tags: [],
+        minecraftVersion: "",
+        minecraftEditionType: "",
+        minecraftModLoader: "",
+        hasModrinthInstance: false,
       })
+      setModrinthFile(null)
     } else {
       setFormData({
         ...formData,
@@ -308,6 +346,19 @@ export default function CreateServerPage() {
                 </optgroup>
               </select>
             </div>
+
+            <MinecraftJavaFields
+              gameType={formData.gameType}
+              values={{
+                minecraftVersion: formData.minecraftVersion,
+                minecraftEditionType: formData.minecraftEditionType,
+                minecraftModLoader: formData.minecraftModLoader,
+                hasModrinthInstance: formData.hasModrinthInstance,
+              }}
+              onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
+              modrinthFile={modrinthFile}
+              onModrinthFileChange={setModrinthFile}
+            />
 
             {/* Description */}
             <div>

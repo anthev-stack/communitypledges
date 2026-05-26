@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { deleteModrinthInstance } from "@/lib/modrinth-storage"
 
 export async function GET(
   request: Request,
@@ -153,6 +154,16 @@ export async function PATCH(
         communityId: body.communityId !== undefined ? (body.communityId || null) : undefined,
         isPrivate: body.isPrivate !== undefined ? body.isPrivate : undefined,
         isRealm: body.isRealm !== undefined ? body.isRealm : undefined,
+        minecraftVersion:
+          body.gameType === "Minecraft: Java Edition" || body.minecraftVersion !== undefined
+            ? body.minecraftVersion ?? null
+            : undefined,
+        minecraftEditionType:
+          body.minecraftEditionType !== undefined ? body.minecraftEditionType || null : undefined,
+        minecraftModLoader:
+          body.minecraftModLoader !== undefined ? body.minecraftModLoader || null : undefined,
+        hasModrinthInstance:
+          body.hasModrinthInstance !== undefined ? body.hasModrinthInstance : undefined,
       },
     })
 
@@ -189,8 +200,9 @@ export async function DELETE(
     // Check if user owns the server
     const existingServer = await prisma.server.findUnique({
       where: { id },
-      select: { 
+      select: {
         ownerId: true,
+        modrinthInstanceExtension: true,
         _count: {
           select: {
             pledges: true,
@@ -223,6 +235,8 @@ export async function DELETE(
         },
       },
     })
+
+    await deleteModrinthInstance(id, existingServer.modrinthInstanceExtension)
 
     // Delete server (cascades to pledges due to Prisma schema)
     await prisma.server.delete({

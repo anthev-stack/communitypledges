@@ -14,6 +14,8 @@ import PledgeProgressBar from "@/components/pledge/PledgeProgressBar"
 import PledgeAmountBadge from "@/components/pledge/PledgeAmountBadge"
 import { calculateOptimizedCosts } from "@/lib/optimization"
 import ServerDetailScrollBack from "@/components/server/ServerDetailScrollBack"
+import ServerMinecraftMeta from "@/components/server/ServerMinecraftMeta"
+import ModrinthDownloadCard from "@/components/server/ModrinthDownloadCard"
 
 export const dynamic = "force-dynamic"
 
@@ -55,6 +57,11 @@ interface Server {
   totalPledged: number
   totalOptimized: number
   pledgerCount: number
+  minecraftVersion?: string | null
+  minecraftEditionType?: string | null
+  minecraftModLoader?: string | null
+  hasModrinthInstance?: boolean
+  modrinthInstanceFileName?: string | null
 }
 
 export default function ServerPage({ params }: { params: Promise<{ id: string }> }) {
@@ -261,6 +268,12 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 <div className="server-detail-banner__content">
                   <span className="server-detail-game-tag">{server.gameType}</span>
                   <h1 className="server-detail-banner__title">{server.name}</h1>
+                  <ServerMinecraftMeta
+                    gameType={server.gameType}
+                    minecraftVersion={server.minecraftVersion}
+                    minecraftEditionType={server.minecraftEditionType}
+                    minecraftModLoader={server.minecraftModLoader}
+                  />
                 </div>
               </div>
             </div>
@@ -507,6 +520,14 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                   </div>
                 </Link>
               </div>
+            )}
+
+            {server.hasModrinthInstance && server.modrinthInstanceFileName && (
+              <ModrinthDownloadCard
+                serverId={server.id}
+                serverName={server.name}
+                fileName={server.modrinthInstanceFileName}
+              />
             )}
 
             <div className="listing-card p-6">

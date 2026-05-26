@@ -7,6 +7,8 @@ import Link from "next/link"
 import { SUPPORTED_GAMES } from "@/lib/supported-games"
 import { REGIONS, getTagsForGame } from "@/lib/game-tags"
 import ImageUpload from "@/components/ImageUpload"
+import MinecraftJavaFields from "@/components/server/MinecraftJavaFields"
+import { isMinecraftJavaEdition } from "@/lib/minecraft-java"
 
 export default function EditServerPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
@@ -33,7 +35,13 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
     discordWebhook: "",
     isPrivate: false,
     isRealm: false,
+    minecraftVersion: "",
+    minecraftEditionType: "",
+    minecraftModLoader: "",
+    hasModrinthInstance: false,
   })
+  const [modrinthFile, setModrinthFile] = useState<File | null>(null)
+  const [existingModrinthFileName, setExistingModrinthFileName] = useState<string | null>(null)
   const [communities, setCommunities] = useState<any[]>([])
 
   useEffect(() => {
@@ -73,7 +81,14 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
           discordWebhook: data.discordWebhook || "",
           isPrivate: data.isPrivate || false,
           isRealm: data.isRealm || false,
+          minecraftVersion: data.minecraftVersion || "",
+          minecraftEditionType: data.minecraftEditionType || "",
+          minecraftModLoader: data.minecraftModLoader || "",
+          hasModrinthInstance: data.hasModrinthInstance || false,
         })
+        setExistingModrinthFileName(
+          data.hasModrinthInstance ? data.modrinthInstanceFileName || null : null
+        )
       } else {
         setError("Server not found")
         setTimeout(() => router.push("/dashboard"), 2000)
@@ -135,6 +150,27 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
       const data = await response.json()
 
       if (response.ok) {
+        if (isMinecraftJavaEdition(formData.gameType) && formData.hasModrinthInstance && modrinthFile) {
+          const uploadData = new FormData()
+          uploadData.append("file", modrinthFile)
+          const uploadRes = await fetch(`/api/servers/${serverId}/modrinth-instance`, {
+            method: "POST",
+            body: uploadData,
+          })
+          if (!uploadRes.ok) {
+            const uploadErr = await uploadRes.json()
+            setError(uploadErr.error || "Server saved but Modrinth upload failed")
+            setLoading(false)
+            return
+          }
+        } else if (
+          isMinecraftJavaEdition(formData.gameType) &&
+          !formData.hasModrinthInstance &&
+          existingModrinthFileName
+        ) {
+          await fetch(`/api/servers/${serverId}/modrinth-instance`, { method: "DELETE" })
+        }
+
         setSuccess("Server updated successfully!")
         if (data.pledgesRemoved > 0) {
           alert(`Server updated! ${data.pledgesRemoved} pledges were removed. Notify your community to re-pledge!`)
@@ -159,7 +195,12 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
         ...formData,
         [name]: value,
         tags: [],
+        minecraftVersion: "",
+        minecraftEditionType: "",
+        minecraftModLoader: "",
+        hasModrinthInstance: false,
       })
+      setModrinthFile(null)
     } else {
       setFormData({
         ...formData,
@@ -280,6 +321,20 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
                 </optgroup>
               </select>
             </div>
+
+            <MinecraftJavaFields
+              gameType={formData.gameType}
+              values={{
+                minecraftVersion: formData.minecraftVersion,
+                minecraftEditionType: formData.minecraftEditionType,
+                minecraftModLoader: formData.minecraftModLoader,
+                hasModrinthInstance: formData.hasModrinthInstance,
+              }}
+              onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
+              modrinthFile={modrinthFile}
+              onModrinthFileChange={setModrinthFile}
+              existingModrinthFileName={existingModrinthFileName}
+            />
 
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">

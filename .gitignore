@@ -50,3 +50,6 @@ next-env.d.ts
 # Stripe keys (never commit!)
 STRIPE_KEYS.*
 *stripe*keys*
+
+# User-uploaded Modrinth instance packs
+/uploads/
