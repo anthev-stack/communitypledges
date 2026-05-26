@@ -53,7 +53,7 @@ export default function ServerStats({ serverId, gameType }: ServerStatsProps) {
 
   if (loading) {
     return (
-      <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4">
+      <div className="listing-card p-4">
         <div className="animate-pulse space-y-2">
           <div className="h-4 bg-slate-700 rounded w-1/2"></div>
           <div className="h-4 bg-slate-700 rounded w-3/4"></div>
@@ -67,7 +67,7 @@ export default function ServerStats({ serverId, gameType }: ServerStatsProps) {
   }
 
   return (
-    <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-4">
+    <div className="listing-card p-4 md:p-6">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-white">Live Server Status</h3>
         <div className="flex items-center space-x-2">
@@ -135,11 +135,12 @@ export default function ServerStats({ serverId, gameType }: ServerStatsProps) {
         <p className="text-sm text-red-400">{stats.error}</p>
       )}
 
-      <div className="mt-3 pt-3 border-t border-slate-700 flex items-center justify-between">
+      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
         <span className="text-xs text-gray-500">Updates every 30 seconds</span>
         <button
+          type="button"
           onClick={fetchStats}
-          className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+          className="text-xs text-[#949cf7] hover:text-[#c9cdfb] font-medium"
         >
           Refresh Now
         </button>

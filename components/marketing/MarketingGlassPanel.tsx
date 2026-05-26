@@ -1,5 +1,7 @@
 import { ReactNode } from "react"
 import { DollarSign, Users, Server, Heart } from "lucide-react"
+import PledgeProgressBar from "@/components/pledge/PledgeProgressBar"
+import PledgeAmountBadge from "@/components/pledge/PledgeAmountBadge"
 
 type VisualVariant = "pledge" | "community" | "owners" | "features"
 
@@ -52,14 +54,12 @@ function MarketingVisual({ variant }: { variant: VisualVariant }) {
             <Server className="w-5 h-5" />
             <span>Realm of Eldoria</span>
           </div>
-          <div className="marketing-visual__bar">
-            <span style={{ width: "72%" }} />
-          </div>
+          <PledgeProgressBar percent={72} size="sm" />
           <p className="marketing-visual__stat">$24 / $40 goal · 9 pledgers</p>
           <div className="marketing-visual__chips">
-            <span>$2</span>
-            <span>$5</span>
-            <span>$10</span>
+            <PledgeAmountBadge size="sm">$2</PledgeAmountBadge>
+            <PledgeAmountBadge size="sm">$5</PledgeAmountBadge>
+            <PledgeAmountBadge size="sm">$10</PledgeAmountBadge>
           </div>
         </div>
       </div>

@@ -732,6 +732,68 @@ body:has(.marketing-page-backdrop) footer {
   margin-bottom: 1rem;
 }
 
+/* Shared pledge UI (homepage + server detail) */
+.pledge-progress-track {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.pledge-progress-track--sm {
+  height: 6px;
+}
+
+.pledge-progress-track--lg {
+  height: 12px;
+  border-radius: 6px;
+}
+
+.pledge-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #5865f2, #23a559);
+  transition: width 0.35s ease;
+}
+
+.pledge-amount-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(88, 101, 242, 0.35);
+  color: #e0e7ff;
+  white-space: nowrap;
+}
+
+.pledge-amount-badge--sm {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+}
+
+.pledge-amount-badge--lg {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.875rem;
+}
+
+.pledge-amount-badge--optimized {
+  background: rgba(35, 165, 89, 0.35);
+  color: #bbf7d0;
+}
+
+.pledge-funding-stat {
+  font-size: 0.875rem;
+  color: #b5bac1;
+  margin-bottom: 0.75rem;
+}
+
+.marketing-visual .pledge-progress-track {
+  margin-bottom: 0.75rem;
+}
+
 .marketing-visual__bar {
   height: 8px;
   border-radius: 4px;
@@ -759,13 +821,78 @@ body:has(.marketing-page-backdrop) footer {
   flex-wrap: wrap;
 }
 
-.marketing-visual__chips span {
-  padding: 0.25rem 0.65rem;
+/* Server detail page */
+.server-detail-hero {
+  position: relative;
+  height: 20rem;
+  overflow: hidden;
+}
+
+.server-detail-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(26, 27, 30, 0.95) 0%,
+    rgba(26, 27, 30, 0.4) 50%,
+    rgba(26, 27, 30, 0.25) 100%
+  );
+}
+
+.server-detail-hero__content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1.5rem;
+}
+
+.server-detail-hero--fallback {
+  background: linear-gradient(135deg, #5865f2, #8b5cf6, #ec4899);
+}
+
+.server-detail-game-tag {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: rgba(88, 101, 242, 0.35);
-  color: #e0e7ff;
+  background: rgba(35, 165, 89, 0.9);
+  color: #fff;
+  margin-bottom: 0.75rem;
+}
+
+.server-detail-pledger-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.server-detail-pledger-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.server-detail-notice {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(43, 45, 49, 0.9);
+  padding: 1rem;
+}
+
+.server-detail-notice--amber {
+  border-color: rgba(250, 166, 26, 0.35);
+  background: rgba(250, 166, 26, 0.08);
+}
+
+.server-detail-notice--amber h3 {
+  color: #faa81a !important;
+}
+
+.server-detail-notice--amber p {
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 
 .marketing-visual__big {
