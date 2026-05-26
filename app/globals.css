@@ -871,25 +871,11 @@ body:has(.server-detail-page-backdrop) main {
   opacity: 0.65;
 }
 
-.server-detail-page .listing-card,
-.server-detail-page .server-detail-notice {
+.server-detail-page .server-detail-inner-panel {
   background: rgba(30, 31, 34, 0.75) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.server-detail-page .listing-card:hover {
-  background: rgba(43, 45, 49, 0.8) !important;
-  border-color: rgba(88, 101, 242, 0.35) !important;
-}
-
-.server-detail-page .server-detail-notice {
-  background: rgba(43, 45, 49, 0.75) !important;
-}
-
-.server-detail-page .server-detail-notice--amber {
-  background: rgba(43, 35, 20, 0.75) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .server-detail-page .server-detail-pledger-row {
@@ -907,7 +893,17 @@ body:has(.server-detail-page-backdrop) main {
 }
 
 .server-detail-est-pays--savings {
-  color: rgba(87, 242, 135, 0.85);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.server-detail-est-pays--savings .server-detail-est-pays__amount {
+  color: rgba(87, 242, 135, 0.9);
+  font-weight: 600;
+}
+
+.server-detail-est-pays__amount {
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 500;
 }
 
 /* Server detail hero */
@@ -1148,6 +1144,34 @@ body:has(.server-detail-page-backdrop) main {
 .marketing-page .listing-card .bg-slate-700\/50,
 .marketing-page .listing-card .bg-slate-800\/80 {
   background-color: #2b2d31 !important;
+}
+
+/* Server detail — 75% panels (override solid listing-card above) */
+.server-detail-page.marketing-page .listing-card,
+.server-detail-page.marketing-page .listing-empty,
+.server-detail-page.marketing-page .listing-loading,
+.server-detail-page.marketing-page .server-detail-notice {
+  background: rgba(30, 31, 34, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: none !important;
+}
+
+.server-detail-page.marketing-page .listing-card:hover {
+  background: rgba(43, 45, 49, 0.8) !important;
+  border-color: rgba(88, 101, 242, 0.35) !important;
+}
+
+.server-detail-page.marketing-page .server-detail-notice--amber {
+  background: rgba(43, 35, 20, 0.75) !important;
+  border-color: rgba(250, 166, 26, 0.35) !important;
+}
+
+.server-detail-page.marketing-page .listing-card .bg-slate-700\/50,
+.server-detail-page.marketing-page .listing-card .bg-slate-800\/80,
+.server-detail-page.marketing-page .server-detail-inner-panel {
+  background: rgba(30, 31, 34, 0.75) !important;
 }
 
 .marketing-page .listing-empty h3 {

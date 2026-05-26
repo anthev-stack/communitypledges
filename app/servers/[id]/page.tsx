@@ -271,7 +271,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
               </p>
 
               {server.serverIp && (
-                <div className="mt-6 rounded-lg border border-white/10 bg-[#2b2d31] p-4">
+                <div className="mt-6 rounded-lg border border-white/10 server-detail-inner-panel p-4">
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
                     Server IP
                   </p>
@@ -289,36 +289,6 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 </div>
               )}
             </div>
-
-            {server.community && (
-              <div className="listing-card p-6 md:p-8">
-                <h2 className="text-xl font-bold text-white mb-4">Part of community</h2>
-                <Link
-                  href={`/communities/${server.community.id}`}
-                  className="flex items-center gap-4 p-4 rounded-lg border border-white/10 hover:border-[#5865f2]/50 transition"
-                >
-                  {server.community.imageUrl ? (
-                    <Image
-                      src={server.community.imageUrl}
-                      alt={server.community.name}
-                      width={60}
-                      height={60}
-                      className="rounded-lg"
-                    />
-                  ) : (
-                    <div className="w-[60px] h-[60px] bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center shrink-0">
-                      <span className="text-xl text-white font-bold">
-                        {server.community.name[0]?.toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="text-lg font-bold text-white">{server.community.name}</h3>
-                    <p className="text-sm text-[#949cf7]">View community profile →</p>
-                  </div>
-                </Link>
-              </div>
-            )}
 
             <div className="listing-card p-6 md:p-8">
               <h2 className="text-xl font-bold text-white mb-4">Active pledgers</h2>
@@ -358,14 +328,11 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                             <span
                               className={`server-detail-est-pays ${hasSavings ? "server-detail-est-pays--savings" : ""}`}
                             >
-                              Est. pays
-                              <PledgeAmountBadge
-                                variant={hasSavings ? "optimized" : "default"}
-                                size="sm"
-                              >
+                              Est. pays{" "}
+                              <span className="server-detail-est-pays__amount">
                                 <Price amountUSD={estimatedPayment} showCode={false} />
                                 /mo
-                              </PledgeAmountBadge>
+                              </span>
                             </span>
                           </div>
                         </div>
@@ -424,12 +391,10 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
               </p>
 
               {server.totalOptimized > 0 && server.totalOptimized < server.totalPledged && (
-                <p className="text-sm text-emerald-400 font-medium mb-4 flex items-center gap-2 flex-wrap">
-                  Optimized to
-                  <PledgeAmountBadge variant="optimized">
-                    <Price amountUSD={server.totalOptimized} showCode={false} />
-                    /mo
-                  </PledgeAmountBadge>
+                <p className="text-sm text-emerald-400 font-medium mb-4">
+                  Optimized to{" "}
+                  <Price amountUSD={server.totalOptimized} showCode={false} />
+                  /mo
                 </p>
               )}
 
@@ -452,12 +417,12 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
 
               {server.owner.stripeOnboardingComplete ? (
                 checkingPledge ? (
-                  <div className="w-full rounded-lg border border-white/10 bg-[#2b2d31] text-gray-400 px-6 py-3 text-center text-sm">
+                  <div className="w-full rounded-lg border border-white/10 server-detail-inner-panel text-gray-400 px-6 py-3 text-center text-sm">
                     Checking pledge status...
                   </div>
                 ) : userPledge ? (
                   <div className="space-y-3">
-                    <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+                    <div className="rounded-lg border border-white/10 server-detail-inner-panel p-4">
                       <p className="text-sm font-medium text-gray-400 mb-2">Your pledge</p>
                       <div className="flex flex-wrap items-center gap-2 mb-2">
                         <PledgeAmountBadge size="lg">
@@ -475,10 +440,8 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                           <p
                             className={`server-detail-est-pays ${saves ? "server-detail-est-pays--savings" : ""}`}
                           >
-                            Est. pays
-                            <PledgeAmountBadge variant={saves ? "optimized" : "default"} size="sm">
-                              {formatPrice(est)}/month
-                            </PledgeAmountBadge>
+                            Est. pays{" "}
+                            <span className="server-detail-est-pays__amount">{formatPrice(est)}/month</span>
                           </p>
                         )
                       })()}
@@ -516,6 +479,36 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 </div>
               )}
             </div>
+
+            {server.community && (
+              <div className="listing-card p-6 md:p-8">
+                <h2 className="text-lg font-bold text-white mb-4">Part of community</h2>
+                <Link
+                  href={`/communities/${server.community.id}`}
+                  className="flex items-center gap-4 p-4 rounded-lg border border-white/10 server-detail-inner-panel hover:border-[#5865f2]/50 transition"
+                >
+                  {server.community.imageUrl ? (
+                    <Image
+                      src={server.community.imageUrl}
+                      alt={server.community.name}
+                      width={56}
+                      height={56}
+                      className="rounded-lg shrink-0"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center shrink-0">
+                      <span className="text-lg text-white font-bold">
+                        {server.community.name[0]?.toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <h3 className="text-base font-bold text-white truncate">{server.community.name}</h3>
+                    <p className="text-sm text-[#949cf7]">View community profile →</p>
+                  </div>
+                </Link>
+              </div>
+            )}
 
             <div className="listing-card p-6">
               <h3 className="text-lg font-semibold text-white mb-4">Server owner</h3>
