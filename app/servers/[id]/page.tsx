@@ -13,6 +13,7 @@ import ServerDetailPageShell from "@/components/marketing/ServerDetailPageShell"
 import PledgeProgressBar from "@/components/pledge/PledgeProgressBar"
 import PledgeAmountBadge from "@/components/pledge/PledgeAmountBadge"
 import { calculateOptimizedCosts } from "@/lib/optimization"
+import ServerDetailScrollBack from "@/components/server/ServerDetailScrollBack"
 
 export const dynamic = "force-dynamic"
 
@@ -232,38 +233,38 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
     return optimizedCosts[index] ?? pledgeAmount
   }
 
+  const bannerImageUrl = server.imageUrl || gameBannerUrl
+
   return (
     <ServerDetailPageShell>
-      {/* Hero */}
-      <div
-        className={`server-detail-hero ${!gameBannerUrl ? "server-detail-hero--fallback" : ""}`}
-      >
-        {gameBannerUrl && (
-          <Image
-            src={gameBannerUrl}
-            alt={server.gameType}
-            fill
-            className="object-cover blur-sm scale-110"
-            priority
-          />
-        )}
-        <div className="server-detail-hero__overlay" />
-        <div className="server-detail-hero__content max-w-7xl mx-auto">
-          <Link href="/servers" className="help-article-back inline-flex items-center text-sm font-medium mb-4">
-            <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to servers
-          </Link>
-          <span className="server-detail-game-tag">{server.gameType}</span>
-          <h1 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">{server.name}</h1>
-        </div>
-      </div>
+      <ServerDetailScrollBack showAfter={160} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main column */}
           <div className="lg:col-span-2 space-y-6">
+            <div className="listing-card listing-card--banner">
+              <div
+                className={`server-detail-banner ${!bannerImageUrl ? "server-detail-banner--fallback" : ""}`}
+              >
+                {bannerImageUrl && (
+                  <Image
+                    src={bannerImageUrl}
+                    alt=""
+                    fill
+                    className="server-detail-banner__image"
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 66vw"
+                  />
+                )}
+                <div className="server-detail-banner__overlay" aria-hidden />
+                <div className="server-detail-banner__content">
+                  <span className="server-detail-game-tag">{server.gameType}</span>
+                  <h1 className="server-detail-banner__title">{server.name}</h1>
+                </div>
+              </div>
+            </div>
+
             <div className="listing-card p-6 md:p-8">
               <h2 className="text-xl font-bold text-white mb-4">About this server</h2>
               <p className="text-gray-300 whitespace-pre-wrap leading-relaxed">

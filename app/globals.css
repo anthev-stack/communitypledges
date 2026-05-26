@@ -906,45 +906,126 @@ body:has(.server-detail-page-backdrop) main {
   font-weight: 500;
 }
 
-/* Server detail hero */
-.server-detail-hero {
-  position: relative;
-  height: 20rem;
+/* Server detail — compact banner card (main column) */
+.server-detail-page .listing-card--banner {
+  padding: 0 !important;
   overflow: hidden;
 }
 
-.server-detail-hero__overlay {
+.server-detail-banner {
+  position: relative;
+  height: 11rem;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .server-detail-banner {
+    height: 12.5rem;
+  }
+}
+
+.server-detail-banner--fallback {
+  background: linear-gradient(135deg, #3b2d5c, #5865f2, #1a1224);
+}
+
+.server-detail-banner__image {
+  object-fit: cover;
+}
+
+.server-detail-banner__overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     to top,
-    rgba(10, 10, 12, 0.97) 0%,
-    rgba(14, 12, 20, 0.55) 50%,
-    rgba(18, 14, 26, 0.35) 100%
+    rgba(10, 10, 12, 0.92) 0%,
+    rgba(14, 12, 20, 0.45) 55%,
+    rgba(18, 14, 26, 0.2) 100%
   );
 }
 
-.server-detail-hero__content {
+.server-detail-banner__content {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 1.5rem;
+  padding: 1rem 1.25rem;
 }
 
-.server-detail-hero--fallback {
-  background: linear-gradient(135deg, #5865f2, #8b5cf6, #ec4899);
+@media (min-width: 768px) {
+  .server-detail-banner__content {
+    padding: 1.25rem 1.5rem;
+  }
 }
 
 .server-detail-game-tag {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
+  padding: 0.2rem 0.65rem;
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
-  background: rgba(35, 165, 89, 0.9);
+  background: rgba(35, 165, 89, 0.85);
   color: #fff;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.server-detail-banner__title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 768px) {
+  .server-detail-banner__title {
+    font-size: 1.75rem;
+  }
+}
+
+/* Floating back control (appears on scroll) */
+.server-detail-scroll-back {
+  position: fixed;
+  right: 1.25rem;
+  top: 5.5rem;
+  z-index: 40;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(30, 31, 34, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #949cf7;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(0.5rem);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.server-detail-scroll-back:hover {
+  background: rgba(43, 45, 49, 0.95);
+  color: #c9cdfb;
+  border-color: rgba(88, 101, 242, 0.45);
+}
+
+.server-detail-scroll-back--visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+@media (min-width: 1024px) {
+  .server-detail-scroll-back {
+    right: max(1.25rem, calc((100vw - 80rem) / 2 + 1rem));
+  }
 }
 
 .server-detail-pledger-row {
@@ -1148,6 +1229,7 @@ body:has(.server-detail-page-backdrop) main {
 
 /* Server detail — 75% panels (override solid listing-card above) */
 .server-detail-page.marketing-page .listing-card,
+.server-detail-page.marketing-page .listing-card--banner,
 .server-detail-page.marketing-page .listing-empty,
 .server-detail-page.marketing-page .listing-loading,
 .server-detail-page.marketing-page .server-detail-notice {
