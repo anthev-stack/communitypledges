@@ -1333,6 +1333,176 @@ body:has(.server-detail-page-backdrop) main {
   margin: 0 auto;
 }
 
+/* Server detail — pledge action buttons */
+.server-detail-pledge-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.btn-server-pledge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.btn-server-pledge:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-server-pledge:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-server-pledge--primary {
+  background: #5865f2 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(88, 101, 242, 0.4);
+}
+
+.btn-server-pledge--primary:hover:not(:disabled) {
+  background: #4752c4 !important;
+  box-shadow: 0 6px 18px rgba(88, 101, 242, 0.5);
+}
+
+.btn-server-pledge--secondary {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #f2f3f5 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.btn-server-pledge--secondary:hover:not(:disabled) {
+  background: rgba(88, 101, 242, 0.15) !important;
+  border-color: rgba(148, 156, 247, 0.45) !important;
+  color: #ffffff !important;
+}
+
+.btn-server-pledge--danger {
+  background: transparent !important;
+  color: #f47b7b !important;
+  border-color: rgba(237, 66, 69, 0.35) !important;
+}
+
+.btn-server-pledge--danger:hover:not(:disabled) {
+  background: rgba(237, 66, 69, 0.12) !important;
+  border-color: rgba(237, 66, 69, 0.55) !important;
+  color: #ff9a9a !important;
+}
+
+/* Dashboard — my servers action buttons */
+.dashboard-server-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.dashboard-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(43, 45, 49, 0.85);
+  color: #b5bac1;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.dashboard-action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+
+.dashboard-action-btn--view:hover:not(:disabled) {
+  background: rgba(88, 101, 242, 0.2);
+  border-color: rgba(148, 156, 247, 0.45);
+  color: #949cf7;
+}
+
+.dashboard-action-btn--edit:hover:not(:disabled) {
+  background: rgba(35, 165, 89, 0.18);
+  border-color: rgba(59, 165, 93, 0.45);
+  color: #57f287;
+}
+
+.dashboard-action-btn--delete:hover:not(:disabled) {
+  background: rgba(237, 66, 69, 0.15);
+  border-color: rgba(237, 66, 69, 0.45);
+  color: #f47b7b;
+}
+
+.dashboard-boost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  border-radius: 10px;
+  border: 1px solid rgba(250, 166, 26, 0.35);
+  background: rgba(250, 166, 26, 0.15);
+  color: #faa81a;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.dashboard-boost-btn:hover:not(:disabled) {
+  background: rgba(250, 166, 26, 0.28);
+  border-color: rgba(250, 166, 26, 0.55);
+  color: #ffcc4d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(250, 166, 26, 0.2);
+}
+
+.dashboard-boost-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.dashboard-boost-btn--active {
+  background: rgba(250, 166, 26, 0.1);
+  border-color: rgba(250, 166, 26, 0.25);
+  color: rgba(250, 166, 26, 0.7);
+  box-shadow: none;
+}
+
+.dashboard-boost-btn--active:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+
 .marketing-visual__meter {
   width: 100%;
   height: 10px;

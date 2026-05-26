@@ -579,49 +579,61 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    <div className="flex space-x-2">
+                    <div className="dashboard-server-actions">
                       <Link href={`/servers/${server.id}`}>
-                        <button className="px-4 py-2 text-sm bg-slate-700/50 hover:bg-slate-600 text-white rounded-lg transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl">
-                          <Eye className="w-4 h-4" />
-                          <span>View</span>
+                        <button
+                          type="button"
+                          className="dashboard-action-btn dashboard-action-btn--view"
+                          title="View server"
+                        >
+                          <Eye className="w-4 h-4" aria-hidden />
+                          <span className="sr-only">View</span>
                         </button>
                       </Link>
                       <Link href={`/dashboard/server/${server.id}/edit`}>
-                        <button className="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl">
-                          <Edit3 className="w-4 h-4" />
-                          <span>Edit</span>
+                        <button
+                          type="button"
+                          className="dashboard-action-btn dashboard-action-btn--edit"
+                          title="Edit server"
+                        >
+                          <Edit3 className="w-4 h-4" aria-hidden />
+                          <span className="sr-only">Edit</span>
                         </button>
                       </Link>
                       {!server.isPrivate && (
                         <button
+                          type="button"
                           onClick={() => handleBoostServer(server.id, server.name)}
                           disabled={boostingServer === server.id || server.isBoosted}
-                          className={`px-4 py-2 text-sm rounded-lg transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl ${
+                          title={
                             server.isBoosted
-                              ? "bg-yellow-100 text-yellow-700 cursor-not-allowed shadow-none"
+                              ? "Server is boosted"
                               : boostingServer === server.id
-                              ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
-                              : "bg-yellow-600 text-white hover:bg-yellow-700"
+                                ? "Boosting..."
+                                : "Boost server listing"
+                          }
+                          className={`dashboard-boost-btn ${
+                            server.isBoosted ? "dashboard-boost-btn--active" : ""
                           }`}
                         >
-                          <Zap className="w-4 h-4" />
+                          <Zap className="w-4 h-4 shrink-0" aria-hidden />
                           <span>
-                            {boostingServer === server.id ? (
-                              "Boosting..."
-                            ) : server.isBoosted ? (
-                              "Boosted"
-                            ) : (
-                              "Boost ($3)"
-                            )}
+                            {boostingServer === server.id
+                              ? "Boosting..."
+                              : server.isBoosted
+                                ? "Boosted"
+                                : "Boost ($3)"}
                           </span>
                         </button>
                       )}
                       <button
+                        type="button"
                         onClick={() => handleDelete(server.id, server.name)}
-                        className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                        className="dashboard-action-btn dashboard-action-btn--delete"
+                        title="Delete server"
                       >
-                        <Trash2 className="w-4 h-4" />
-                        <span>Delete</span>
+                        <Trash2 className="w-4 h-4" aria-hidden />
+                        <span className="sr-only">Delete</span>
                       </button>
                     </div>
                   </div>

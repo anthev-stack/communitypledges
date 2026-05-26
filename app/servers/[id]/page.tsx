@@ -421,30 +421,32 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                         )
                       })()}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowPledgeModal(true)}
-                      className="btn-primary w-full py-3 text-sm font-semibold inline-flex items-center justify-center gap-2"
-                    >
-                      <Edit3 className="w-5 h-5" />
-                      Change pledge amount
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleRemovePledge}
-                      className="w-full py-3 text-sm font-semibold rounded-lg bg-red-600/90 hover:bg-red-600 text-white inline-flex items-center justify-center gap-2 transition"
-                    >
-                      <X className="w-5 h-5" />
-                      Remove pledge
-                    </button>
+                    <div className="server-detail-pledge-actions">
+                      <button
+                        type="button"
+                        onClick={() => setShowPledgeModal(true)}
+                        className="btn-server-pledge btn-server-pledge--secondary"
+                      >
+                        <Edit3 className="w-4 h-4 shrink-0" aria-hidden />
+                        Change pledge amount
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemovePledge}
+                        className="btn-server-pledge btn-server-pledge--danger"
+                      >
+                        <X className="w-4 h-4 shrink-0" aria-hidden />
+                        Remove pledge
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setShowPledgeModal(true)}
-                    className="btn-primary w-full py-3 text-sm font-semibold inline-flex items-center justify-center gap-2"
+                    className="btn-server-pledge btn-server-pledge--primary mt-4"
                   >
-                    <HeartHandshake className="w-5 h-5" />
+                    <HeartHandshake className="w-4 h-4 shrink-0" aria-hidden />
                     Make a pledge
                   </button>
                 )
