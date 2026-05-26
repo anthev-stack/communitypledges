@@ -5,7 +5,18 @@ import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { MIN_PLEDGE, MAX_PLEDGE } from "@/lib/constants"
 import { useCurrency } from "./CurrencyProvider"
-import { Lightbulb, DollarSign, CreditCard, TrendingDown, Users } from "lucide-react"
+import {
+  Lightbulb,
+  DollarSign,
+  CreditCard,
+  TrendingDown,
+  Users,
+  X,
+  Sparkles,
+  HeartHandshake,
+} from "lucide-react"
+import PledgeModalBackdrop from "@/components/pledge/PledgeModalBackdrop"
+import PledgeModalFireworks from "@/components/pledge/PledgeModalFireworks"
 
 interface PledgeModalProps {
   server: {
@@ -28,15 +39,29 @@ export default function PledgeModal({ server, isOpen, onClose, onSuccess }: Pled
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
-  const [pledgeStatus, setPledgeStatus] = useState<any>(null)
+  const [pledgeStatus, setPledgeStatus] = useState<{
+    hasPledge?: boolean
+    canPledge?: boolean
+    maxPledges?: number
+    currentPledges?: number
+    userPledge?: {
+      amount: number
+      optimizedAmount?: number | null
+    }
+  } | null>(null)
   const [loadingStatus, setLoadingStatus] = useState(true)
 
   useEffect(() => {
     if (isOpen) {
+      document.body.style.overflow = "hidden"
       fetchPledgeStatus()
     } else {
+      document.body.style.overflow = ""
       setError("")
       setMessage("")
+    }
+    return () => {
+      document.body.style.overflow = ""
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
@@ -47,8 +72,7 @@ export default function PledgeModal({ server, isOpen, onClose, onSuccess }: Pled
       const response = await fetch(`/api/servers/${server.id}/pledge`)
       const data = await response.json()
       setPledgeStatus(data)
-      
-      // Set amount to existing pledge amount if user has one (convert from USD)
+
       if (data.hasPledge && data.userPledge) {
         const convertedAmount = convertFromUSD(data.userPledge.amount)
         setAmount(convertedAmount.toFixed(2))
@@ -66,20 +90,20 @@ export default function PledgeModal({ server, isOpen, onClose, onSuccess }: Pled
 
   const handlePledge = async () => {
     const pledgeAmountInUserCurrency = parseFloat(amount)
-    
+
     if (isNaN(pledgeAmountInUserCurrency)) {
       setError(`Please enter a valid amount`)
       return
     }
 
-    // Convert user's currency input to USD for storage
     const pledgeAmountUSD = convertToUSD(pledgeAmountInUserCurrency)
-    
-    // Check min/max in USD
+
     if (pledgeAmountUSD < MIN_PLEDGE || pledgeAmountUSD > MAX_PLEDGE) {
       const minConverted = convertFromUSD(MIN_PLEDGE)
       const maxConverted = convertFromUSD(MAX_PLEDGE)
-      setError(`Pledge must be between ${symbol}${minConverted.toFixed(2)} and ${symbol}${maxConverted.toFixed(2)}`)
+      setError(
+        `Pledge must be between ${symbol}${minConverted.toFixed(2)} and ${symbol}${maxConverted.toFixed(2)}`
+      )
       return
     }
 
@@ -107,7 +131,7 @@ export default function PledgeModal({ server, isOpen, onClose, onSuccess }: Pled
         onSuccess()
         onClose()
       }, 2000)
-    } catch (err) {
+    } catch {
       setError("Something went wrong")
     } finally {
       setLoading(false)
@@ -138,7 +162,7 @@ export default function PledgeModal({ server, isOpen, onClose, onSuccess }: Pled
         onSuccess()
         onClose()
       }, 1500)
-    } catch (err) {
+    } catch {
       setError("Something went wrong")
     } finally {
       setLoading(false)
@@ -147,142 +171,166 @@ export default function PledgeModal({ server, isOpen, onClose, onSuccess }: Pled
 
   if (!isOpen) return null
 
+  const isCelebrating = Boolean(message && !error)
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-800 border border-slate-700 rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between sticky top-0 bg-slate-800">
-          <h2 className="text-xl font-bold text-white">
-            {pledgeStatus?.hasPledge ? "Manage Pledge" : "Make a Pledge"}
-          </h2>
+    <div
+      className="pledge-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pledge-modal-title"
+    >
+      <PledgeModalBackdrop />
+      <PledgeModalFireworks boost={loading} celebrate={isCelebrating} />
+
+      <button
+        type="button"
+        className="pledge-modal-overlay-dismiss"
+        onClick={onClose}
+        aria-label="Close"
+      />
+
+      <div className="pledge-modal-panel">
+        <div className="pledge-modal-panel__header">
+          <div className="pledge-modal-panel__title-wrap">
+            <Sparkles className="w-5 h-5 text-amber-300/90 shrink-0" aria-hidden />
+            <h2 id="pledge-modal-title" className="pledge-modal-panel__title">
+              {pledgeStatus?.hasPledge ? "Manage pledge" : "Make a pledge"}
+            </h2>
+          </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-300"
+            className="pledge-modal-panel__close"
+            aria-label="Close"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="pledge-modal-panel__body">
           {loadingStatus ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
-              <p className="text-gray-400">Loading...</p>
+            <div className="pledge-modal-loading">
+              <div className="pledge-modal-loading__spinner" />
+              <p>Loading...</p>
             </div>
           ) : pledgeStatus?.hasPledge ? (
-            // User already has a pledge - show management options
-            <div className="space-y-4">
-              <div className="bg-green-900/30 border border-green-700/50 rounded-lg p-4">
-                <h3 className="font-semibold text-green-300 mb-2 flex items-center">
-                  <DollarSign className="w-5 h-5 mr-2" />
-                  Your Current Pledge
+            <div className="pledge-modal-stack">
+              <div className="pledge-modal-notice pledge-modal-notice--success">
+                <h3 className="pledge-modal-notice__title">
+                  <DollarSign className="w-5 h-5" aria-hidden />
+                  Your current pledge
                 </h3>
-                <div className="space-y-2 text-sm text-gray-300">
-                  <p><strong className="text-white">Pledged Amount:</strong> {formatPrice(pledgeStatus.userPledge.amount)}/month</p>
-                  <p><strong className="text-white">Estimated Payment:</strong> {formatPrice(pledgeStatus.userPledge.optimizedAmount || pledgeStatus.userPledge.amount)}/month</p>
-                  {pledgeStatus.userPledge.optimizedAmount < pledgeStatus.userPledge.amount && (
-                    <p className="text-green-400 flex items-center">
-                      <TrendingDown className="w-4 h-4 mr-1" />
-                      You&apos;re saving {formatPrice(pledgeStatus.userPledge.amount - pledgeStatus.userPledge.optimizedAmount)}/month thanks to optimization!
-                    </p>
-                  )}
+                <div className="pledge-modal-notice__body">
+                  <p>
+                    <strong>Pledged:</strong> {formatPrice(pledgeStatus.userPledge!.amount)}/month
+                  </p>
+                  <p>
+                    <strong>Estimated payment:</strong>{" "}
+                    {formatPrice(
+                      pledgeStatus.userPledge!.optimizedAmount || pledgeStatus.userPledge!.amount
+                    )}
+                    /month
+                  </p>
+                  {pledgeStatus.userPledge!.optimizedAmount != null &&
+                    pledgeStatus.userPledge!.optimizedAmount! < pledgeStatus.userPledge!.amount && (
+                      <p className="pledge-modal-notice__highlight">
+                        <TrendingDown className="w-4 h-4" aria-hidden />
+                        You&apos;re saving{" "}
+                        {formatPrice(
+                          pledgeStatus.userPledge!.amount - pledgeStatus.userPledge!.optimizedAmount!
+                        )}
+                        /month thanks to optimization!
+                      </p>
+                    )}
                 </div>
               </div>
 
+              {error && <div className="pledge-modal-alert pledge-modal-alert--error">{error}</div>}
+              {message && (
+                <div className="pledge-modal-alert pledge-modal-alert--success">{message}</div>
+              )}
+
               <button
+                type="button"
                 onClick={handleUnpledge}
                 disabled={loading}
-                className="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition disabled:opacity-50"
+                className="btn-server-pledge btn-server-pledge--danger"
               >
-                {loading ? "Cancelling..." : "Cancel Pledge"}
+                {loading ? "Cancelling..." : "Cancel pledge"}
               </button>
             </div>
           ) : !session ? (
-            // Guest user
-            <div className="space-y-4">
-              <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-6 text-center">
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  Sign In Required
-                </h3>
-                <p className="text-sm text-gray-300 mb-4">
+            <div className="pledge-modal-stack">
+              <div className="pledge-modal-notice pledge-modal-notice--warn">
+                <h3 className="pledge-modal-notice__title">Sign in required</h3>
+                <p className="pledge-modal-notice__text">
                   You need to be logged in to pledge to a server.
                 </p>
-                <Link
-                  href="/login"
-                  onClick={onClose}
-                  className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition"
-                >
-                  Sign In
+                <Link href="/login" onClick={onClose} className="btn-server-pledge btn-server-pledge--primary">
+                  Sign in
                 </Link>
               </div>
             </div>
           ) : !pledgeStatus?.canPledge ? (
-            // Server at capacity
-            <div className="space-y-4">
-              <div className="bg-red-900/30 border border-red-700/50 rounded-lg p-6 text-center">
-                <svg className="w-12 h-12 text-red-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <h3 className="text-lg font-semibold text-white mb-2 flex items-center justify-center">
-                  <Users className="w-5 h-5 mr-2" />
-                  Server at Capacity
+            <div className="pledge-modal-stack">
+              <div className="pledge-modal-notice pledge-modal-notice--error">
+                <h3 className="pledge-modal-notice__title">
+                  <Users className="w-5 h-5" aria-hidden />
+                  Server at capacity
                 </h3>
-                <p className="text-sm text-gray-300">
-                  This server has reached maximum pledgers ({pledgeStatus.maxPledges} people).
+                <p className="pledge-modal-notice__text">
+                  This server has reached maximum pledgers ({pledgeStatus?.maxPledges} people).
                 </p>
               </div>
             </div>
           ) : (
-            // Create pledge form
-            <div className="space-y-4">
-              <div className="bg-indigo-900/30 border border-indigo-700/50 rounded-lg p-4">
-                <p className="text-sm text-gray-300">
-                  <strong className="text-white">Server:</strong> {server.name}
-                </p>
-                <p className="text-xs text-gray-400 mt-1 flex items-center">
-                  <DollarSign className="w-3 h-3 mr-1" />
-                  Monthly cost: {formatPrice(server.cost)} • {pledgeStatus.currentPledges}/{pledgeStatus.maxPledges} pledgers
+            <div className="pledge-modal-stack">
+              <div className="pledge-modal-server-card">
+                <p className="pledge-modal-server-card__name">{server.name}</p>
+                <p className="pledge-modal-server-card__meta">
+                  <DollarSign className="w-3.5 h-3.5" aria-hidden />
+                  Monthly cost: {formatPrice(server.cost)} · {pledgeStatus?.currentPledges}/
+                  {pledgeStatus?.maxPledges} pledgers
                 </p>
               </div>
 
-              {error && (
-                <div className="bg-red-900/30 border border-red-700/50 text-red-300 px-4 py-3 rounded-lg text-sm">
-                  {error}
-                </div>
-              )}
-
+              {error && <div className="pledge-modal-alert pledge-modal-alert--error">{error}</div>}
               {message && (
-                <div className="bg-green-900/30 border border-green-700/50 text-green-300 px-4 py-3 rounded-lg text-sm">
+                <div className="pledge-modal-alert pledge-modal-alert--success pledge-modal-alert--celebrate">
+                  <Sparkles className="w-4 h-4 shrink-0" aria-hidden />
                   {message}
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Your Monthly Pledge ({symbol}{convertFromUSD(MIN_PLEDGE).toFixed(2)}-{symbol}{convertFromUSD(MAX_PLEDGE).toFixed(2)})
+                <label htmlFor="pledge-amount" className="pledge-modal-label">
+                  Your monthly pledge ({symbol}
+                  {convertFromUSD(MIN_PLEDGE).toFixed(2)}–{symbol}
+                  {convertFromUSD(MAX_PLEDGE).toFixed(2)})
                 </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-3 text-gray-400">{symbol}</span>
+                <div className="pledge-modal-input-wrap">
+                  <span className="pledge-modal-input-prefix">{symbol}</span>
                   <input
+                    id="pledge-amount"
                     type="number"
                     min={convertFromUSD(MIN_PLEDGE)}
                     max={convertFromUSD(MAX_PLEDGE)}
                     step="0.01"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2 bg-slate-900 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-white"
+                    className="pledge-modal-input"
+                    disabled={loading}
                   />
                 </div>
-                {currency !== 'USD' && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Amounts are displayed in {currency} but stored in USD
+                {currency !== "USD" && (
+                  <p className="pledge-modal-hint">
+                    Amounts are shown in {currency} but stored in USD
                   </p>
                 )}
               </div>
 
-              {/* Quick Amount Buttons */}
-              <div className="grid grid-cols-5 gap-2">
+              <div className="pledge-modal-presets">
                 {[2, 5, 10, 15, 20].map((presetUSD) => {
                   const convertedPreset = convertFromUSD(presetUSD)
                   const roundedPreset = Math.round(convertedPreset)
@@ -291,48 +339,67 @@ export default function PledgeModal({ server, isOpen, onClose, onSuccess }: Pled
                       key={presetUSD}
                       type="button"
                       onClick={() => setAmount(roundedPreset.toFixed(2))}
-                      className="px-3 py-2 border border-slate-600 rounded-lg hover:bg-slate-700 transition text-sm font-medium text-gray-300 bg-slate-900"
+                      disabled={loading}
+                      className="pledge-modal-preset"
                     >
-                      {symbol}{roundedPreset}
+                      {symbol}
+                      {roundedPreset}
                     </button>
                   )
                 })}
               </div>
 
-              {/* Optimization Preview */}
-              {parseFloat(amount) >= MIN_PLEDGE && parseFloat(amount) <= MAX_PLEDGE && (
-                <div className="bg-slate-900/70 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4">
-                  <p className="text-sm font-semibold text-white mb-3 flex items-center">
-                    <Lightbulb className="w-5 h-5 mr-2 text-emerald-400" />
-                    Smart Optimization
-                  </p>
-                  <div className="space-y-2 text-sm text-gray-300">
-                    <p className="flex items-center">
-                      <DollarSign className="w-4 h-4 mr-1 text-indigo-400" />
-                      You pledge: <strong className="text-white ml-1">${parseFloat(amount).toFixed(2)}/month</strong>
+              {parseFloat(amount) >= convertFromUSD(MIN_PLEDGE) &&
+                parseFloat(amount) <= convertFromUSD(MAX_PLEDGE) && (
+                  <div className="pledge-modal-optimization">
+                    <p className="pledge-modal-optimization__title">
+                      <Lightbulb className="w-5 h-5" aria-hidden />
+                      Smart optimization
                     </p>
-                    <p className="text-green-400 flex items-center">
-                      <TrendingDown className="w-4 h-4 mr-1" />
-                      Est. payment: <strong className="ml-1">${Math.min(parseFloat(amount), server.cost / (pledgeStatus.currentPledges + 1)).toFixed(2)}/month</strong>
-                    </p>
-                    <p className="text-xs text-gray-400 mt-2 flex items-start">
-                      <Users className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0" />
-                      <span>When more people join, your cost goes down! The more pledgers, the less everyone pays.</span>
-                    </p>
+                    <div className="pledge-modal-optimization__body">
+                      <p>
+                        <DollarSign className="w-4 h-4" aria-hidden />
+                        You pledge:{" "}
+                        <strong>
+                          {symbol}
+                          {parseFloat(amount).toFixed(2)}/month
+                        </strong>
+                      </p>
+                      <p className="pledge-modal-optimization__savings">
+                        <TrendingDown className="w-4 h-4" aria-hidden />
+                        Est. payment:{" "}
+                        <strong>
+                          {symbol}
+                          {Math.min(
+                            parseFloat(amount),
+                            convertFromUSD(
+                              server.cost / ((pledgeStatus?.currentPledges ?? 0) + 1)
+                            )
+                          ).toFixed(2)}
+                          /month
+                        </strong>
+                      </p>
+                      <p className="pledge-modal-optimization__hint">
+                        <Users className="w-4 h-4" aria-hidden />
+                        When more people join, your cost goes down — the more pledgers, the less
+                        everyone pays.
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               <button
+                type="button"
                 onClick={handlePledge}
                 disabled={loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-server-pledge btn-server-pledge--primary"
               >
-                {loading ? "Processing..." : `Pledge $${amount}/month`}
+                <HeartHandshake className="w-4 h-4 shrink-0" aria-hidden />
+                {loading ? "Processing..." : `Pledge ${symbol}${amount}/month`}
               </button>
 
-              <p className="text-xs text-gray-500 text-center flex items-center justify-center">
-                <CreditCard className="w-4 h-4 mr-1" />
+              <p className="pledge-modal-footer-note">
+                <CreditCard className="w-4 h-4" aria-hidden />
                 Your saved payment method will be charged automatically each month
               </p>
             </div>
