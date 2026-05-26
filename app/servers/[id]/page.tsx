@@ -9,9 +9,10 @@ import PledgeModal from "@/components/PledgeModal"
 import ServerStats from "@/components/ServerStats"
 import { Price } from "@/components/Price"
 import { useCurrency } from "@/components/CurrencyProvider"
-import MarketingPageShell from "@/components/marketing/MarketingPageShell"
+import ServerDetailPageShell from "@/components/marketing/ServerDetailPageShell"
 import PledgeProgressBar from "@/components/pledge/PledgeProgressBar"
 import PledgeAmountBadge from "@/components/pledge/PledgeAmountBadge"
+import { calculateOptimizedCosts } from "@/lib/optimization"
 
 export const dynamic = "force-dynamic"
 
@@ -64,6 +65,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
   const [showPledgeModal, setShowPledgeModal] = useState(false)
   const [serverId, setServerId] = useState("")
   const [userPledge, setUserPledge] = useState<{
+    id: string
     amount: number
     optimizedAmount?: number | null
   } | null>(null)
@@ -192,20 +194,20 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
 
   if (loading) {
     return (
-      <MarketingPageShell>
+      <ServerDetailPageShell>
         <div className="max-w-7xl mx-auto px-4 py-24">
           <div className="listing-loading text-center py-16">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400 mx-auto mb-4" />
             <p>Loading server...</p>
           </div>
         </div>
-      </MarketingPageShell>
+      </ServerDetailPageShell>
     )
   }
 
   if (error || !server) {
     return (
-      <MarketingPageShell>
+      <ServerDetailPageShell>
         <div className="max-w-md mx-auto px-4 py-24 text-center">
           <div className="listing-card p-8">
             <h2 className="text-2xl font-bold text-white mb-2">Server not found</h2>
@@ -215,15 +217,23 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
             </Link>
           </div>
         </div>
-      </MarketingPageShell>
+      </ServerDetailPageShell>
     )
   }
 
   const progressPercentage = Math.min((server.totalPledged / server.cost) * 100, 100)
   const maxPledgers = Math.floor(server.cost / 2)
+  const pledgeAmounts = server.pledges.map((p) => p.amount)
+  const { optimizedCosts } = calculateOptimizedCosts(pledgeAmounts, server.cost)
+
+  const getEstimatedPayment = (index: number, pledgeAmount: number) => {
+    const fromDb = server.pledges[index]?.optimizedAmount
+    if (fromDb != null && fromDb > 0) return fromDb
+    return optimizedCosts[index] ?? pledgeAmount
+  }
 
   return (
-    <MarketingPageShell>
+    <ServerDetailPageShell>
       {/* Hero */}
       <div
         className={`server-detail-hero ${!gameBannerUrl ? "server-detail-hero--fallback" : ""}`}
@@ -316,7 +326,11 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                 <p className="text-gray-500 text-center py-8">No pledges yet. Be the first!</p>
               ) : (
                 <div className="space-y-4">
-                  {server.pledges.map((pledge) => (
+                  {server.pledges.map((pledge, index) => {
+                    const estimatedPayment = getEstimatedPayment(index, pledge.amount)
+                    const hasSavings = estimatedPayment < pledge.amount - 0.005
+
+                    return (
                     <div key={pledge.id} className="server-detail-pledger-row">
                       {pledge.user.image ? (
                         <Image
@@ -341,15 +355,18 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                               <Price amountUSD={pledge.amount} showCode={false} />
                               /mo
                             </PledgeAmountBadge>
-                            {pledge.optimizedAmount != null &&
-                              pledge.optimizedAmount < pledge.amount && (
-                                <span className="text-xs text-gray-400 flex items-center gap-1.5 flex-wrap justify-end">
-                                  pays
-                                  <PledgeAmountBadge variant="optimized" size="sm">
-                                    <Price amountUSD={pledge.optimizedAmount} showCode={false} />
-                                  </PledgeAmountBadge>
-                                </span>
-                              )}
+                            <span
+                              className={`server-detail-est-pays ${hasSavings ? "server-detail-est-pays--savings" : ""}`}
+                            >
+                              Est. pays
+                              <PledgeAmountBadge
+                                variant={hasSavings ? "optimized" : "default"}
+                                size="sm"
+                              >
+                                <Price amountUSD={estimatedPayment} showCode={false} />
+                                /mo
+                              </PledgeAmountBadge>
+                            </span>
                           </div>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
@@ -357,7 +374,7 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                         </p>
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               )}
             </div>
@@ -440,22 +457,31 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                   </div>
                 ) : userPledge ? (
                   <div className="space-y-3">
-                    <div className="rounded-lg border border-white/10 bg-[#2b2d31] p-4">
+                    <div className="rounded-lg border border-white/10 bg-black/20 p-4">
                       <p className="text-sm font-medium text-gray-400 mb-2">Your pledge</p>
                       <div className="flex flex-wrap items-center gap-2 mb-2">
                         <PledgeAmountBadge size="lg">
                           {formatPrice(userPledge.amount)}/month
                         </PledgeAmountBadge>
                       </div>
-                      {userPledge.optimizedAmount != null &&
-                        userPledge.optimizedAmount < userPledge.amount && (
-                          <p className="text-sm text-gray-400 flex items-center gap-2 flex-wrap">
-                            Actually paying
-                            <PledgeAmountBadge variant="optimized" size="sm">
-                              {formatPrice(userPledge.optimizedAmount)}/month
+                      {(() => {
+                        const userIdx = server.pledges.findIndex((p) => p.id === userPledge.id)
+                        const est =
+                          userPledge.optimizedAmount ??
+                          (userIdx >= 0 ? optimizedCosts[userIdx] : undefined) ??
+                          userPledge.amount
+                        const saves = est < userPledge.amount - 0.005
+                        return (
+                          <p
+                            className={`server-detail-est-pays ${saves ? "server-detail-est-pays--savings" : ""}`}
+                          >
+                            Est. pays
+                            <PledgeAmountBadge variant={saves ? "optimized" : "default"} size="sm">
+                              {formatPrice(est)}/month
                             </PledgeAmountBadge>
                           </p>
-                        )}
+                        )
+                      })()}
                     </div>
                     <button
                       type="button"
@@ -525,6 +551,6 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
         onClose={() => setShowPledgeModal(false)}
         onSuccess={handlePledgeSuccess}
       />
-    </MarketingPageShell>
+    </ServerDetailPageShell>
   )
 }
