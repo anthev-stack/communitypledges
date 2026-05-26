@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { emailService } from "@/lib/email"
 import { normalizeServerAddress } from "@/lib/server-address"
+import { syncModdedServerTag } from "@/lib/minecraft-java"
 
 // Get all servers
 export async function GET() {
@@ -165,7 +166,10 @@ export async function POST(request: Request) {
         withdrawalDay: withdrawalDayNum,
         imageUrl,
         region: body.region || null,
-        tags: body.tags || [],
+        tags: syncModdedServerTag(
+          body.tags || [],
+          isMinecraftJava ? body.minecraftEditionType : null
+        ),
         communityId: body.communityId || null,
         discordWebhook: body.discordWebhook || null,
         isPrivate: isPrivate || false,

@@ -45,3 +45,20 @@ export function formatMinecraftEditionLabel(editionType: string | null | undefin
   if (editionType === "modded") return "Modded"
   return null
 }
+
+export const MODDED_SERVER_TAG = "Modded"
+
+/** Ensure the Modded tag is present when a Minecraft Java server is marked modded. */
+export function syncModdedServerTag(
+  tags: string[],
+  editionType: string | null | undefined
+): string[] {
+  if (editionType === "modded" && !tags.includes(MODDED_SERVER_TAG)) {
+    return [...tags, MODDED_SERVER_TAG]
+  }
+  return tags
+}
+
+export function isModdedTagLocked(editionType: string | null | undefined): boolean {
+  return editionType === "modded"
+}

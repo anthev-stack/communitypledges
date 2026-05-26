@@ -8,6 +8,7 @@ import { SUPPORTED_GAMES } from "@/lib/supported-games"
 import { getTagsForGame } from "@/lib/game-tags"
 import { Price } from "@/components/Price"
 import ServerLiveStats from "@/components/ServerLiveStats"
+import ServerMinecraftMeta from "@/components/server/ServerMinecraftMeta"
 import MarketingListingLayout from "@/components/marketing/MarketingListingLayout"
 
 interface Server {
@@ -32,6 +33,9 @@ interface Server {
   totalPledged: number
   totalOptimized: number
   pledgerCount: number
+  minecraftVersion?: string | null
+  minecraftEditionType?: string | null
+  minecraftModLoader?: string | null
   _count?: {
     favorites: number
   }
@@ -494,6 +498,14 @@ export default function ServersPage() {
                         </>
                       )}
                     </div>
+
+                    <ServerMinecraftMeta
+                      variant="listing"
+                      gameType={server.gameType}
+                      minecraftVersion={server.minecraftVersion}
+                      minecraftEditionType={server.minecraftEditionType}
+                      minecraftModLoader={server.minecraftModLoader}
+                    />
 
                     {/* Tags */}
                     {server.tags.length > 0 && (

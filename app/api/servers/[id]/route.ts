@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { deleteModrinthInstance } from "@/lib/modrinth-storage"
 import { normalizeServerAddress } from "@/lib/server-address"
+import { syncModdedServerTag } from "@/lib/minecraft-java"
 
 export async function GET(
   request: Request,
@@ -108,7 +109,13 @@ export async function PATCH(
     // Check if user owns this server
     const existingServer = await prisma.server.findUnique({
       where: { id },
-      select: { ownerId: true },
+      select: {
+        ownerId: true,
+        cost: true,
+        withdrawalDay: true,
+        tags: true,
+        minecraftEditionType: true,
+      },
     })
 
     if (!existingServer || existingServer.ownerId !== session.user.id) {
@@ -118,17 +125,9 @@ export async function PATCH(
       )
     }
 
-    // Check if cost or withdrawalDay changed - if so, remove all pledges
-    const oldServer = await prisma.server.findUnique({
-      where: { id },
-      select: {
-        cost: true,
-        withdrawalDay: true,
-      },
-    })
-
-    const costChanged = body.cost && parseFloat(body.cost) !== oldServer?.cost
-    const withdrawalDayChanged = body.withdrawalDay && parseInt(body.withdrawalDay) !== oldServer?.withdrawalDay
+    const costChanged = body.cost && parseFloat(body.cost) !== existingServer.cost
+    const withdrawalDayChanged =
+      body.withdrawalDay && parseInt(body.withdrawalDay) !== existingServer.withdrawalDay
     
     let pledgesRemoved = 0
 
@@ -145,6 +144,18 @@ export async function PATCH(
         ? normalizeServerAddress(body.serverIp, body.serverPort)
         : null
 
+    const resolvedEditionType =
+      body.minecraftEditionType !== undefined
+        ? body.minecraftEditionType || null
+        : existingServer.minecraftEditionType
+
+    const shouldUpdateTags =
+      body.tags !== undefined || body.minecraftEditionType !== undefined
+    const resolvedTags = syncModdedServerTag(
+      body.tags ?? existingServer.tags,
+      resolvedEditionType
+    )
+
     const server = await prisma.server.update({
       where: { id },
       data: {
@@ -157,7 +168,7 @@ export async function PATCH(
         withdrawalDay: body.withdrawalDay ? parseInt(body.withdrawalDay) : undefined,
         imageUrl: body.imageUrl,
         region: body.region !== undefined ? body.region : undefined,
-        tags: body.tags !== undefined ? body.tags : undefined,
+        tags: shouldUpdateTags ? resolvedTags : undefined,
         communityId: body.communityId !== undefined ? (body.communityId || null) : undefined,
         isPrivate: body.isPrivate !== undefined ? body.isPrivate : undefined,
         isRealm: body.isRealm !== undefined ? body.isRealm : undefined,

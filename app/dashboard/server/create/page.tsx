@@ -10,7 +10,12 @@ import { useCurrency } from "@/components/CurrencyProvider"
 import { getCurrencyName } from "@/lib/currency"
 import ImageUpload from "@/components/ImageUpload"
 import MinecraftJavaFields from "@/components/server/MinecraftJavaFields"
-import { isMinecraftJavaEdition } from "@/lib/minecraft-java"
+import {
+  isMinecraftJavaEdition,
+  MODDED_SERVER_TAG,
+  syncModdedServerTag,
+  isModdedTagLocked,
+} from "@/lib/minecraft-java"
 
 interface Community {
   id: string
@@ -175,6 +180,9 @@ export default function CreateServerPage() {
   }
 
   const handleTagToggle = (tag: string) => {
+    if (isModdedTagLocked(formData.minecraftEditionType) && tag === MODDED_SERVER_TAG) {
+      return
+    }
     setFormData(prev => ({
       ...prev,
       tags: prev.tags.includes(tag)
@@ -355,7 +363,15 @@ export default function CreateServerPage() {
                 minecraftModLoader: formData.minecraftModLoader,
                 hasModrinthInstance: formData.hasModrinthInstance,
               }}
-              onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
+              onChange={(patch) =>
+                setFormData((prev) => {
+                  const next = { ...prev, ...patch }
+                  if (patch.minecraftEditionType !== undefined) {
+                    next.tags = syncModdedServerTag(next.tags, patch.minecraftEditionType)
+                  }
+                  return next
+                })
+              }
               modrinthFile={modrinthFile}
               onModrinthFileChange={setModrinthFile}
             />
@@ -567,20 +583,29 @@ export default function CreateServerPage() {
                   Server Tags <span className="text-gray-500">(Select all that apply)</span>
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {availableTags.map((tag) => (
+                  {availableTags.map((tag) => {
+                    const locked =
+                      tag === MODDED_SERVER_TAG && isModdedTagLocked(formData.minecraftEditionType)
+                    return (
                     <button
                       key={tag}
                       type="button"
                       onClick={() => handleTagToggle(tag)}
+                      disabled={locked}
+                      title={locked ? "Required when server type is Modded" : undefined}
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
                         formData.tags.includes(tag)
-                          ? "bg-indigo-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          ? locked
+                            ? "bg-indigo-600 text-white cursor-not-allowed ring-2 ring-indigo-400/60"
+                            : "bg-indigo-600 text-white"
+                          : locked
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                     >
                       {tag}
                     </button>
-                  ))}
+                  )})}
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
                   Selected: {formData.tags.length > 0 ? formData.tags.join(", ") : "None"}
