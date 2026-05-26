@@ -281,29 +281,39 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
               </div>
             </div>
 
-            <div className="listing-card p-6 md:p-8">
-              <h2 className="text-xl font-bold text-white mb-4">About this server</h2>
-              <p className="text-gray-300 whitespace-pre-wrap leading-relaxed">
-                {server.description || "No description provided."}
-              </p>
+            <div className="server-detail-about-section">
+              <div className="listing-card p-6 md:p-8">
+                <h2 className="text-xl font-bold text-white mb-4">About this server</h2>
+                <p className="text-gray-300 whitespace-pre-wrap leading-relaxed">
+                  {server.description || "No description provided."}
+                </p>
 
-              {displayAddress && (
-                <div className="mt-6 rounded-lg border border-white/10 server-detail-inner-panel p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
-                    Server IP
-                  </p>
-                  <div className="flex items-center justify-between gap-3">
-                    <code className="text-sm text-emerald-400 font-mono break-all">{displayAddress}</code>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(displayAddress)}
-                      className="shrink-0 p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition"
-                      title="Copy IP address"
-                    >
-                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    </button>
+                {displayAddress && (
+                  <div className="mt-6 rounded-lg border border-white/10 server-detail-inner-panel p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                      Server IP
+                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                      <code className="text-sm text-emerald-400 font-mono break-all">{displayAddress}</code>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(displayAddress)}
+                        className="shrink-0 p-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition"
+                        title="Copy IP address"
+                      >
+                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
+              </div>
+
+              {server.hasModrinthInstance && server.modrinthInstanceFileName && (
+                <ModrinthDownloadCard
+                  serverId={server.id}
+                  serverName={server.name}
+                  fileName={server.modrinthInstanceFileName}
+                />
               )}
             </div>
 
@@ -523,14 +533,6 @@ export default function ServerPage({ params }: { params: Promise<{ id: string }>
                   </div>
                 </Link>
               </div>
-            )}
-
-            {server.hasModrinthInstance && server.modrinthInstanceFileName && (
-              <ModrinthDownloadCard
-                serverId={server.id}
-                serverName={server.name}
-                fileName={server.modrinthInstanceFileName}
-              />
             )}
 
             <div className="listing-card p-6">
