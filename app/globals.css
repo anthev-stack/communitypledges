@@ -1134,6 +1134,246 @@ body:has(.server-detail-page-backdrop) main {
   margin-left: -10px;
 }
 
+.marketing-visual--discord {
+  min-height: 280px;
+}
+
+.marketing-visual__card--discord {
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.marketing-visual__blob--discord {
+  background: rgba(88, 101, 242, 0.35);
+  width: min(55vw, 420px);
+  height: min(55vw, 420px);
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Homepage Discord widget */
+.marketing-discord-widget {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  padding: 1.1rem 1.15rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(30, 31, 34, 0.92);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.marketing-discord-widget--loading,
+.marketing-discord-widget--fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-height: 220px;
+  justify-content: center;
+}
+
+.marketing-discord-widget--loading p,
+.marketing-discord-widget--fallback .marketing-discord-widget__meta {
+  font-size: 0.8rem;
+  color: #b5bac1;
+  margin: 0;
+}
+
+.marketing-discord-widget__spinner {
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 0.75rem;
+  border-radius: 50%;
+  border: 2px solid rgba(88, 101, 242, 0.25);
+  border-top-color: #5865f2;
+  animation: pledge-modal-spin 0.7s linear infinite;
+}
+
+.marketing-discord-widget__header {
+  margin-bottom: 0.85rem;
+}
+
+.marketing-discord-widget__guild {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.marketing-discord-widget__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.marketing-discord-widget__icon--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #5865f2;
+  color: #fff;
+}
+
+.marketing-discord-widget__server-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.2rem;
+  line-height: 1.25;
+}
+
+.marketing-discord-widget__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: #b5bac1;
+  margin: 0;
+}
+
+.marketing-discord-widget__online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #23a559;
+  box-shadow: 0 0 8px rgba(35, 165, 89, 0.6);
+  flex-shrink: 0;
+}
+
+.marketing-discord-widget__members {
+  margin-bottom: 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.marketing-discord-widget__members-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #949cf7;
+  margin: 0 0 0.5rem;
+}
+
+.marketing-discord-widget__member-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.marketing-discord-widget__member {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.marketing-discord-widget__avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.marketing-discord-widget__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.marketing-discord-widget__avatar-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  background: #4f545c;
+}
+
+.marketing-discord-widget__status {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(30, 31, 34, 0.95);
+}
+
+.marketing-discord-widget__status--online {
+  background: #23a559;
+}
+
+.marketing-discord-widget__status--idle {
+  background: #faa81a;
+}
+
+.marketing-discord-widget__status--dnd {
+  background: #ed4245;
+}
+
+.marketing-discord-widget__status--offline {
+  background: #747f8d;
+}
+
+.marketing-discord-widget__username {
+  font-size: 0.8rem;
+  color: #dbdee1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.marketing-discord-widget__empty-hint {
+  font-size: 0.8rem;
+  color: #b5bac1;
+  margin: 0;
+}
+
+.marketing-discord-widget__join {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ffffff !important;
+  text-decoration: none !important;
+  border-radius: 8px;
+  background: #5865f2 !important;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.marketing-discord-widget__join:hover {
+  background: #4752c4 !important;
+  transform: translateY(-1px);
+}
+
+.marketing-discord-cta {
+  margin-top: 1.25rem;
+  display: inline-flex;
+}
+
 /* Overlapping member / pledger avatars (homepage + server detail) */
 .overlapping-avatar-stack {
   display: flex;

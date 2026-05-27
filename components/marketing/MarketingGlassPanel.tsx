@@ -3,8 +3,9 @@ import { DollarSign, Users, Server, Heart } from "lucide-react"
 import PledgeProgressBar from "@/components/pledge/PledgeProgressBar"
 import PledgeAmountBadge from "@/components/pledge/PledgeAmountBadge"
 import MarketingCommunityAvatars from "@/components/marketing/MarketingCommunityAvatars"
+import MarketingDiscordWidget from "@/components/marketing/MarketingDiscordWidget"
 
-type VisualVariant = "pledge" | "community" | "owners" | "features"
+type VisualVariant = "pledge" | "community" | "owners" | "discord" | "features"
 
 export default function MarketingGlassPanel({
   title,
@@ -76,6 +77,17 @@ function MarketingVisual({ variant }: { variant: VisualVariant }) {
           <p className="marketing-visual__big">12 members</p>
           <p className="marketing-visual__sub">pledged this month</p>
           <MarketingCommunityAvatars />
+        </div>
+      </div>
+    )
+  }
+
+  if (variant === "discord") {
+    return (
+      <div className="marketing-visual marketing-visual--discord">
+        <div className="marketing-visual__blob marketing-visual__blob--discord" />
+        <div className="marketing-visual__card marketing-visual__card--discord">
+          <MarketingDiscordWidget />
         </div>
       </div>
     )

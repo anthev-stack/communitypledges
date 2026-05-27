@@ -4,6 +4,7 @@ import { Users, DollarSign, Heart } from "lucide-react"
 import LiveStreamerEmbed from "@/components/LiveStreamerEmbed"
 import MarketingHero from "@/components/MarketingHero"
 import MarketingPageShell from "@/components/marketing/MarketingPageShell"
+import { COMMUNITY_DISCORD_INVITE } from "@/lib/discord-invite"
 import MarketingGlassPanel, {
   MarketingFeatureTile,
 } from "@/components/marketing/MarketingGlassPanel"
@@ -89,29 +90,64 @@ export default async function Home() {
         visual="owners"
         title="For server owners"
         description="Share hosting costs with the people who actually play on your server."
+        className="marketing-section--tight-bottom"
       >
         <div className="marketing-steps-grid">
           <StepItem
             n={1}
-            title="Upload your server"
-            text="List your community, game type, and monthly hosting costs."
+            title="List your server"
+            text="Upload your server, set your monthly goal, and tell players what makes it special."
           />
           <StepItem
             n={2}
-            title="Invite your community"
-            text="Share with Discord, friends, and socials so members can pledge."
+            title="Connect payouts"
+            text="Link Stripe so pledges go straight to you when the community hits your goal."
           />
           <StepItem
             n={3}
-            title="Watch pledges come in"
-            text="Track how much of your hosting bill the community covers."
+            title="Grow your community"
+            text="Share your page, boost your listing, and let members pledge what they can afford."
           />
           <StepItem
             n={4}
-            title="Focus on your community"
-            text="Spend less time on bills and more time building great player experiences."
+            title="Hosting covered"
+            text="When pledges add up, your players help keep the server online every month."
           />
         </div>
+      </MarketingGlassPanel>
+
+      <MarketingGlassPanel
+        visual="discord"
+        reverse
+        title="Join us on Discord"
+        className="marketing-section--tight-top"
+        description="Hang out with server owners and players, get help, share feedback, and see who's online right now."
+      >
+        <div className="marketing-steps-grid">
+          <StepItem
+            n={1}
+            title="Meet the community"
+            text="Connect with people who run and play on community-funded servers."
+          />
+          <StepItem
+            n={2}
+            title="Get support fast"
+            text="Ask questions about pledges, payouts, and listing your server."
+          />
+          <StepItem
+            n={3}
+            title="Stay in the loop"
+            text="Hear about updates, new features, and tips for growing your server."
+          />
+        </div>
+        <a
+          href={COMMUNITY_DISCORD_INVITE}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-marketing-blurple marketing-discord-cta"
+        >
+          discord.gg/jj7GJFe3vH
+        </a>
       </MarketingGlassPanel>
 
       <section className="marketing-section">
