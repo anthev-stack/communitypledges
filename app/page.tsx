@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { Users, DollarSign, Heart } from "lucide-react"
+import LiveStreamerEmbed from "@/components/LiveStreamerEmbed"
 import MarketingHero from "@/components/MarketingHero"
 import MarketingPageShell from "@/components/marketing/MarketingPageShell"
 import MarketingGlassPanel, {
@@ -25,6 +26,8 @@ export default async function Home() {
   return (
     <MarketingPageShell>
       <MarketingHero isLoggedIn={!!session} />
+
+      <LiveStreamerEmbed variant="home" />
 
       <div className="marketing-home-sections">
         <MarketingGlassPanel title="Why Community Pledges?" visual="features">

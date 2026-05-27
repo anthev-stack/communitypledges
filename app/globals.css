@@ -380,6 +380,204 @@ body:has(.server-detail-page-backdrop) main {
   margin: 0;
 }
 
+/* Homepage partner live stream (above Why Community Pledges) */
+.marketing-home-live {
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto clamp(2.25rem, 4vw, 3.25rem);
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .marketing-home-live {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+.marketing-home-live__shell {
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.marketing-home-live__skeleton {
+  min-height: 200px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: marketing-home-live-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes marketing-home-live-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.partner-stream-card {
+  position: relative;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.partner-stream-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+}
+
+.partner-stream-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.partner-stream-card__avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 2px solid rgba(167, 139, 250, 0.6);
+  object-fit: cover;
+}
+
+.partner-stream-card__live-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: #ed4245;
+  border: 2px solid #1e1f22;
+  animation: partner-stream-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes partner-stream-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.partner-stream-card__name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.partner-stream-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: #b5bac1;
+  margin: 0.2rem 0 0;
+}
+
+.partner-stream-card__live-label {
+  color: #f47b7b;
+  font-weight: 700;
+}
+
+.partner-stream-card__viewers {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fca5a5;
+  background: rgba(237, 66, 69, 0.15);
+  flex-shrink: 0;
+}
+
+.partner-stream-card__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 0.5rem;
+  line-height: 1.35;
+}
+
+.partner-stream-card__game {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #c4b5fd;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(88, 101, 242, 0.2);
+  border: 1px solid rgba(148, 156, 247, 0.35);
+  margin-bottom: 1rem;
+}
+
+.partner-stream-card__player {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  margin-bottom: 1rem;
+}
+
+.partner-stream-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.partner-stream-card__watch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff !important;
+  text-decoration: none !important;
+  border-radius: 8px;
+  background: #5865f2 !important;
+  transition: background-color 0.2s ease;
+}
+
+.partner-stream-card__watch:hover {
+  background: #4752c4 !important;
+}
+
+.partner-stream-card__refresh {
+  font-size: 0.7rem;
+  color: #72767d;
+}
+
 .marketing-sparkle {
   display: block;
   color: #ffffff;
