@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import MarketingStaffLayout from "@/components/marketing/MarketingStaffLayout"
 
 interface Ticket {
   id: string
@@ -39,21 +40,21 @@ const CATEGORIES: Record<string, string> = {
   feature_request: "Feature Request",
   support: "Support",
   report_user_server: "Report User/Server",
-  other: "Other"
+  other: "Other",
 }
 
 const PRIORITIES: Record<string, string> = {
   low: "Low",
   medium: "Medium",
   high: "High",
-  urgent: "Urgent"
+  urgent: "Urgent",
 }
 
 const STATUSES: Record<string, string> = {
   open: "Open",
   in_progress: "In Progress",
   resolved: "Resolved",
-  closed: "Closed"
+  closed: "Closed",
 }
 
 export default function StaffTicketPage({ params }: { params: Promise<{ id: string }> }) {
@@ -72,12 +73,10 @@ export default function StaffTicketPage({ params }: { params: Promise<{ id: stri
       router.push("/login")
       return
     }
-    
-    // Check if user is staff
+
     fetchUserRole()
-    
-    // Get ticket ID from params
-    params.then(p => {
+
+    params.then((p) => {
       setTicketId(p.id)
       fetchTicket(p.id)
     })
@@ -90,7 +89,6 @@ export default function StaffTicketPage({ params }: { params: Promise<{ id: stri
         const data = await response.json()
         if (data.role !== "ADMIN" && data.role !== "MODERATOR") {
           router.push("/dashboard")
-          return
         }
       }
     } catch (error) {
@@ -125,15 +123,13 @@ export default function StaffTicketPage({ params }: { params: Promise<{ id: stri
     try {
       const response = await fetch(`/api/staff/tickets/${ticketId}/responses`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: newResponse.trim() }),
       })
 
       if (response.ok) {
         setNewResponse("")
-        fetchTicket(ticketId) // Refresh ticket data
+        fetchTicket(ticketId)
       } else {
         const error = await response.json()
         alert(error.error || "Failed to submit response")
@@ -151,14 +147,12 @@ export default function StaffTicketPage({ params }: { params: Promise<{ id: stri
     try {
       const response = await fetch(`/api/staff/tickets/${ticketId}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       })
 
       if (response.ok) {
-        fetchTicket(ticketId) // Refresh ticket data
+        fetchTicket(ticketId)
       } else {
         const error = await response.json()
         alert(error.error || "Failed to update status")
@@ -171,258 +165,206 @@ export default function StaffTicketPage({ params }: { params: Promise<{ id: stri
     }
   }
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityClass = (priority: string) => {
     switch (priority) {
-      case "urgent": return "bg-red-100 text-red-800"
-      case "high": return "bg-orange-100 text-orange-800"
-      case "medium": return "bg-yellow-100 text-yellow-800"
-      case "low": return "bg-green-100 text-green-800"
-      default: return "bg-gray-100 text-gray-800"
+      case "urgent":
+        return "staff-pill staff-pill--urgent"
+      case "high":
+        return "staff-pill staff-pill--high"
+      case "medium":
+        return "staff-pill staff-pill--medium"
+      case "low":
+        return "staff-pill staff-pill--low"
+      default:
+        return "staff-pill staff-pill--default"
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusClass = (status: string) => {
     switch (status) {
-      case "open": return "bg-blue-100 text-blue-800"
-      case "in_progress": return "bg-purple-100 text-purple-800"
-      case "resolved": return "bg-green-100 text-green-800"
-      case "closed": return "bg-gray-100 text-gray-800"
-      default: return "bg-gray-100 text-gray-800"
+      case "open":
+        return "staff-pill staff-pill--open"
+      case "in_progress":
+        return "staff-pill staff-pill--in_progress"
+      case "resolved":
+        return "staff-pill staff-pill--resolved"
+      case "closed":
+        return "staff-pill staff-pill--closed"
+      default:
+        return "staff-pill staff-pill--default"
     }
   }
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <MarketingStaffLayout backHref="/staff" backLabel="Back to Staff">
+        <div className="listing-loading text-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-400/80 mx-auto" />
+          <p className="mt-4">Loading...</p>
         </div>
-      </div>
+      </MarketingStaffLayout>
     )
   }
 
   if (!ticket) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Ticket Not Found</h1>
-          <Link href="/staff" className="text-indigo-600 hover:text-indigo-700">
-            ← Back to Staff Dashboard
+      <MarketingStaffLayout backHref="/staff" backLabel="Back to Staff" title="Ticket not found">
+        <div className="listing-empty text-center py-12">
+          <p className="mb-4">This ticket could not be found.</p>
+          <Link href="/staff" className="staff-link">
+            Return to staff dashboard
           </Link>
         </div>
-      </div>
+      </MarketingStaffLayout>
     )
   }
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl font-bold text-gray-900">{ticket.title}</h1>
-            <Link
-              href="/staff"
-              className="text-indigo-600 hover:text-indigo-700 flex items-center"
-            >
-              <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Back to Staff Dashboard
-            </Link>
-          </div>
-          
-          <div className="flex items-center space-x-4 mb-4">
-            <span className={`px-3 py-1 text-sm rounded-full ${getStatusColor(ticket.status)}`}>
-              {STATUSES[ticket.status]}
-            </span>
-            <span className={`px-3 py-1 text-sm rounded-full ${getPriorityColor(ticket.priority)}`}>
-              {PRIORITIES[ticket.priority]} Priority
-            </span>
-            <span className="text-sm text-gray-600">
-              {CATEGORIES[ticket.category]}
-            </span>
+    <MarketingStaffLayout
+      title={ticket.title}
+      subtitle={`${CATEGORIES[ticket.category]} · ${ticket.user.name || ticket.user.email}`}
+      backHref="/staff"
+      backLabel="Back to Staff"
+    >
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <span className={getStatusClass(ticket.status)}>{STATUSES[ticket.status]}</span>
+        <span className={getPriorityClass(ticket.priority)}>{PRIORITIES[ticket.priority]} priority</span>
+        <select
+          value={ticket.status}
+          onChange={(e) => handleStatusChange(e.target.value)}
+          disabled={updatingStatus}
+          className="staff-select ml-auto"
+        >
+          <option value="open">Open</option>
+          <option value="in_progress">In Progress</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+        </select>
+        {updatingStatus && (
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-400/80" aria-hidden />
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="listing-card p-6">
+            <h2 className="text-lg font-semibold mb-4">Description</h2>
+            <p className="text-gray-600 whitespace-pre-wrap">{ticket.description}</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 pt-4 border-t border-gray-200 mt-4">
+              <span>Created by {ticket.user.name}</span>
+              <span>{new Date(ticket.createdAt).toLocaleString()}</span>
+              <span>Updated {new Date(ticket.updatedAt).toLocaleString()}</span>
+            </div>
           </div>
 
-          {/* Staff Controls */}
-          <div className="flex items-center space-x-4">
-            <select
-              value={ticket.status}
-              onChange={(e) => handleStatusChange(e.target.value)}
-              disabled={updatingStatus}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="open">Open</option>
-              <option value="in_progress">In Progress</option>
-              <option value="resolved">Resolved</option>
-              <option value="closed">Closed</option>
-            </select>
-            {updatingStatus && (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
+          <div className="listing-card p-6">
+            <h2 className="text-lg font-semibold mb-4">Responses ({ticket.responses.length})</h2>
+            {ticket.responses.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No responses yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {ticket.responses.map((response) => (
+                  <div
+                    key={response.id}
+                    className={`p-4 rounded-lg ${
+                      response.isStaff ? "ticket-response--staff" : "ticket-response--user"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{response.user.name}</span>
+                        {response.isStaff && (
+                          <span className="ticket-pill ticket-pill--staff">Staff</span>
+                        )}
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {new Date(response.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 whitespace-pre-wrap">{response.content}</p>
+                  </div>
+                ))}
+              </div>
             )}
+          </div>
+
+          <div className="listing-card p-6">
+            <h2 className="text-lg font-semibold mb-4">Staff response</h2>
+            <form onSubmit={handleSubmitResponse}>
+              <textarea
+                value={newResponse}
+                onChange={(e) => setNewResponse(e.target.value)}
+                rows={4}
+                placeholder="Type your response as staff..."
+                className="staff-input resize-none"
+                required
+              />
+              <div className="flex justify-end mt-4">
+                <button
+                  type="submit"
+                  disabled={submittingResponse || !newResponse.trim()}
+                  className="btn-server-pledge btn-server-pledge--primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submittingResponse ? "Submitting..." : "Submit staff response"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Ticket Details */}
-            <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Description</h2>
-              <div className="prose max-w-none">
-                <p className="text-gray-700 whitespace-pre-wrap">{ticket.description}</p>
+        <div className="space-y-6">
+          <div className="listing-card p-6">
+            <h3 className="text-lg font-semibold mb-4">User information</h3>
+            <dl className="space-y-2 text-sm">
+              <div>
+                <dt className="text-gray-500">Name</dt>
+                <dd>{ticket.user.name || "Not provided"}</dd>
               </div>
-              
-              <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-200 mt-4">
-                <div>
-                  <span>Created by {ticket.user.name}</span>
-                  <span className="mx-2">•</span>
-                  <span>{new Date(ticket.createdAt).toLocaleString()}</span>
-                </div>
-                <div>
-                  Last updated: {new Date(ticket.updatedAt).toLocaleString()}
-                </div>
+              <div>
+                <dt className="text-gray-500">Email</dt>
+                <dd>{ticket.user.email}</dd>
               </div>
-            </div>
-
-            {/* Responses */}
-            <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Responses ({ticket.responses.length})
-              </h2>
-              
-              {ticket.responses.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No responses yet.</p>
-              ) : (
-                <div className="space-y-4">
-                  {ticket.responses.map((response) => (
-                    <div
-                      key={response.id}
-                      className={`p-4 rounded-lg ${
-                        response.isStaff 
-                          ? "bg-blue-50 border-l-4 border-blue-400" 
-                          : "bg-gray-50 border-l-4 border-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium text-gray-900">
-                            {response.user.name}
-                          </span>
-                          {response.isStaff && (
-                            <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                              Staff
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          {new Date(response.createdAt).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="prose max-w-none">
-                        <p className="text-gray-700 whitespace-pre-wrap">{response.content}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Add Staff Response */}
-            <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Staff Response</h2>
-              <form onSubmit={handleSubmitResponse}>
-                <textarea
-                  value={newResponse}
-                  onChange={(e) => setNewResponse(e.target.value)}
-                  rows={4}
-                  placeholder="Type your response as staff..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-                  required
-                />
-                <div className="flex justify-end mt-4">
-                  <button
-                    type="submit"
-                    disabled={submittingResponse || !newResponse.trim()}
-                    className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                  >
-                    {submittingResponse ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Submitting...
-                      </>
-                    ) : (
-                      "Submit Staff Response"
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div>
+                <dt className="text-gray-500">User ID</dt>
+                <dd className="font-mono text-xs break-all">{ticket.user.id}</dd>
+              </div>
+            </dl>
+            <Link href={`/users/${ticket.user.id}`} className="staff-link inline-block mt-4 text-sm">
+              View user profile →
+            </Link>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* User Info */}
-            <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">User Information</h3>
-              <div className="space-y-2">
-                <div>
-                  <span className="text-sm font-medium text-gray-600">Name:</span>
-                  <p className="text-gray-900">{ticket.user.name || "Not provided"}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-600">Email:</span>
-                  <p className="text-gray-900">{ticket.user.email}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-600">User ID:</span>
-                  <p className="text-gray-900 font-mono text-sm">{ticket.user.id}</p>
-                </div>
+          <div className="listing-card p-6">
+            <h3 className="text-lg font-semibold mb-4">Ticket information</h3>
+            <dl className="space-y-2 text-sm">
+              <div className="flex justify-between gap-4">
+                <dt className="text-gray-500">Category</dt>
+                <dd>{CATEGORIES[ticket.category]}</dd>
               </div>
-              <div className="mt-4">
-                <Link
-                  href={`/users/${ticket.user.id}`}
-                  className="text-indigo-600 hover:text-indigo-700 text-sm"
-                >
-                  View User Profile →
-                </Link>
+              <div className="flex justify-between gap-4">
+                <dt className="text-gray-500">Priority</dt>
+                <dd>{PRIORITIES[ticket.priority]}</dd>
               </div>
-            </div>
-
-            {/* Ticket Info */}
-            <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Ticket Information</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Category:</span>
-                  <span className="text-gray-900">{CATEGORIES[ticket.category]}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Priority:</span>
-                  <span className="text-gray-900">{PRIORITIES[ticket.priority]}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Status:</span>
-                  <span className="text-gray-900">{STATUSES[ticket.status]}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Responses:</span>
-                  <span className="text-gray-900">{ticket.responses.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Created:</span>
-                  <span className="text-gray-900">{new Date(ticket.createdAt).toLocaleDateString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Updated:</span>
-                  <span className="text-gray-900">{new Date(ticket.updatedAt).toLocaleDateString()}</span>
-                </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-gray-500">Status</dt>
+                <dd>{STATUSES[ticket.status]}</dd>
               </div>
-            </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-gray-500">Responses</dt>
+                <dd>{ticket.responses.length}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-gray-500">Created</dt>
+                <dd>{new Date(ticket.createdAt).toLocaleDateString()}</dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-gray-500">Updated</dt>
+                <dd>{new Date(ticket.updatedAt).toLocaleDateString()}</dd>
+              </div>
+            </dl>
           </div>
         </div>
       </div>
-    </div>
+    </MarketingStaffLayout>
   )
 }

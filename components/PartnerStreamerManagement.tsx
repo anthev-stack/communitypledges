@@ -129,37 +129,38 @@ export default function PartnerStreamerManagement() {
   }
 
   if (loading) {
-    return <div className="animate-pulse space-y-4">
-      <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-      <div className="h-64 bg-gray-200 rounded"></div>
-    </div>
+    return (
+      <div className="listing-loading text-center py-12">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-400/80 mx-auto" />
+        <p className="mt-4 text-sm">Loading streamers...</p>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Partner Streamers</h2>
+          <h2 className="text-xl font-bold">Partner Streamers</h2>
           <p className="text-sm text-gray-600 mt-1">
             Manage Twitch streamers that appear on the homepage when live
           </p>
         </div>
         <button
+          type="button"
           onClick={() => setShowAddForm(!showAddForm)}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center space-x-2"
+          className="btn-server-pledge btn-server-pledge--primary flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" />
           <span>Add Streamer</span>
         </button>
       </div>
 
-      {/* Info Panel */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start space-x-3">
-          <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-800">
-            <p className="font-semibold mb-1">How Priority Works:</p>
+      <div className="staff-callout">
+        <div className="flex items-start gap-3">
+          <Info className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-300" />
+          <div className="text-sm">
+            <p className="font-semibold mb-1">How priority works</p>
             <ul className="list-disc list-inside space-y-1">
               <li>Higher priority (0-1000) = shown first when multiple streamers are live</li>
               <li>Only active streamers are checked for live status</li>
@@ -171,21 +172,18 @@ export default function PartnerStreamerManagement() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
-          {error}
-        </div>
+        <div className="staff-pill staff-pill--banned w-full text-center py-3 px-4">{error}</div>
       )}
 
-      {/* Add/Edit Form */}
       {showAddForm && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="listing-card p-6">
+          <h3 className="text-lg font-semibold mb-4">
             {editingId ? 'Edit Streamer' : 'Add New Streamer'}
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="username" className="block text-sm font-medium text-gray-600 mb-1">
                   Twitch Username
                 </label>
                 <input
@@ -196,13 +194,13 @@ export default function PartnerStreamerManagement() {
                   required
                   disabled={!!editingId}
                   placeholder="e.g., hrry (lowercase, no @)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100"
+                  className="staff-input disabled:opacity-60"
                 />
                 <p className="text-xs text-gray-500 mt-1">Lowercase only, no @ symbol</p>
               </div>
 
               <div>
-                <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="displayName" className="block text-sm font-medium text-gray-600 mb-1">
                   Display Name
                 </label>
                 <input
@@ -212,7 +210,7 @@ export default function PartnerStreamerManagement() {
                   onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
                   required
                   placeholder="e.g., HRRY"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="staff-input"
                 />
                 <p className="text-xs text-gray-500 mt-1">How it appears on site</p>
               </div>
@@ -220,7 +218,7 @@ export default function PartnerStreamerManagement() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="priority" className="block text-sm font-medium text-gray-600 mb-1">
                   Priority (0-1000)
                 </label>
                 <input
@@ -231,13 +229,13 @@ export default function PartnerStreamerManagement() {
                   value={formData.priority}
                   onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) })}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="staff-input"
                 />
                 <p className="text-xs text-gray-500 mt-1">Higher = shown first</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-600 mb-1">
                   Active Status
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer mt-2">
@@ -245,25 +243,18 @@ export default function PartnerStreamerManagement() {
                     type="checkbox"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    className="w-4 h-4 rounded border-gray-500"
                   />
-                  <span className="text-sm text-gray-700">Active (shown when live)</span>
+                  <span className="text-sm text-gray-600">Active (shown when live)</span>
                 </label>
               </div>
             </div>
 
-            <div className="flex items-center space-x-3 pt-2">
-              <button
-                type="submit"
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition"
-              >
-                {editingId ? 'Update Streamer' : 'Add Streamer'}
+            <div className="flex items-center gap-3 pt-2">
+              <button type="submit" className="btn-server-pledge btn-server-pledge--primary">
+                {editingId ? "Update Streamer" : "Add Streamer"}
               </button>
-              <button
-                type="button"
-                onClick={cancelForm}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition"
-              >
+              <button type="button" onClick={cancelForm} className="btn-server-pledge btn-server-pledge--secondary">
                 Cancel
               </button>
             </div>
@@ -271,33 +262,30 @@ export default function PartnerStreamerManagement() {
         </div>
       )}
 
-      {/* Streamers List */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-          <h3 className="font-semibold text-gray-900">
-            Partner Streamers ({streamers.length})
-          </h3>
+      <div className="listing-card overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="font-semibold">Partner Streamers ({streamers.length})</h3>
         </div>
-        
+
         {streamers.length === 0 ? (
           <div className="p-12 text-center text-gray-500">
-            <Play className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+            <Play className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p>No partner streamers added yet</p>
             <p className="text-sm mt-1">Click &quot;Add Streamer&quot; to get started</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
             {streamers.map((streamer) => (
-              <div key={streamer.id} className="p-4 hover:bg-gray-50 transition">
+              <div key={streamer.id} className="p-4 transition hover:bg-white/5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4 flex-1">
-                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                      <Play className="w-5 h-5 text-purple-600" />
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-red-950/60 border border-red-900/40">
+                      <Play className="w-5 h-5 text-red-300" />
                     </div>
-                    
+
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
-                        <h4 className="font-semibold text-gray-900">{streamer.displayName}</h4>
+                        <h4 className="font-semibold">{streamer.displayName}</h4>
                         {streamer.isActive ? (
                           <span title="Active">
                             <CheckCircle className="w-4 h-4 text-green-500" />
@@ -312,10 +300,10 @@ export default function PartnerStreamerManagement() {
                     </div>
 
                     <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-1 text-amber-600 bg-amber-50 px-3 py-1 rounded-full">
-                        <Star className="w-4 h-4" />
-                        <span className="text-sm font-semibold">{streamer.priority}</span>
-                      </div>
+                      <span className="staff-pill staff-pill--medium inline-flex items-center gap-1">
+                        <Star className="w-3.5 h-3.5" />
+                        {streamer.priority}
+                      </span>
 
                       <div className="text-xs text-gray-500">
                         Added by {streamer.addedByUser.name || 'Unknown'}
@@ -325,15 +313,17 @@ export default function PartnerStreamerManagement() {
 
                   <div className="flex items-center space-x-2 ml-4">
                     <button
+                      type="button"
                       onClick={() => handleEdit(streamer)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                      className="p-2 text-red-200 hover:bg-white/10 rounded-lg transition"
                       title="Edit"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleDelete(streamer.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                      className="p-2 text-red-400 hover:bg-red-950/40 rounded-lg transition"
                       title="Delete"
                     >
                       <Trash2 className="w-4 h-4" />

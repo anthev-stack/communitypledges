@@ -6,7 +6,8 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import PartnerStreamerManagement from "@/components/PartnerStreamerManagement"
-import { Users, Server, Ticket, Globe, Play, ArrowLeft, Gamepad2 } from 'lucide-react'
+import MarketingStaffLayout from "@/components/marketing/MarketingStaffLayout"
+import { Users, Server, Ticket, Globe, Play, ArrowLeft } from "lucide-react"
 
 interface User {
   id: string
@@ -441,23 +442,33 @@ export default function StaffDashboardPage() {
     return statuses[status] || status
   }
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityClass = (priority: string) => {
     switch (priority) {
-      case "urgent": return "bg-red-100 text-red-700"
-      case "high": return "bg-orange-100 text-orange-700"
-      case "medium": return "bg-yellow-100 text-yellow-700"
-      case "low": return "bg-green-100 text-green-700"
-      default: return "bg-gray-100 text-gray-700"
+      case "urgent": return "staff-pill staff-pill--urgent"
+      case "high": return "staff-pill staff-pill--high"
+      case "medium": return "staff-pill staff-pill--medium"
+      case "low": return "staff-pill staff-pill--low"
+      default: return "staff-pill staff-pill--default"
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusClass = (status: string) => {
     switch (status) {
-      case "open": return "bg-blue-100 text-blue-700"
-      case "in_progress": return "bg-purple-100 text-purple-700"
-      case "resolved": return "bg-green-100 text-green-700"
-      case "closed": return "bg-gray-100 text-gray-700"
-      default: return "bg-gray-100 text-gray-700"
+      case "open": return "staff-pill staff-pill--open"
+      case "in_progress": return "staff-pill staff-pill--in_progress"
+      case "resolved": return "staff-pill staff-pill--resolved"
+      case "closed": return "staff-pill staff-pill--closed"
+      default: return "staff-pill staff-pill--default"
+    }
+  }
+
+  const getRoleClass = (role: string) => {
+    switch (role.toUpperCase()) {
+      case "ADMIN": return "staff-pill staff-pill--admin"
+      case "MODERATOR": return "staff-pill staff-pill--moderator"
+      case "SUSPENDED": return "staff-pill staff-pill--suspended"
+      case "BANNED": return "staff-pill staff-pill--banned"
+      default: return "staff-pill staff-pill--user"
     }
   }
 
@@ -469,12 +480,12 @@ export default function StaffDashboardPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+      <MarketingStaffLayout>
+        <div className="listing-loading text-center py-16">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-400/80 mx-auto" />
+          <p className="mt-4">Loading...</p>
         </div>
-      </div>
+      </MarketingStaffLayout>
     )
   }
 
@@ -489,87 +500,64 @@ export default function StaffDashboardPage() {
   )
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-white">Staff Dashboard</h1>
-          <Link
-            href="/dashboard"
-            className="text-indigo-400 hover:text-indigo-300 flex items-center gap-2 transition"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="hidden sm:inline">Back to Dashboard</span>
-            <span className="sm:hidden">Back</span>
-          </Link>
-        </div>
-
-        {/* Tabs */}
-        <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg mb-6">
-          <div className="border-b border-slate-700/50">
-            <div className="flex overflow-x-auto scrollbar-hide">
+    <MarketingStaffLayout
+      variant="tabs"
+      headerAction={
+        <Link href="/dashboard" className="staff-header-link inline-flex items-center gap-2 text-sm font-medium">
+          <ArrowLeft className="w-5 h-5" aria-hidden />
+          <span className="hidden sm:inline">Back to Dashboard</span>
+          <span className="sm:hidden">Back</span>
+        </Link>
+      }
+    >
+      <div className="staff-tabs">
+        <div className="staff-tabs__nav">
               <button
+                type="button"
                 onClick={() => setTab("users")}
-                className={`flex-1 min-w-[120px] px-4 py-3 text-sm font-medium transition flex flex-col items-center gap-1.5 sm:flex-row sm:justify-center sm:gap-2 ${
-                  tab === "users"
-                    ? "text-indigo-400 border-b-2 border-indigo-400 bg-indigo-500/10"
-                    : "text-gray-400 hover:text-white hover:bg-slate-700/50"
-                }`}
+                className={`staff-tabs__btn ${tab === "users" ? "staff-tabs__btn--active" : ""}`}
               >
                 <Users className="w-5 h-5" />
                 <span className="text-xs sm:text-sm">Users</span>
               </button>
               <button
+                type="button"
                 onClick={() => setTab("servers")}
-                className={`flex-1 min-w-[120px] px-4 py-3 text-sm font-medium transition flex flex-col items-center gap-1.5 sm:flex-row sm:justify-center sm:gap-2 ${
-                  tab === "servers"
-                    ? "text-indigo-400 border-b-2 border-indigo-400 bg-indigo-500/10"
-                    : "text-gray-400 hover:text-white hover:bg-slate-700/50"
-                }`}
+                className={`staff-tabs__btn ${tab === "servers" ? "staff-tabs__btn--active" : ""}`}
               >
                 <Server className="w-5 h-5" />
                 <span className="text-xs sm:text-sm">Servers</span>
               </button>
               <button
+                type="button"
                 onClick={() => setTab("tickets")}
-                className={`flex-1 min-w-[120px] px-4 py-3 text-sm font-medium transition flex flex-col items-center gap-1.5 sm:flex-row sm:justify-center sm:gap-2 ${
-                  tab === "tickets"
-                    ? "text-indigo-400 border-b-2 border-indigo-400 bg-indigo-500/10"
-                    : "text-gray-400 hover:text-white hover:bg-slate-700/50"
-                }`}
+                className={`staff-tabs__btn ${tab === "tickets" ? "staff-tabs__btn--active" : ""}`}
               >
                 <Ticket className="w-5 h-5" />
                 <span className="text-xs sm:text-sm">Tickets</span>
               </button>
               <button
+                type="button"
                 onClick={() => setTab("streamers")}
-                className={`flex-1 min-w-[120px] px-4 py-3 text-sm font-medium transition flex flex-col items-center gap-1.5 sm:flex-row sm:justify-center sm:gap-2 ${
-                  tab === "streamers"
-                    ? "text-indigo-400 border-b-2 border-indigo-400 bg-indigo-500/10"
-                    : "text-gray-400 hover:text-white hover:bg-slate-700/50"
-                }`}
+                className={`staff-tabs__btn ${tab === "streamers" ? "staff-tabs__btn--active" : ""}`}
               >
                 <Play className="w-5 h-5" />
                 <span className="text-xs sm:text-sm">Streamers</span>
               </button>
               {userRole === "ADMIN" && (
                 <button
+                  type="button"
                   onClick={() => setTab("web")}
-                  className={`flex-1 min-w-[120px] px-4 py-3 text-sm font-medium transition flex flex-col items-center gap-1.5 sm:flex-row sm:justify-center sm:gap-2 ${
-                    tab === "web"
-                      ? "text-indigo-400 border-b-2 border-indigo-400 bg-indigo-500/10"
-                      : "text-gray-400 hover:text-white hover:bg-slate-700/50"
-                  }`}
+                  className={`staff-tabs__btn ${tab === "web" ? "staff-tabs__btn--active" : ""}`}
                 >
                   <Globe className="w-5 h-5" />
                   <span className="text-xs sm:text-sm">Web</span>
                 </button>
               )}
-            </div>
-          </div>
+        </div>
 
-          {/* Search Bar */}
           {tab !== "web" && tab !== "streamers" && (
-            <div className="p-6 border-b border-gray-200">
+            <div className="marketing-filters staff-toolbar">
               <input
                 type="text"
                 value={searchTerm}
@@ -579,19 +567,18 @@ export default function StaffDashboardPage() {
                   tab === "servers" ? "Search servers by name or game..." :
                   "Search tickets by title or user..."
                 }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="staff-input"
               />
             </div>
           )}
 
-          {/* Ticket Filters */}
           {tab === "tickets" && (
-            <div className="px-6 pb-4 border-b border-gray-200">
-              <div className="flex gap-4">
+            <div className="marketing-filters staff-toolbar">
+              <div className="flex flex-wrap gap-3">
                 <select
                   value={ticketFilters.status}
                   onChange={(e) => setTicketFilters(prev => ({ ...prev, status: e.target.value }))}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="staff-select"
                 >
                   <option value="all">All Status</option>
                   <option value="open">Open</option>
@@ -602,7 +589,7 @@ export default function StaffDashboardPage() {
                 <select
                   value={ticketFilters.category}
                   onChange={(e) => setTicketFilters(prev => ({ ...prev, category: e.target.value }))}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="staff-select"
                 >
                   <option value="all">All Categories</option>
                   <option value="bug_report">Bug Report</option>
@@ -614,7 +601,7 @@ export default function StaffDashboardPage() {
                 <select
                   value={ticketFilters.priority}
                   onChange={(e) => setTicketFilters(prev => ({ ...prev, priority: e.target.value }))}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  className="staff-select"
                 >
                   <option value="all">All Priorities</option>
                   <option value="urgent">Urgent</option>
@@ -626,21 +613,20 @@ export default function StaffDashboardPage() {
             </div>
           )}
 
-          {/* Content */}
-          <div className="p-6">
+          <div className="staff-tabs__body">
             {loading ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading...</p>
+              <div className="listing-loading text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-400/80 mx-auto" />
+                <p className="mt-4">Loading...</p>
               </div>
             ) : tab === "users" ? (
               /* User Management */
               <div className="space-y-4">
                 {filteredUsers.length === 0 ? (
-                  <p className="text-center text-gray-600 py-8">No users found</p>
+                  <p className="listing-empty text-center py-8">No users found</p>
                 ) : (
                   filteredUsers.map((user) => (
-                    <div key={user.id} className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition">
+                    <div key={user.id} className="listing-card p-4 transition">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-4 flex-1">
                           {user.image ? (
@@ -659,16 +645,8 @@ export default function StaffDashboardPage() {
                           
                           <div className="flex-1">
                             <div className="flex items-center space-x-2">
-                              <h3 className="font-semibold text-gray-900">{user.name || "Unnamed"}</h3>
-                              <span className={`px-2 py-1 text-xs rounded-full ${
-                                user.role === "ADMIN" ? "bg-purple-100 text-purple-700" :
-                                user.role === "MODERATOR" ? "bg-blue-100 text-blue-700" :
-                                user.role === "SUSPENDED" ? "bg-orange-100 text-orange-700" :
-                                user.role === "BANNED" ? "bg-red-100 text-red-700" :
-                                "bg-gray-100 text-gray-700"
-                              }`}>
-                                {user.role}
-                              </span>
+                              <h3 className="font-semibold">{user.name || "Unnamed"}</h3>
+                              <span className={getRoleClass(user.role)}>{user.role}</span>
                             </div>
                             <p className="text-sm text-gray-600">{user.email}</p>
                             <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
@@ -683,7 +661,7 @@ export default function StaffDashboardPage() {
                           <select
                             value={user.role}
                             onChange={(e) => handleRoleChange(user.id, e.target.value, user.name || user.email || "User")}
-                            className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            className="staff-select"
                           >
                             <option value="user">User</option>
                             <option value="moderator">Moderator</option>
@@ -691,10 +669,7 @@ export default function StaffDashboardPage() {
                             <option value="suspended">Suspended</option>
                             <option value="banned">Banned</option>
                           </select>
-                          <Link
-                            href={`/users/${user.id}`}
-                            className="text-center px-3 py-1 text-sm text-indigo-600 hover:text-indigo-700"
-                          >
+                          <Link href={`/users/${user.id}`} className="staff-link text-center block">
                             View Profile
                           </Link>
                         </div>
@@ -707,22 +682,18 @@ export default function StaffDashboardPage() {
               /* Server Management */
               <div className="space-y-4">
                 {filteredServers.length === 0 ? (
-                  <p className="text-center text-gray-600 py-8">No servers found</p>
+                  <p className="listing-empty text-center py-8">No servers found</p>
                 ) : (
                   filteredServers.map((server) => (
-                    <div key={server.id} className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition">
+                    <div key={server.id} className="listing-card p-4 transition">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="font-semibold text-gray-900">{server.name}</h3>
+                            <h3 className="font-semibold">{server.name}</h3>
                             {!server.isActive && (
-                              <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded-full">
-                                Inactive
-                              </span>
+                              <span className="staff-pill staff-pill--banned">Inactive</span>
                             )}
-                            <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">
-                              {server.status}
-                            </span>
+                            <span className="staff-pill staff-pill--default">{server.status}</span>
                           </div>
                           <p className="text-sm text-gray-600 mb-2">{server.gameType}</p>
                           <div className="flex items-center space-x-4 text-xs text-gray-500">
@@ -734,13 +705,14 @@ export default function StaffDashboardPage() {
 
                         <div className="flex space-x-2">
                           <Link href={`/servers/${server.id}`}>
-                            <button className="px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                            <button type="button" className="btn-server-pledge btn-server-pledge--secondary text-sm">
                               View
                             </button>
                           </Link>
                           <button
+                            type="button"
                             onClick={() => handleDeleteServer(server.id, server.name)}
-                            className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                            className="btn-server-pledge btn-server-pledge--danger text-sm"
                           >
                             Delete
                           </button>
@@ -754,18 +726,18 @@ export default function StaffDashboardPage() {
               /* Ticket Management */
               <div className="space-y-4">
                 {filteredTickets.length === 0 ? (
-                  <p className="text-center text-gray-600 py-8">No tickets found</p>
+                  <p className="listing-empty text-center py-8">No tickets found</p>
                 ) : (
                   filteredTickets.map((ticket) => (
-                    <div key={ticket.id} className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition">
+                    <div key={ticket.id} className="listing-card p-4 transition">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="font-semibold text-gray-900">{ticket.title}</h3>
-                            <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(ticket.status)}`}>
+                          <div className="flex items-center space-x-3 mb-2 flex-wrap gap-2">
+                            <h3 className="font-semibold">{ticket.title}</h3>
+                            <span className={getStatusClass(ticket.status)}>
                               {getStatusLabel(ticket.status)}
                             </span>
-                            <span className={`px-2 py-1 text-xs rounded-full ${getPriorityColor(ticket.priority)}`}>
+                            <span className={getPriorityClass(ticket.priority)}>
                               {getPriorityLabel(ticket.priority)}
                             </span>
                           </div>
@@ -776,7 +748,7 @@ export default function StaffDashboardPage() {
                             <span>Created: {new Date(ticket.createdAt).toLocaleDateString()}</span>
                             <span>{ticket._count.responses} responses</span>
                             {ticket.assignedUser && (
-                              <span className="text-indigo-600">Assigned to: {ticket.assignedUser.name}</span>
+                              <span className="staff-link">Assigned to: {ticket.assignedUser.name}</span>
                             )}
                           </div>
                         </div>
@@ -785,17 +757,14 @@ export default function StaffDashboardPage() {
                           <select
                             value={ticket.status}
                             onChange={(e) => handleTicketStatusChange(ticket.id, e.target.value, ticket.title)}
-                            className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            className="staff-select"
                           >
                             <option value="open">Open</option>
                             <option value="in_progress">In Progress</option>
                             <option value="resolved">Resolved</option>
                             <option value="closed">Closed</option>
                           </select>
-                          <Link
-                            href={`/staff/tickets/${ticket.id}`}
-                            className="text-center px-3 py-1 text-sm text-indigo-600 hover:text-indigo-700"
-                          >
+                          <Link href={`/staff/tickets/${ticket.id}`} className="staff-link text-center block">
                             View & Respond
                           </Link>
                         </div>
@@ -807,21 +776,21 @@ export default function StaffDashboardPage() {
             ) : tab === "web" ? (
               <div className="max-w-4xl mx-auto">
                 <div className="mb-8">
-                  <h2 className="text-2xl font-semibold text-white mb-2">Web Management</h2>
-                  <p className="text-gray-300">
+                  <h2 className="text-xl font-semibold mb-2">Web Management</h2>
+                  <p className="text-gray-600">
                     Site appearance uses a fixed dark theme. Manage branding assets below.
                   </p>
                 </div>
 
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-6">Website Favicon</h2>
-                  <p className="text-gray-300 mb-6">Upload a custom favicon for your website. This will appear in browser tabs and bookmarks.</p>
+                  <h2 className="text-xl font-bold mb-6">Website Favicon</h2>
+                  <p className="text-gray-600 mb-6">Upload a custom favicon for your website. This will appear in browser tabs and bookmarks.</p>
                   
-                  <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6 max-w-md">
+                  <div className="staff-asset-card max-w-md">
                     <div className="flex items-center mb-4">
-                      <h3 className="text-lg font-semibold text-white">Site Favicon</h3>
+                      <h3 className="text-lg font-semibold">Site Favicon</h3>
                     </div>
-                    <p className="text-gray-300 text-sm mb-4">
+                    <p className="text-gray-600 text-sm mb-4">
                       Upload a .ico, .png, or .svg file (recommended: 32x32px or 64x64px)
                     </p>
                     <div className="space-y-4">
@@ -830,8 +799,8 @@ export default function StaffDashboardPage() {
                           <Image src={faviconUrl} alt="Current favicon" width={32} height={32} className="w-8 h-8" unoptimized />
                         </div>
                         <div>
-                          <p className="text-sm text-gray-300">Current favicon</p>
-                          <p className="text-xs text-gray-400">Displays in browser tabs</p>
+                          <p className="text-sm text-gray-600">Current favicon</p>
+                          <p className="text-xs text-gray-500">Displays in browser tabs</p>
                         </div>
                       </div>
                       <div className="flex space-x-2">
@@ -847,14 +816,14 @@ export default function StaffDashboardPage() {
                         />
                         <label
                           htmlFor="favicon-upload"
-                          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-center cursor-pointer transition disabled:opacity-50"
+                          className="flex-1 btn-server-pledge btn-server-pledge--primary text-center cursor-pointer disabled:opacity-50"
                         >
-                          {uploadingFavicon ? 'Uploading...' : 'Upload Favicon'}
+                          {uploadingFavicon ? "Uploading..." : "Upload Favicon"}
                         </label>
                         <button
                           type="button"
-                          onClick={() => window.open(faviconUrl, '_blank')}
-                          className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
+                          onClick={() => window.open(faviconUrl, "_blank")}
+                          className="btn-server-pledge btn-server-pledge--secondary"
                         >
                           View
                         </button>
@@ -865,16 +834,15 @@ export default function StaffDashboardPage() {
 
                 {/* Game Banner Management */}
                 <div className="mt-12">
-                  <h2 className="text-2xl font-bold text-white mb-6">Game Banner Management</h2>
-                  <p className="text-gray-300 mb-6">Upload custom banners for different game types. These will appear in the hero section of server pages instead of individual server banners.</p>
+                  <h2 className="text-xl font-bold mb-6">Game Banner Management</h2>
+                  <p className="text-gray-600 mb-6">Upload custom banners for different game types. These will appear in the hero section of server pages instead of individual server banners.</p>
                   
-                  {/* Default Banner */}
                   <div className="mb-8">
-                    <h3 className="text-xl font-semibold text-white mb-4">Default Game Banner</h3>
-                    <p className="text-gray-300 text-sm mb-4">This banner will be used for games that don&apos;t have a specific banner uploaded.</p>
+                    <h3 className="text-lg font-semibold mb-4">Default Game Banner</h3>
+                    <p className="text-gray-600 text-sm mb-4">This banner will be used for games that don&apos;t have a specific banner uploaded.</p>
                     
-                    <div 
-                      className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-6 max-w-md hover:border-indigo-500/50 transition-colors"
+                    <div
+                      className="staff-asset-card max-w-md transition-colors"
                       onDragOver={handleDragOver}
                       onDrop={(e) => {
                         e.preventDefault()
@@ -910,14 +878,15 @@ export default function StaffDashboardPage() {
                           />
                           <label
                             htmlFor="default-banner-upload"
-                            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-center cursor-pointer transition disabled:opacity-50"
+                            className="flex-1 btn-server-pledge btn-server-pledge--primary text-center cursor-pointer disabled:opacity-50"
                           >
-                            {uploadingBanner === 'default' ? 'Uploading...' : 'Upload Default Banner'}
+                            {uploadingBanner === "default" ? "Uploading..." : "Upload Default Banner"}
                           </label>
                           {defaultBannerUrl && (
                             <button
-                              onClick={() => window.open(defaultBannerUrl, '_blank')}
-                              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition"
+                              type="button"
+                              onClick={() => window.open(defaultBannerUrl, "_blank")}
+                              className="btn-server-pledge btn-server-pledge--secondary"
                             >
                               View
                             </button>
@@ -932,8 +901,8 @@ export default function StaffDashboardPage() {
 
                   {/* Game-Specific Banners */}
                   <div>
-                    <h3 className="text-xl font-semibold text-white mb-4">Game-Specific Banners</h3>
-                    <p className="text-gray-300 text-sm mb-6">Upload banners for specific games. These will override the default banner for that game type.</p>
+                    <h3 className="text-lg font-semibold mb-4">Game-Specific Banners</h3>
+                    <p className="text-gray-600 text-sm mb-6">Upload banners for specific games. These will override the default banner for that game type.</p>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {[
@@ -942,9 +911,9 @@ export default function StaffDashboardPage() {
                         'ARK: Survival Evolved', 'Valheim', '7 Days to Die', 'Conan Exiles', 
                         'DayZ', 'The Forest', 'Sons of The Forest'
                       ].map((game) => (
-                        <div 
-                          key={game} 
-                          className="bg-slate-800/70 backdrop-blur-sm border border-slate-700/50 rounded-lg shadow-lg p-4 hover:border-indigo-500/50 transition-colors"
+                        <div
+                          key={game}
+                          className="staff-asset-card p-4 transition-colors"
                           onDragOver={handleDragOver}
                           onDrop={(e) => {
                             e.preventDefault()
@@ -952,7 +921,7 @@ export default function StaffDashboardPage() {
                             if (file) handleBannerUpload(file, game, 'game-banner')
                           }}
                         >
-                          <h4 className="text-sm font-semibold text-white mb-3 truncate" title={game}>
+                          <h4 className="text-sm font-semibold mb-3 truncate" title={game}>
                             {game}
                           </h4>
                           
@@ -984,15 +953,16 @@ export default function StaffDashboardPage() {
                                 }}
                               />
                               <label
-                                htmlFor={`banner-upload-${game.replace(/[^a-zA-Z0-9]/g, '_')}`}
-                                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-center cursor-pointer transition disabled:opacity-50 text-xs"
+                                htmlFor={`banner-upload-${game.replace(/[^a-zA-Z0-9]/g, "_")}`}
+                                className="flex-1 btn-server-pledge btn-server-pledge--primary text-center cursor-pointer disabled:opacity-50 text-xs"
                               >
-                                {uploadingBanner === game ? 'Uploading...' : 'Upload'}
+                                {uploadingBanner === game ? "Uploading..." : "Upload"}
                               </label>
                               {gameBanners[game] && (
                                 <button
-                                  onClick={() => window.open(gameBanners[game], '_blank')}
-                                  className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded text-xs transition"
+                                  type="button"
+                                  onClick={() => window.open(gameBanners[game], "_blank")}
+                                  className="btn-server-pledge btn-server-pledge--secondary text-xs"
                                 >
                                   View
                                 </button>
@@ -1007,14 +977,10 @@ export default function StaffDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-start">
-                      <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                      </svg>
-                      <div>
-                        <h4 className="text-sm font-semibold text-blue-900 mb-1">Game Banner Guidelines</h4>
-                        <ul className="text-sm text-blue-800 space-y-1">
+                  <div className="mt-6 staff-callout">
+                    <div>
+                        <h4 className="text-sm font-semibold mb-1">Game Banner Guidelines</h4>
+                        <ul className="space-y-1 list-none pl-0">
                           <li>• Recommended dimensions: 500x100 pixels (5:1 aspect ratio)</li>
                           <li>• Supports WebP, GIF, PNG, and JPEG formats</li>
                           <li>• Maximum file size: 5MB per banner</li>
@@ -1022,7 +988,6 @@ export default function StaffDashboardPage() {
                           <li>• Banners appear in server page hero sections instead of individual server banners</li>
                           <li>• Use high-quality images that represent each game type well</li>
                         </ul>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -1034,9 +999,8 @@ export default function StaffDashboardPage() {
               </div>
             ) : null}
           </div>
-        </div>
       </div>
-    </div>
+    </MarketingStaffLayout>
   )
 }
 
