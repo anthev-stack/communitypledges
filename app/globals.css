@@ -1413,6 +1413,86 @@ body:has(.server-detail-page-backdrop) main {
   flex-shrink: 0;
 }
 
+.dashboard-top {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.dashboard-quick-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.dashboard-quick-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0 0.85rem;
+  box-sizing: border-box;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.dashboard-quick-btn:hover {
+  transform: translateY(-1px);
+}
+
+.dashboard-quick-btn--upload {
+  border-color: rgba(88, 101, 242, 0.45);
+  background: rgba(88, 101, 242, 0.18);
+  color: #949cf7;
+}
+
+.dashboard-quick-btn--upload:hover {
+  background: rgba(88, 101, 242, 0.32);
+  border-color: rgba(148, 156, 247, 0.55);
+  color: #c9cdfb;
+  box-shadow: 0 4px 12px rgba(88, 101, 242, 0.25);
+}
+
+.dashboard-quick-btn--community {
+  border-color: rgba(35, 165, 89, 0.4);
+  background: rgba(35, 165, 89, 0.14);
+  color: #57f287;
+}
+
+.dashboard-quick-btn--community:hover {
+  background: rgba(35, 165, 89, 0.26);
+  border-color: rgba(59, 165, 93, 0.55);
+  color: #86efac;
+  box-shadow: 0 4px 12px rgba(35, 165, 89, 0.2);
+}
+
+.dashboard-quick-btn--settings {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(43, 45, 49, 0.85);
+  color: #b5bac1;
+}
+
+.dashboard-quick-btn--settings:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 .dashboard-action-btn {
   display: inline-flex;
   align-items: center;
@@ -1461,10 +1541,13 @@ body:has(.server-detail-page-backdrop) main {
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  padding: 0.5rem 0.85rem;
+  height: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0 0.85rem;
+  box-sizing: border-box;
   font-size: 0.8125rem;
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1;
   border-radius: 10px;
   border: 1px solid rgba(250, 166, 26, 0.35);
   background: rgba(250, 166, 26, 0.15);

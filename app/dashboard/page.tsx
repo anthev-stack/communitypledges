@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import { Eye, Edit3, Zap, Trash2, Copy, Check } from "lucide-react"
+import { Eye, Edit3, Zap, Trash2, Copy, Check, Upload, Users, Settings } from "lucide-react"
 import { Price } from "@/components/Price"
 import { useCurrency } from "@/components/CurrencyProvider"
 import MarketingDashboardLayout from "@/components/marketing/MarketingDashboardLayout"
@@ -408,81 +408,71 @@ export default function DashboardPage() {
 
   return (
     <MarketingDashboardLayout>
-        {/* Stats Overview */}
-        <div className="grid gap-6 md:grid-cols-3 mb-8">
-          <div className="listing-card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Total Pledged</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {stats?.totalPledged ? <Price amountUSD={stats.totalPledged} showCode={true} /> : "$0.00"}
-                </p>
+        <div className="dashboard-top mb-12">
+          <div className="grid gap-6 md:grid-cols-3 mb-6">
+            <div className="listing-card p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Total Pledged</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {stats?.totalPledged ? <Price amountUSD={stats.totalPledged} showCode={true} /> : "$0.00"}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+            </div>
+
+            <div className="listing-card p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Active Pledges</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {stats?.activePledges || 0}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="listing-card p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Servers Created</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {stats?.serversCreated || 0}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="listing-card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Active Pledges</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {stats?.activePledges || 0}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="listing-card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Servers Created</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {stats?.serversCreated || 0}
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-3 mb-12">
-          {/* Create Server Card */}
-          <Link href="/dashboard/server/create">
-            <div className="listing-card p-6 transition cursor-pointer h-full">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Create Server</h2>
-              <p className="text-gray-600">Set up a new game server and start receiving pledges</p>
-            </div>
-          </Link>
-
-          {/* Create Community Card */}
-          <Link href="/dashboard/community/create">
-            <div className="listing-card p-6 transition cursor-pointer h-full">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Create Community</h2>
-              <p className="text-gray-600">Share your community to attract new members</p>
-            </div>
-          </Link>
-
-          {/* Settings Card */}
-          <Link href="/settings">
-            <div className="listing-card p-6 transition cursor-pointer h-full">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Settings</h2>
-              <p className="text-gray-600">Manage your profile and payment settings</p>
-            </div>
-          </Link>
+          <nav className="dashboard-quick-actions" aria-label="Dashboard shortcuts">
+            <Link href="/dashboard/server/create" className="dashboard-quick-btn dashboard-quick-btn--upload">
+              <Upload className="w-4 h-4 shrink-0" aria-hidden />
+              Upload Server
+            </Link>
+            <Link href="/dashboard/community/create" className="dashboard-quick-btn dashboard-quick-btn--community">
+              <Users className="w-4 h-4 shrink-0" aria-hidden />
+              Create Community
+            </Link>
+            <Link href="/settings" className="dashboard-quick-btn dashboard-quick-btn--settings">
+              <Settings className="w-4 h-4 shrink-0" aria-hidden />
+              Settings
+            </Link>
+          </nav>
         </div>
 
         {/* My Servers Section - Only show if user has servers */}
