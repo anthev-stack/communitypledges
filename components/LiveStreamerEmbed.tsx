@@ -131,25 +131,33 @@ export default function LiveStreamerEmbed({ variant = "inline" }: Props) {
       </div>
 
       <div className="partner-stream-card__header">
-        <div className="relative shrink-0">
-          <Image
-            src={user.profileImageUrl}
-            alt={user.displayName}
-            width={48}
-            height={48}
-            className="partner-stream-card__avatar"
-            unoptimized
-          />
-          <span className="partner-stream-card__live-dot" aria-hidden />
+        <div className="partner-stream-card__identity">
+          <div className="relative shrink-0">
+            <Image
+              src={user.profileImageUrl}
+              alt={user.displayName}
+              width={48}
+              height={48}
+              className="partner-stream-card__avatar"
+              unoptimized
+            />
+            <span className="partner-stream-card__live-dot" aria-hidden />
+          </div>
+          <div className="partner-stream-card__who">
+            <h3 className="partner-stream-card__name">{user.displayName}</h3>
+            <p className="partner-stream-card__meta">
+              <span className="partner-stream-card__live-label">LIVE</span>
+              <span aria-hidden>·</span>
+              <span>{getStreamDuration()}</span>
+            </p>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="partner-stream-card__name">{user.displayName}</h3>
-          <p className="partner-stream-card__meta">
-            <span className="partner-stream-card__live-label">LIVE</span>
-            <span aria-hidden>·</span>
-            <span>{getStreamDuration()}</span>
-          </p>
+
+        <div className="partner-stream-card__stream-info">
+          <h4 className="partner-stream-card__title">{stream.title}</h4>
+          <span className="partner-stream-card__game">{stream.gameName}</span>
         </div>
+
         <div className="partner-stream-card__viewers">
           <Eye className="w-4 h-4" aria-hidden />
           <span>
@@ -159,9 +167,6 @@ export default function LiveStreamerEmbed({ variant = "inline" }: Props) {
           </span>
         </div>
       </div>
-
-      <h4 className="partner-stream-card__title">{stream.title}</h4>
-      <span className="partner-stream-card__game">{stream.gameName}</span>
 
       {playerSrc && (
         <div className="partner-stream-card__player">
