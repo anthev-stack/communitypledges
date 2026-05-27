@@ -353,6 +353,31 @@ body:has(.server-detail-page-backdrop) main {
 
 .marketing-hero {
   position: relative;
+  margin-bottom: clamp(2.25rem, 4vw, 3.25rem);
+}
+
+/* Homepage — even spacing between glass panels */
+.marketing-home-sections {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2.25rem, 4vw, 3.25rem);
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1rem clamp(3rem, 6vw, 4rem);
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .marketing-home-sections {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+.marketing-home-sections > .marketing-section {
+  padding: 0;
+  margin: 0;
 }
 
 .marketing-sparkle {
@@ -464,21 +489,9 @@ body:has(.server-detail-page-backdrop) main {
   padding: 0 1rem 2.5rem;
 }
 
-.marketing-section--tight-bottom {
-  padding-bottom: 0.75rem;
-}
-
-.marketing-section--tight-top {
-  padding-top: 0;
-}
-
 @media (min-width: 640px) {
   .marketing-section {
     padding: 0 1.5rem 3rem;
-  }
-
-  .marketing-section--tight-bottom {
-    padding-bottom: 1rem;
   }
 }
 
@@ -568,16 +581,11 @@ body:has(.server-detail-page-backdrop) main {
   font-size: 1rem;
   line-height: 1.65;
   color: rgba(255, 255, 255, 0.82) !important;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
-.marketing-glass--stream {
-  padding: 1.5rem;
-}
-
-.marketing-glass--stream .bg-slate-800\/50 {
-  background: rgba(30, 31, 34, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+.marketing-glass__body > *:last-child {
+  margin-bottom: 0;
 }
 
 /* Feature tiles inside glass */
