@@ -3182,49 +3182,9 @@ body:has(.server-detail-page-backdrop) main {
   margin: 0.25rem 0 0;
 }
 
-.server-browse-card__owner {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding-top: 0.75rem;
-  margin-top: 0.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.65) !important;
-}
-
-.server-browse-card--list .server-browse-card__owner {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
-  flex-shrink: 0;
-}
-
-.server-browse-card__owner-fallback {
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-  background: #5865f2;
-  color: #fff;
-  font-size: 0.65rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .server-browse-card__grid-footer {
   margin-top: auto;
   padding-top: 0.25rem;
-}
-
-.server-browse-card__list-footer {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 0.15rem;
-  padding-top: 0;
 }
 
 .server-browse-card--list .server-browse-card__pledge {
@@ -3245,10 +3205,6 @@ body:has(.server-detail-page-backdrop) main {
 .server-browse-card--list .server-browse-card__pledge-optimized {
   font-size: 0.65rem;
   margin-top: 0.1rem;
-}
-
-.server-browse-card--list .server-browse-card__owner {
-  font-size: 0.75rem;
 }
 
 .marketing-page .tag-pill--idle:hover {

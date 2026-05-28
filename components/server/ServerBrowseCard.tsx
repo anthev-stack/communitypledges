@@ -141,25 +141,6 @@ function PledgeBlock({ server }: { server: ServerBrowseItem }) {
   )
 }
 
-function OwnerRow({ server }: { server: ServerBrowseItem }) {
-  return (
-    <div className="server-browse-card__owner">
-      {server.owner.image ? (
-        <Image
-          src={server.owner.image}
-          alt={server.owner.name}
-          width={24}
-          height={24}
-          className="rounded-full"
-        />
-      ) : (
-        <div className="server-browse-card__owner-fallback">{server.owner.name[0]?.toUpperCase()}</div>
-      )}
-      <span>{server.owner.name}</span>
-    </div>
-  )
-}
-
 function BannerThumb({
   server,
   isFavorited,
@@ -260,10 +241,7 @@ export default function ServerBrowseCard({ server, variant, isFavorited, onToggl
             <ServerTags tags={server.tags} max={4} className="server-browse-card__tags--end" />
           </div>
 
-          <div className="server-browse-card__list-footer">
-            <PledgeBlock server={server} />
-            <OwnerRow server={server} />
-          </div>
+          <PledgeBlock server={server} />
         </div>
       </Link>
     )
@@ -316,7 +294,6 @@ export default function ServerBrowseCard({ server, variant, isFavorited, onToggl
           </div>
 
           <PledgeBlock server={server} />
-          <OwnerRow server={server} />
         </div>
       </div>
     </Link>
