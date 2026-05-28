@@ -1,44 +1,18 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
-import Image from "next/image"
+import { LayoutGrid, List } from "lucide-react"
 import { REGIONS } from "@/lib/game-tags"
 import { SUPPORTED_GAMES } from "@/lib/supported-games"
 import { getTagsForGame } from "@/lib/game-tags"
-import { Price } from "@/components/Price"
-import ServerLiveStats from "@/components/ServerLiveStats"
-import ServerMinecraftMeta from "@/components/server/ServerMinecraftMeta"
 import MarketingListingLayout from "@/components/marketing/MarketingListingLayout"
+import ServerBrowseCard, { type ServerBrowseItem } from "@/components/server/ServerBrowseCard"
 
-interface Server {
-  id: string
-  name: string
-  description: string
-  gameType: string
-  serverIp: string | null
+type Server = ServerBrowseItem & {
   playerCount: number
-  cost: number
-  imageUrl: string
-  region: string | null
-  tags: string[]
   createdAt: string
-  isBoosted: boolean
   boostExpiresAt: string | null
-  owner: {
-    id: string
-    name: string
-    image: string
-  }
-  totalPledged: number
-  totalOptimized: number
-  pledgerCount: number
-  minecraftVersion?: string | null
-  minecraftEditionType?: string | null
-  minecraftModLoader?: string | null
-  _count?: {
-    favorites: number
-  }
+  owner: ServerBrowseItem["owner"] & { id: string }
 }
 
 export default function ServersPage() {
@@ -52,6 +26,19 @@ export default function ServersPage() {
   const [sortBy, setSortBy] = useState("newest")
   const [showFilters, setShowFilters] = useState(false)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+
+  useEffect(() => {
+    const saved = localStorage.getItem("servers-view-mode")
+    if (saved === "grid" || saved === "list") {
+      setViewMode(saved)
+    }
+  }, [])
+
+  const changeViewMode = (mode: "grid" | "list") => {
+    setViewMode(mode)
+    localStorage.setItem("servers-view-mode", mode)
+  }
   
   // Get all unique tags from current filtered servers
   const [availableTags, setAvailableTags] = useState<string[]>([])
@@ -345,9 +332,33 @@ export default function ServersPage() {
           )}
 
           {/* Status Bar */}
-          <div className="flex items-center justify-between pt-4 mt-4 border-t border-gray-700">
-            <div className="flex items-center gap-4 text-sm text-gray-400">
-              <span>Showing {filteredServers.length} of {servers.length} servers</span>
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 mt-4 border-t border-gray-700">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
+              <div className="servers-status-count">
+                <span>Showing {filteredServers.length} of {servers.length} servers</span>
+                <div className="servers-view-toggle" role="group" aria-label="Server list layout">
+                  <button
+                    type="button"
+                    className={`servers-view-toggle__btn ${viewMode === "grid" ? "servers-view-toggle__btn--active" : ""}`}
+                    onClick={() => changeViewMode("grid")}
+                    aria-pressed={viewMode === "grid"}
+                    title="Column view"
+                  >
+                    <LayoutGrid className="w-4 h-4" aria-hidden />
+                    <span className="hidden sm:inline">Columns</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`servers-view-toggle__btn ${viewMode === "list" ? "servers-view-toggle__btn--active" : ""}`}
+                    onClick={() => changeViewMode("list")}
+                    aria-pressed={viewMode === "list"}
+                    title="Horizontal view"
+                  >
+                    <List className="w-4 h-4" aria-hidden />
+                    <span className="hidden sm:inline">List</span>
+                  </button>
+                </div>
+              </div>
               {selectedGame && (
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
@@ -362,6 +373,7 @@ export default function ServersPage() {
             </div>
             {hasActiveFilters && (
               <button
+                type="button"
                 onClick={clearFilters}
                 className="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition"
               >
@@ -400,195 +412,15 @@ export default function ServersPage() {
             )}
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className={viewMode === "grid" ? "servers-browse-grid" : "servers-browse-list"}>
             {filteredServers.map((server) => (
-              <Link key={server.id} href={`/servers/${server.id}`}>
-                <div className="listing-card overflow-hidden transition cursor-pointer h-full flex flex-col">
-                  {/* Server Banner */}
-                  {server.imageUrl ? (
-                    <div className="relative w-full" style={{ aspectRatio: '500/100' }}>
-                      <Image
-                        src={server.imageUrl}
-                        alt={server.name}
-                        fill
-                        className="object-cover"
-                      />
-                      {/* Boost indicator */}
-                      {server.isBoosted && (
-                        <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          BOOSTED
-                        </div>
-                      )}
-                      {/* Favorite button with count */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          toggleFavorite(server.id)
-                        }}
-                        className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1.5 bg-slate-800/80 hover:bg-slate-700 rounded-full transition-colors"
-                      >
-                        <svg 
-                          className={`w-5 h-5 ${favorites.has(server.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`}
-                          fill={favorites.has(server.id) ? 'currentColor' : 'none'}
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                        <span className="text-white text-sm font-medium">
-                          {server._count?.favorites || 0}
-                        </span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="relative w-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center" style={{ aspectRatio: '500/100' }}>
-                      <span className="text-2xl text-white font-bold">
-                        {server.name[0]?.toUpperCase()}
-                      </span>
-                      {/* Boost indicator */}
-                      {server.isBoosted && (
-                        <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          BOOSTED
-                        </div>
-                      )}
-                      {/* Favorite button with count */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          toggleFavorite(server.id)
-                        }}
-                        className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1.5 bg-slate-800/80 hover:bg-slate-700 rounded-full transition-colors"
-                      >
-                        <svg 
-                          className={`w-5 h-5 ${favorites.has(server.id) ? 'text-red-500 fill-current' : 'text-gray-400'}`}
-                          fill={favorites.has(server.id) ? 'currentColor' : 'none'}
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                        <span className="text-white text-sm font-medium">
-                          {server._count?.favorites || 0}
-                        </span>
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="p-6 flex-1 flex flex-col">
-                    {/* Server Name */}
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-1">
-                      {server.name}
-                    </h3>
-
-                    {/* Game Type & Region */}
-                    <div className="flex items-center text-sm text-gray-600 mb-2">
-                      <span className="font-medium">{server.gameType}</span>
-                      {server.region && (
-                        <>
-                          <span className="mx-2">•</span>
-                          <span>{server.region}</span>
-                        </>
-                      )}
-                    </div>
-
-                    <ServerMinecraftMeta
-                      variant="listing"
-                      gameType={server.gameType}
-                      minecraftVersion={server.minecraftVersion}
-                      minecraftEditionType={server.minecraftEditionType}
-                      minecraftModLoader={server.minecraftModLoader}
-                    />
-
-                    {/* Tags */}
-                    {server.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {server.tags.slice(0, 3).map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-1 text-xs bg-indigo-100 text-indigo-700 rounded-full"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {server.tags.length > 3 && (
-                          <span className="px-2 py-1 text-xs bg-slate-700/50 text-gray-300 rounded-full">
-                            +{server.tags.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Description */}
-                    {server.description && (
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                        {server.description}
-                      </p>
-                    )}
-
-                    <div className="mt-auto">
-                      {/* Stats */}
-                      <div className="flex items-center justify-between text-sm text-gray-400 mb-3">
-                        <span className="flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          {server.pledgerCount} pledger{server.pledgerCount !== 1 ? 's' : ''}
-                        </span>
-                        {server.serverIp && (
-                          <ServerLiveStats serverId={server.id} serverIp={server.serverIp} />
-                        )}
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="mb-3">
-                        <div className="flex justify-between text-xs text-gray-600 mb-1">
-                          <span><Price amountUSD={server.totalPledged} /> pledged</span>
-                          <span><Price amountUSD={server.cost} /> needed</span>
-                        </div>
-                        <div className="w-full bg-slate-700/50 rounded-full h-2">
-                          <div
-                            className="bg-emerald-600 h-2 rounded-full transition-all"
-                            style={{
-                              width: `${Math.min((server.totalPledged / server.cost) * 100, 100)}%`,
-                            }}
-                          />
-                        </div>
-                        {server.totalOptimized > 0 && server.totalOptimized < server.totalPledged && (
-                          <p className="text-xs text-green-600 mt-1">
-                            💰 Optimized to <Price amountUSD={server.totalOptimized} />/month
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Owner */}
-                      <div className="flex items-center pt-3 border-t border-gray-200">
-                        {server.owner.image ? (
-                          <Image
-                            src={server.owner.image}
-                            alt={server.owner.name}
-                            width={24}
-                            height={24}
-                            className="rounded-full mr-2"
-                          />
-                        ) : (
-                          <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-semibold mr-2">
-                            {server.owner.name[0]?.toUpperCase()}
-                          </div>
-                        )}
-                        <span className="text-sm text-gray-600">{server.owner.name}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+              <ServerBrowseCard
+                key={server.id}
+                server={server}
+                variant={viewMode}
+                isFavorited={favorites.has(server.id)}
+                onToggleFavorite={toggleFavorite}
+              />
             ))}
           </div>
         )}
