@@ -151,6 +151,18 @@ The application uses PostgreSQL with Prisma ORM. Key models:
 - **Session** - User sessions
 - **VerificationToken** - Email verification tokens
 
+## Navigate to the project folder
+
+**Windows (local):**
+```powershell
+cd "c:\Users\camer\OneDrive\Desktop\community pledges"
+```
+
+**Linux (Vultr / production server):**
+```bash
+cd /var/www/communitypledges
+```
+
 ## Development Commands
 
 ```bash
@@ -170,6 +182,16 @@ npm run lint
 npx prisma studio      # Open Prisma Studio
 npx prisma migrate dev # Create and apply migration
 npx prisma generate    # Generate Prisma Client
+```
+
+## Production deploy (Vultr)
+
+```bash
+cd /var/www/communitypledges
+git pull
+npm install
+npm run build
+pm2 reload commpledges --update-env
 ```
 
 ## Security Features

@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { LayoutGrid, List } from "lucide-react"
 import { REGIONS } from "@/lib/game-tags"
 import { SUPPORTED_GAMES } from "@/lib/supported-games"
 import { getTagsForGame } from "@/lib/game-tags"
 import MarketingListingLayout from "@/components/marketing/MarketingListingLayout"
 import ServerBrowseCard, { type ServerBrowseItem } from "@/components/server/ServerBrowseCard"
+import ServersViewSwitch from "@/components/server/ServersViewSwitch"
 
 type Server = ServerBrowseItem & {
   playerCount: number
@@ -332,33 +332,9 @@ export default function ServersPage() {
           )}
 
           {/* Status Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 mt-4 border-t border-gray-700">
-            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
-              <div className="servers-status-count">
-                <span>Showing {filteredServers.length} of {servers.length} servers</span>
-                <div className="servers-view-toggle" role="group" aria-label="Server list layout">
-                  <button
-                    type="button"
-                    className={`servers-view-toggle__btn ${viewMode === "grid" ? "servers-view-toggle__btn--active" : ""}`}
-                    onClick={() => changeViewMode("grid")}
-                    aria-pressed={viewMode === "grid"}
-                    title="Column view"
-                  >
-                    <LayoutGrid className="w-4 h-4" aria-hidden />
-                    <span className="hidden sm:inline">Columns</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`servers-view-toggle__btn ${viewMode === "list" ? "servers-view-toggle__btn--active" : ""}`}
-                    onClick={() => changeViewMode("list")}
-                    aria-pressed={viewMode === "list"}
-                    title="Horizontal view"
-                  >
-                    <List className="w-4 h-4" aria-hidden />
-                    <span className="hidden sm:inline">List</span>
-                  </button>
-                </div>
-              </div>
+          <div className="servers-status-bar">
+            <div className="servers-status-bar__left text-sm text-gray-400">
+              <span>Showing {filteredServers.length} of {servers.length} servers</span>
               {selectedGame && (
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
@@ -371,15 +347,18 @@ export default function ServersPage() {
                 </span>
               )}
             </div>
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition"
-              >
-                Clear all filters
-              </button>
-            )}
+            <div className="servers-status-bar__right">
+              <ServersViewSwitch viewMode={viewMode} onChange={changeViewMode} />
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

@@ -8,7 +8,7 @@ type Props = {
   minecraftVersion?: string | null
   minecraftEditionType?: string | null
   minecraftModLoader?: string | null
-  variant?: "detail" | "listing"
+  variant?: "detail" | "listing" | "compact"
 }
 
 export default function ServerMinecraftMeta({
@@ -24,6 +24,22 @@ export default function ServerMinecraftMeta({
   const parts = [minecraftVersion, edition, minecraftEditionType === "modded" && minecraftModLoader]
     .filter(Boolean)
     .join(" · ")
+
+  if (variant === "compact") {
+    return (
+      <span className="server-minecraft-meta--compact">
+        <span className="server-browse-card__dot" aria-hidden>
+          ·
+        </span>
+        {parts.split(" · ").map((part, i, arr) => (
+          <span key={part}>
+            <span>{part}</span>
+            {i < arr.length - 1 && <span className="opacity-60"> · </span>}
+          </span>
+        ))}
+      </span>
+    )
+  }
 
   const isListing = variant === "listing"
 

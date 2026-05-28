@@ -91,10 +91,18 @@ function FavoriteButton({
   )
 }
 
-function ServerTags({ tags, max = 3 }: { tags: string[]; max?: number }) {
+function ServerTags({
+  tags,
+  max = 3,
+  className = "",
+}: {
+  tags: string[]
+  max?: number
+  className?: string
+}) {
   if (tags.length === 0) return null
   return (
-    <div className="server-browse-card__tags">
+    <div className={`server-browse-card__tags ${className}`.trim()}>
       {tags.slice(0, max).map((tag) => (
         <span key={tag} className="tag-pill--idle text-xs px-2 py-0.5 rounded-full">
           {tag}
@@ -205,50 +213,51 @@ export default function ServerBrowseCard({ server, variant, isFavorited, onToggl
     return (
       <Link href={href} className="server-browse-card server-browse-card--list listing-card">
         <BannerThumb server={server} isFavorited={isFavorited} onToggleFavorite={onToggleFavorite} square />
-        <div className="server-browse-card__body">
-          <div className="server-browse-card__title-row">
-            <h3 className="server-browse-card__title">{server.name}</h3>
+        <div className="server-browse-card__body server-browse-card__body--list">
+          <h3 className="server-browse-card__title">{server.name}</h3>
+
+          <div className="server-browse-card__info-line">
+            <div className="server-browse-card__info-primary">
+              <span className="font-medium">{server.gameType}</span>
+              {server.region && (
+                <>
+                  <span className="server-browse-card__dot" aria-hidden>
+                    ·
+                  </span>
+                  <span>{server.region}</span>
+                </>
+              )}
+              <ServerMinecraftMeta
+                variant="compact"
+                gameType={server.gameType}
+                minecraftVersion={server.minecraftVersion}
+                minecraftEditionType={server.minecraftEditionType}
+                minecraftModLoader={server.minecraftModLoader}
+              />
+            </div>
+            {server.description && (
+              <p className="server-browse-card__description server-browse-card__description--inline">
+                {server.description}
+              </p>
+            )}
           </div>
 
-          <p className="server-browse-card__game-line">
-            <span className="font-medium">{server.gameType}</span>
-            {server.region && (
-              <>
-                <span className="server-browse-card__dot" aria-hidden>
-                  ·
-                </span>
-                <span>{server.region}</span>
-              </>
-            )}
-          </p>
-
-          <ServerMinecraftMeta
-            variant="listing"
-            gameType={server.gameType}
-            minecraftVersion={server.minecraftVersion}
-            minecraftEditionType={server.minecraftEditionType}
-            minecraftModLoader={server.minecraftModLoader}
-          />
-
-          {server.description && (
-            <p className="server-browse-card__description">{server.description}</p>
-          )}
-
-          <ServerTags tags={server.tags} max={5} />
-
-          <div className="server-browse-card__stats-row">
-            <span className="server-browse-card__stat">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-              {server.pledgerCount} pledger{server.pledgerCount !== 1 ? "s" : ""}
-            </span>
-            {server.serverIp && <ServerLiveStats serverId={server.id} serverIp={server.serverIp} />}
+          <div className="server-browse-card__stats-row server-browse-card__stats-row--split">
+            <div className="server-browse-card__stats-left">
+              <span className="server-browse-card__stat">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                {server.pledgerCount} pledger{server.pledgerCount !== 1 ? "s" : ""}
+              </span>
+              {server.serverIp && <ServerLiveStats serverId={server.id} serverIp={server.serverIp} />}
+            </div>
+            <ServerTags tags={server.tags} max={4} className="server-browse-card__tags--end" />
           </div>
 
           <div className="server-browse-card__list-footer">
