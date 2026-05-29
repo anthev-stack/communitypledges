@@ -54,10 +54,10 @@ export async function POST(request: Request) {
       })
     }
 
-    // Create SetupIntent
+    // Create SetupIntent (automatic_payment_methods enables Apple Pay, Google Pay, Link in Payment Element)
     const setupIntent = await stripe.setupIntents.create({
       customer: customerId,
-      payment_method_types: ['card'],
+      automatic_payment_methods: { enabled: true },
       usage: 'off_session', // Allow charging later without user present
     })
 

@@ -60,7 +60,14 @@ function SetupForm({ onSuccess, onCancel }: any) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement />
+      <PaymentElement
+        options={{
+          wallets: {
+            applePay: "auto",
+            googlePay: "auto",
+          },
+        }}
+      />
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
@@ -74,7 +81,7 @@ function SetupForm({ onSuccess, onCancel }: any) {
           disabled={!stripe || loading}
           className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? "Saving..." : "Save Card"}
+          {loading ? "Saving..." : "Save payment method"}
         </button>
         <button
           type="button"
@@ -134,7 +141,7 @@ export default function AddPaymentMethodModal({ isOpen, onClose, onSuccess }: Ad
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
-          <h2 className="text-xl font-bold text-gray-900">Add Payment Method</h2>
+          <h2 className="text-xl font-bold text-gray-900">Add payment method</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
@@ -173,7 +180,7 @@ export default function AddPaymentMethodModal({ isOpen, onClose, onSuccess }: Ad
               </Elements>
 
               <p className="text-xs text-gray-500 text-center">
-                Your card will be saved for future donations. You can remove it anytime.
+                Your payment method will be saved for future pledges. You can remove it anytime.
               </p>
             </div>
           )}
