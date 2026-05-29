@@ -3421,6 +3421,28 @@ body:has(.server-detail-page-backdrop) main {
   box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.25);
 }
 
+.marketing-auth__input option {
+  background: #1e1f22;
+  color: #f2f3f5;
+}
+
+.marketing-auth__hint {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.marketing-auth__captcha {
+  display: flex;
+  justify-content: center;
+  margin: 0.25rem 0;
+}
+
+.marketing-auth__inner--wide {
+  max-width: 32rem;
+}
+
 .marketing-auth__alert {
   padding: 0.75rem 1rem;
   border-radius: 8px;

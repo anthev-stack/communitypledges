@@ -7,6 +7,7 @@ type Props = {
   subtitle?: ReactNode
   backHref?: string
   backLabel?: string
+  wide?: boolean
   children: ReactNode
 }
 
@@ -15,11 +16,12 @@ export default function MarketingAuthLayout({
   subtitle,
   backHref,
   backLabel = "Back to login",
+  wide = false,
   children,
 }: Props) {
   return (
     <section className="auth-page marketing-auth">
-      <div className="marketing-auth__inner">
+      <div className={`marketing-auth__inner${wide ? " marketing-auth__inner--wide" : ""}`}>
         {backHref && (
           <Link href={backHref} className="marketing-auth__back">
             <ArrowLeft className="w-4 h-4" aria-hidden />
