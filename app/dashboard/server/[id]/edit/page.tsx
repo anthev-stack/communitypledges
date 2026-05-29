@@ -6,6 +6,8 @@ import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { SUPPORTED_GAMES } from "@/lib/supported-games"
 import { REGIONS, getTagsForGame } from "@/lib/game-tags"
+import { useCurrency } from "@/components/CurrencyProvider"
+import { getCurrencyName } from "@/lib/currency"
 import ImageUpload from "@/components/ImageUpload"
 import MinecraftJavaFields from "@/components/server/MinecraftJavaFields"
 import {
@@ -19,11 +21,13 @@ import { normalizeServerAddress, splitHostAndPort } from "@/lib/server-address"
 export default function EditServerPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { data: session } = useSession()
+  const { currency, symbol, convertToUSD, convertFromUSD, isLoading: currencyLoading } = useCurrency()
   const [serverId, setServerId] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
-  const [initialData, setInitialData] = useState<any>(null)
+  const [initialData, setInitialData] = useState<{ cost: number; withdrawalDay: number } | null>(null)
+  const [costInitialized, setCostInitialized] = useState(false)
   const [pledgeCount, setPledgeCount] = useState(0)
 
   const [formData, setFormData] = useState({
@@ -58,6 +62,17 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
     fetchCommunities()
   }, [])
 
+  useEffect(() => {
+    if (!initialData || currencyLoading || costInitialized) return
+    const localCost =
+      currency !== "USD" ? convertFromUSD(initialData.cost) : initialData.cost
+    setFormData((prev) => ({
+      ...prev,
+      cost: Number.isFinite(localCost) ? localCost.toFixed(2) : "",
+    }))
+    setCostInitialized(true)
+  }, [initialData, currency, currencyLoading, costInitialized, convertFromUSD])
+
   const fetchServer = async (id: string) => {
     try {
       const response = await fetch(`/api/servers/${id}`)
@@ -77,7 +92,7 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
           gameType: data.gameType || "",
           serverIp: host || "",
           serverPort: port?.toString() || data.serverPort?.toString() || "",
-          cost: data.cost?.toString() || "",
+          cost: "",
           withdrawalDay: data.withdrawalDay?.toString() || "",
           imageUrl: data.imageUrl || "",
           region: data.region || "",
@@ -121,9 +136,15 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
     setError("")
     setSuccess("")
 
-    // Check if cost or withdrawalDay changed
-    const costChanged = initialData && parseFloat(formData.cost) !== initialData.cost
-    const withdrawalDayChanged = initialData && parseInt(formData.withdrawalDay) !== initialData.withdrawalDay
+    const costInLocalCurrency = parseFloat(formData.cost)
+    const costInUSD =
+      currency !== "USD" ? convertToUSD(costInLocalCurrency) : costInLocalCurrency
+
+    // Check if cost or withdrawalDay changed (cost stored in USD)
+    const costChanged =
+      initialData && Math.abs(costInUSD - initialData.cost) > 0.001
+    const withdrawalDayChanged =
+      initialData && parseInt(formData.withdrawalDay) !== initialData.withdrawalDay
 
     if ((costChanged || withdrawalDayChanged) && pledgeCount > 0) {
       const confirmMessage = `⚠️ WARNING: You are changing the ${costChanged ? 'monthly cost' : ''}${costChanged && withdrawalDayChanged ? ' and ' : ''}${withdrawalDayChanged ? 'withdrawal day' : ''}.\n\nThis will REMOVE ALL ${pledgeCount} CURRENT PLEDGES.\n\nPledgers will need to re-pledge with the new details.\n\nAre you absolutely sure you want to continue?`
@@ -148,6 +169,7 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
         },
         body: JSON.stringify({
           ...formData,
+          cost: costInUSD.toFixed(2),
           serverIp,
           serverPort,
         }),
@@ -234,7 +256,7 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
     return null
   }
 
-  if (!initialData) {
+  if (!initialData || !costInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -489,22 +511,36 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative">
                 <label htmlFor="cost" className="block text-sm font-medium text-gray-700 mb-1">
-                  Monthly Cost (USD) <span className="text-red-600">*</span>
+                  Monthly Server Cost ({currency}) <span className="text-red-600">*</span>
                 </label>
                 {pledgeCount > 0 && (
-                  <span className="text-xs text-yellow-600">⚠️ Changing this will remove all pledges</span>
+                  <span className="block text-xs text-yellow-600 mb-1">
+                    ⚠️ Changing this will remove all pledges
+                  </span>
                 )}
-                <input
-                  type="number"
-                  id="cost"
-                  name="cost"
-                  required
-                  min="1"
-                  step="0.01"
-                  value={formData.cost}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-gray-500">{symbol}</span>
+                  <input
+                    type="number"
+                    id="cost"
+                    name="cost"
+                    required
+                    min="1"
+                    step="0.01"
+                    value={formData.cost}
+                    onChange={handleChange}
+                    className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Enter the cost in {getCurrencyName(currency)}.
+                  {currency !== "USD" && formData.cost && (
+                    <span className="text-indigo-600 font-medium">
+                      {" "}
+                      (≈ ${convertToUSD(parseFloat(formData.cost || "0")).toFixed(2)} USD)
+                    </span>
+                  )}
+                </p>
               </div>
 
               <div className="relative">
