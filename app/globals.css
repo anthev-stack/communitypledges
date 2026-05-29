@@ -15,6 +15,7 @@
   --color-nav: #2b2d31;
   --color-focus: rgba(88, 101, 242, 0.25);
   --color-hover: rgba(79, 84, 92, 0.4);
+  --button-radius: 8px;
   --background: #313338;
   --foreground: #f2f3f5;
 }
@@ -59,7 +60,7 @@ main {
   background: var(--color-primary) !important;
   color: #ffffff !important;
   border: none !important;
-  border-radius: 4px;
+  border-radius: var(--button-radius);
   font-weight: 500;
   font-size: 14px;
   transition: background-color 0.17s ease;
@@ -73,7 +74,7 @@ main {
   background: var(--color-surface-elevated) !important;
   color: var(--color-text) !important;
   border: none !important;
-  border-radius: 4px;
+  border-radius: var(--button-radius);
   font-weight: 500;
   font-size: 14px;
   transition: background-color 0.17s ease;
@@ -81,6 +82,14 @@ main {
 
 .btn-secondary:hover {
   background: var(--color-hover) !important;
+}
+
+/* Discord-style corners on native buttons (excludes pill tags & view switch) */
+button:not(.rounded-full):not(.servers-view-switch__track),
+input[type="submit"],
+input[type="button"],
+input[type="reset"] {
+  border-radius: var(--button-radius) !important;
 }
 
 .label-badge {
@@ -590,7 +599,7 @@ body:has(.server-detail-page-backdrop) main {
   font-weight: 600;
   color: #fff !important;
   text-decoration: none !important;
-  border-radius: 8px;
+  border-radius: var(--button-radius);
   background: #5865f2 !important;
   transition: background-color 0.2s ease;
 }
@@ -680,7 +689,7 @@ body:has(.server-detail-page-backdrop) main {
   padding: 0.75rem 1.35rem;
   font-size: 15px;
   font-weight: 600;
-  border-radius: 9999px;
+  border-radius: var(--button-radius);
   transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
   text-decoration: none;
 }
@@ -1223,7 +1232,7 @@ body:has(.server-detail-page-backdrop) main {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: var(--button-radius);
   background: rgba(30, 31, 34, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: #949cf7;
@@ -1591,7 +1600,7 @@ body:has(.server-detail-page-backdrop) main {
   font-weight: 600;
   color: #ffffff !important;
   text-decoration: none !important;
-  border-radius: 8px;
+  border-radius: var(--button-radius);
   background: #5865f2 !important;
   transition: background-color 0.2s ease, transform 0.15s ease;
 }
@@ -1823,7 +1832,7 @@ body:has(.server-detail-page-backdrop) main {
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.25;
-  border-radius: 9999px;
+  border-radius: var(--button-radius);
   border: 1px solid transparent;
   cursor: pointer;
   transition:
@@ -1964,7 +1973,7 @@ body:has(.server-detail-page-backdrop) main {
   font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1;
-  border-radius: 10px;
+  border-radius: var(--button-radius);
   border: 1px solid transparent;
   text-decoration: none;
   cursor: pointer;
@@ -2026,7 +2035,7 @@ body:has(.server-detail-page-backdrop) main {
   width: 2.5rem;
   height: 2.5rem;
   padding: 0;
-  border-radius: 10px;
+  border-radius: var(--button-radius);
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(43, 45, 49, 0.85);
   color: #b5bac1;
@@ -2074,7 +2083,7 @@ body:has(.server-detail-page-backdrop) main {
   font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1;
-  border-radius: 10px;
+  border-radius: var(--button-radius);
   border: 1px solid rgba(250, 166, 26, 0.35);
   background: rgba(250, 166, 26, 0.15);
   color: #faa81a;
@@ -2277,7 +2286,7 @@ body:has(.server-detail-page-backdrop) main {
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: 8px;
+  border-radius: var(--button-radius);
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.05);
   color: #b5bac1;
@@ -2411,7 +2420,7 @@ body:has(.server-detail-page-backdrop) main {
   color: #dbdee1;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: var(--button-radius);
   cursor: pointer;
   transition:
     background-color 0.15s ease,
@@ -3550,7 +3559,7 @@ body:has(.server-detail-page-backdrop) main {
   color: #fff !important;
   background: #5865f2 !important;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--button-radius);
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
