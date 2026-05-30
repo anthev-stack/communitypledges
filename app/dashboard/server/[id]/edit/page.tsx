@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { SUPPORTED_GAMES } from "@/lib/supported-games"
 import { REGIONS, getTagsForGame } from "@/lib/game-tags"
 import { useCurrency } from "@/components/CurrencyProvider"
-import { getCurrencyName } from "@/lib/currency"
+import { getCurrencyName, isSameMoney, roundMoney } from "@/lib/currency"
 import ImageUpload from "@/components/ImageUpload"
 import MinecraftJavaFields from "@/components/server/MinecraftJavaFields"
 import {
@@ -27,7 +27,7 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [initialData, setInitialData] = useState<{ cost: number; withdrawalDay: number } | null>(null)
-  const [costInitialized, setCostInitialized] = useState(false)
+  const costSyncKeyRef = useRef<string | null>(null)
   const [pledgeCount, setPledgeCount] = useState(0)
 
   const [formData, setFormData] = useState({
@@ -62,16 +62,20 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
     fetchCommunities()
   }, [])
 
+  // Sync displayed cost when server data and user currency are both ready (re-runs if currency loads after USD default)
   useEffect(() => {
-    if (!initialData || currencyLoading || costInitialized) return
+    if (!initialData || currencyLoading) return
+    const syncKey = `${initialData.cost}:${currency}`
+    if (costSyncKeyRef.current === syncKey) return
+
     const localCost =
       currency !== "USD" ? convertFromUSD(initialData.cost) : initialData.cost
     setFormData((prev) => ({
       ...prev,
-      cost: Number.isFinite(localCost) ? localCost.toFixed(2) : "",
+      cost: Number.isFinite(localCost) ? roundMoney(localCost).toFixed(2) : "",
     }))
-    setCostInitialized(true)
-  }, [initialData, currency, currencyLoading, costInitialized, convertFromUSD])
+    costSyncKeyRef.current = syncKey
+  }, [initialData, currency, currencyLoading, convertFromUSD])
 
   const fetchServer = async (id: string) => {
     try {
@@ -140,9 +144,18 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
     const costInUSD =
       currency !== "USD" ? convertToUSD(costInLocalCurrency) : costInLocalCurrency
 
-    // Check if cost or withdrawalDay changed (cost stored in USD)
-    const costChanged =
-      initialData && Math.abs(costInUSD - initialData.cost) > 0.001
+    // Compare in display currency so AUD round-trip does not look like a change
+    const costChanged = Boolean(
+      initialData &&
+        !isSameMoney(
+          costInLocalCurrency,
+          roundMoney(
+            currency !== "USD"
+              ? convertFromUSD(initialData.cost)
+              : initialData.cost
+          )
+        )
+    )
     const withdrawalDayChanged =
       initialData && parseInt(formData.withdrawalDay) !== initialData.withdrawalDay
 
@@ -256,7 +269,7 @@ export default function EditServerPage({ params }: { params: Promise<{ id: strin
     return null
   }
 
-  if (!initialData || !costInitialized) {
+  if (!initialData || currencyLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma"
 import { deleteModrinthInstance } from "@/lib/modrinth-storage"
 import { normalizeServerAddress } from "@/lib/server-address"
 import { syncModdedServerTag } from "@/lib/minecraft-java"
+import { isSameMoney } from "@/lib/currency"
 
 export async function GET(
   request: Request,
@@ -125,7 +126,9 @@ export async function PATCH(
       )
     }
 
-    const costChanged = body.cost && parseFloat(body.cost) !== existingServer.cost
+    const costChanged =
+      body.cost &&
+      !isSameMoney(parseFloat(body.cost), existingServer.cost)
     const withdrawalDayChanged =
       body.withdrawalDay && parseInt(body.withdrawalDay) !== existingServer.withdrawalDay
     

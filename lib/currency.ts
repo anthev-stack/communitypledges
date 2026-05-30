@@ -164,6 +164,16 @@ export function getCurrencyFromCountry(countryCode: string): string {
   return COUNTRY_TO_CURRENCY[countryCode] || 'USD'
 }
 
+/** Round to 2 decimal places for money comparisons */
+export function roundMoney(amount: number): number {
+  return Math.round(amount * 100) / 100
+}
+
+/** Compare monetary amounts after rounding (avoids float / FX round-trip false positives) */
+export function isSameMoney(a: number, b: number): boolean {
+  return roundMoney(a) === roundMoney(b)
+}
+
 /**
  * Convert amount from USD to target currency
  */
