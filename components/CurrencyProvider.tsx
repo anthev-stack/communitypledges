@@ -11,6 +11,7 @@ interface CurrencyContextType {
   convertToUSD: (amount: number) => number
   formatPrice: (amountUSD: number, showCode?: boolean) => string
   isLoading: boolean
+  refreshCurrency: () => Promise<void>
 }
 
 const CurrencyContext = createContext<CurrencyContextType>({
@@ -20,6 +21,7 @@ const CurrencyContext = createContext<CurrencyContextType>({
   convertToUSD: (amount: number) => amount,
   formatPrice: (amountUSD: number) => `$${amountUSD.toFixed(2)}`,
   isLoading: true,
+  refreshCurrency: async () => {},
 })
 
 export function useCurrency() {
@@ -45,6 +47,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
             if (userData.country) {
               const userCurrency = getCurrencyFromCountry(userData.country)
               setCurrency(userCurrency)
+            } else {
+              setCurrency('USD')
             }
           }
         } catch (error) {
@@ -60,6 +64,27 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
     fetchUserCurrency()
   }, [session, status])
+
+  const refreshCurrency = async () => {
+    if (status !== 'authenticated' || !session?.user?.id) {
+      setCurrency('USD')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/user/me')
+      if (response.ok) {
+        const userData = await response.json()
+        if (userData.country) {
+          setCurrency(getCurrencyFromCountry(userData.country))
+        } else {
+          setCurrency('USD')
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh user currency:', error)
+    }
+  }
 
   const symbol = getCurrencySymbol(currency)
 
@@ -85,6 +110,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         convertToUSD: convertToUSDFunc,
         formatPrice,
         isLoading,
+        refreshCurrency,
       }}
     >
       {children}

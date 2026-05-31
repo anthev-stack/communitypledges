@@ -101,6 +101,7 @@ export async function POST(
       where: { id: session.user.id },
       select: {
         role: true,
+        country: true,
         hasPaymentMethod: true,
         stripePaymentMethodId: true,
       },
@@ -118,6 +119,16 @@ export async function POST(
       return NextResponse.json(
         { error: "Your account is suspended. Please contact support." },
         { status: 403 }
+      )
+    }
+
+    if (!user.country) {
+      return NextResponse.json(
+        {
+          error:
+            "Please confirm your country before pledging so amounts use the correct currency.",
+        },
+        { status: 400 }
       )
     }
 

@@ -59,7 +59,7 @@ export default function LoginPage() {
   }
 
   const handleDiscordSignIn = () => {
-    signIn("discord", { callbackUrl: "/dashboard" })
+    signIn("discord", { callbackUrl: "/onboarding/country" })
   }
 
   return (

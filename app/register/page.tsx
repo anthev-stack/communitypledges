@@ -91,7 +91,7 @@ export default function RegisterPage() {
   }
 
   const handleDiscordSignIn = () => {
-    signIn("discord", { callbackUrl: "/dashboard" })
+    signIn("discord", { callbackUrl: "/onboarding/country" })
   }
 
   return (

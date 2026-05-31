@@ -3513,6 +3513,37 @@ body:has(.server-detail-page-backdrop) main {
   color: #c9cdfb !important;
 }
 
+/* Country onboarding gate (Discord / users missing country) */
+.country-onboarding-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.country-onboarding-gate__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.country-onboarding-gate__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 28rem;
+  padding: clamp(1.5rem, 4vw, 2rem);
+  background: rgba(30, 31, 34, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+}
+
 .marketing-auth__inline-link {
   font-weight: 600;
   color: #57f287 !important;
